@@ -42,15 +42,15 @@
 
     <!-- ================= HEADER / NAVBAR ================= -->
     <header class="border-b border-ivory-200 bg-ivory-50/95 backdrop-blur-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-0 sm:h-16 flex flex-wrap sm:flex-nowrap items-center justify-between gap-y-2 gap-x-3">
             <!-- Brand -->
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center shadow-sm border border-bronze-500/40">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 shrink-0 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center shadow-sm border border-bronze-500/40">
                     <span class="font-serif text-xl font-semibold tracking-tighter text-bronze-400">01</span>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                        <h1 class="font-serif text-2xl sm:text-3xl font-semibold tracking-tight text-anthracite-900 leading-none">
+                        <h1 class="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-anthracite-900 leading-none whitespace-nowrap">
                             Scacchi ZeroUno
                         </h1>
                         <span class="hidden md:inline-block text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 rounded-full bg-ivory-200/80 text-anthracite-800 font-medium">
@@ -64,7 +64,7 @@
             </div>
 
             <!-- Strumenti Rapidi Header -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto justify-end">
                 <!-- Stato Rete Mondiale -->
                 <div id="networkStatusBadge" class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-ivory-100 border border-ivory-200 text-xs text-neutral-600">
                     <span id="networkDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -72,7 +72,7 @@
                 </div>
 
                 <!-- Selettore Tema Scacchiera -->
-                <select id="boardThemeSelect" aria-label="Tema Scacchiera" class="text-xs bg-ivory-100 border border-ivory-200 rounded-lg px-2.5 py-1.5 text-anthracite-800 focus:outline-none focus:border-bronze-500 cursor-pointer">
+                <select id="boardThemeSelect" aria-label="Tema Scacchiera" class="text-[11px] sm:text-xs max-w-[104px] sm:max-w-none bg-ivory-100 border border-ivory-200 rounded-lg px-2.5 py-1.5 text-anthracite-800 focus:outline-none focus:border-bronze-500 cursor-pointer">
                     <option value="classic">Avorio &amp; Noce</option>
                     <option value="onyx">Onice &amp; Pietra</option>
                     <option value="club">Verde Torneo</option>
@@ -90,11 +90,11 @@
                 </button>
 
                 <!-- Bottone Archivio Video ZeroUno / Anteprima Fine Partita -->
-                <button id="openVideoPreviewBtn" type="button" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-anthracite-900 text-ivory-50 hover:bg-anthracite-800 transition shadow-sm cursor-pointer">
+                <button id="openVideoPreviewBtn" type="button" title="Video del canale ZeroUno" class="flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-lg bg-anthracite-900 text-ivory-50 hover:bg-anthracite-800 transition shadow-sm cursor-pointer shrink-0">
                     <svg class="w-3.5 h-3.5 text-bronze-400" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z"/>
                     </svg>
-                    <span>Video ZeroUno</span>
+                    <span class="hidden sm:inline">Video ZeroUno</span>
                 </button>
             </div>
         </div>
