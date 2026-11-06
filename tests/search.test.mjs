@@ -133,3 +133,20 @@ test('tavola di trasposizione: la distanza di matto non si sposta', () => {
         assert.equal(valore, punteggio, `profondita ${profondita}: la distanza di matto e' cambiata`);
     }
 });
+
+test('non promuove a donna se la donna e\' stallo', () => {
+    /*
+     * Re nero in h6, re bianco in g4, pedone bianco in g7.
+     * g8=D toglie al Nero ogni mossa senza dargli scacco: patta per
+     * stallo, cioe' una partita vinta buttata via. Torre o cavallo
+     * lasciano la partita viva e vinta.
+     */
+    const fen = '8/6P1/7k/8/6K1/8/8/8 w - - 0 1';
+
+    const mossa = chooseMove(fen, 3, { timeBudgetMs: 1200 });
+    assert.ok(mossa, 'nessuna mossa proposta');
+    assert.equal(mossa.from, 'g7');
+    assert.equal(mossa.to, 'g8');
+    assert.notEqual(mossa.promotion, 'q', 'la donna qui e\' stallo: l\'AI deve sottopromuovere');
+    assert.ok(mossa.score > 400, `punteggio troppo basso: ${mossa.score}`);
+});

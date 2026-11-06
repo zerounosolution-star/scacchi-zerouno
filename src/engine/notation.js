@@ -79,14 +79,39 @@ export function findMoveFromNotation(game, text) {
     }));
 
     const exact = notations.filter((entry) => entry.san === wantedBase);
-    if (exact.length === 1) return { move: exact[0].move, promotion };
-    if (exact.length > 1) return { error: 'ambigua' };
+    if (exact.length > 0) return resolve(exact, promotion);
 
     const loose = notations.filter((entry) => entry.san.toLowerCase() === wantedBase.toLowerCase());
-    if (loose.length === 1) return { move: loose[0].move, promotion };
-    if (loose.length > 1) return { error: 'ambigua' };
+    if (loose.length > 0) return resolve(loose, promotion);
 
     return { error: 'illegale' };
+}
+
+/**
+ * Sceglie fra le mosse che hanno la stessa notazione.
+ *
+ * Due casi diversi: pezzi diversi che arrivano sulla stessa casa (allora
+ * la notazione e' davvero ambigua), oppure lo stesso pedone che promuove
+ * in pezzi diversi, che hanno tutte la stessa notazione una volta tolto
+ * il pezzo finale.
+ *
+ * @param {Array<{move: object}>} candidates
+ * @param {string|null} promotion
+ */
+function resolve(candidates, promotion) {
+    if (candidates.length === 1) return { move: candidates[0].move, promotion };
+
+    const first = candidates[0].move;
+    const stessaStrada = candidates.every((c) => c.move.from === first.from && c.move.to === first.to);
+    if (!stessaStrada) return { error: 'ambigua' };
+
+    if (promotion) {
+        const scelta = candidates.find((c) => c.move.promotion === promotion);
+        return scelta ? { move: scelta.move, promotion } : { error: 'illegale' };
+    }
+
+    // Nessun pezzo indicato: lo chiede la finestra di promozione
+    return { move: first, promotion: null };
 }
 
 /** Il pezzo scelto in una promozione scritta, per esempio "e8=Q". */

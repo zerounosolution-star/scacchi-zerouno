@@ -27,6 +27,15 @@ export function coordsToSq(r, c) {
  * Erano letterali dentro isSquareAttacked: allocarle a ogni chiamata
  * pesava sulla ricerca dell'AI, che chiama quella funzione milioni di volte.
  */
+/*
+ * In che cosa si trasforma un pedone che arriva in fondo.
+ * La donna quasi sempre, ma non sempre: il cavallo da' scacchi che la
+ * donna non da', e torre o alfiere evitano uno stallo che la donna
+ * provocherebbe. Il generatore le produce tutte e quattro, altrimenti
+ * l'AI quelle partite non le puo' nemmeno vedere.
+ */
+const PROMOTION_PIECES = ['q', 'r', 'b', 'n'];
+
 const KNIGHT_JUMPS = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
 const ORTHO_DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const DIAG_DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
@@ -338,14 +347,28 @@ export class ZeroUnoChessEngine {
             const r1 = r + dir;
             if (inBounds(r1, c) && !this.boardGrid[r1][c]) {
                 const isPromo = r1 === promoRow;
-                moves.push({
-                    from: fromSq,
-                    to: coordsToSq(r1, c),
-                    color,
-                    piece: 'p',
-                    captured: null,
-                    flags: isPromo ? 'p' : 'n'
-                });
+                if (isPromo) {
+                    for (const promotion of PROMOTION_PIECES) {
+                        moves.push({
+                            from: fromSq,
+                            to: coordsToSq(r1, c),
+                            color,
+                            piece: 'p',
+                            captured: null,
+                            promotion,
+                            flags: 'p'
+                        });
+                    }
+                } else {
+                    moves.push({
+                        from: fromSq,
+                        to: coordsToSq(r1, c),
+                        color,
+                        piece: 'p',
+                        captured: null,
+                        flags: 'n'
+                    });
+                }
 
                 // Doppio passo iniziale
                 const r2 = r + dir * 2;
@@ -369,14 +392,26 @@ export class ZeroUnoChessEngine {
                 const targetPiece = this.boardGrid[r1][nc];
                 const isPromo = r1 === promoRow;
 
-                if (targetPiece && targetPiece.color === enemy) {
+                if (targetPiece && targetPiece.color === enemy && isPromo) {
+                    for (const promotion of PROMOTION_PIECES) {
+                        moves.push({
+                            from: fromSq,
+                            to: targetSq,
+                            color,
+                            piece: 'p',
+                            captured: targetPiece.type,
+                            promotion,
+                            flags: 'cp'
+                        });
+                    }
+                } else if (targetPiece && targetPiece.color === enemy) {
                     moves.push({
                         from: fromSq,
                         to: targetSq,
                         color,
                         piece: 'p',
                         captured: targetPiece.type,
-                        flags: isPromo ? 'cp' : 'c'
+                        flags: 'c'
                     });
                 } else if (this.enPassantSq && targetSq === this.enPassantSq) {
                     moves.push({

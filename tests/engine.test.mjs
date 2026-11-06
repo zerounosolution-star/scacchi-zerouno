@@ -309,3 +309,44 @@ test('notazione: la cattura tiene la x e la disambiguazione', () => {
     play(g, 'c3e2');
     assert.equal(g.history().at(-1), 'Ncxe2');
 });
+
+test('promozione: il generatore propone tutti e quattro i pezzi', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('8/P6k/8/8/8/8/6K1/8 w - - 0 1');
+
+    const promozioni = g.moves({ verbose: true }).filter((m) => m.from === 'a7' && m.to === 'a8');
+    assert.equal(promozioni.length, 4);
+    assert.deepEqual(promozioni.map((m) => m.promotion).sort(), ['b', 'n', 'q', 'r']);
+    for (const m of promozioni) assert.ok(m.flags.includes('p'));
+});
+
+test('promozione: anche catturando si puo\' scegliere il pezzo', () => {
+    const g = new ZeroUnoChessEngine();
+    // Pedone bianco in b7, torre nera in a8: b8 e bxa8 sono tutte promozioni
+    g.load('r6k/1P6/8/8/8/8/6K1/8 w - - 0 1');
+
+    const catture = g.moves({ verbose: true }).filter((m) => m.from === 'b7' && m.to === 'a8');
+    assert.equal(catture.length, 4);
+    assert.deepEqual(catture.map((m) => m.promotion).sort(), ['b', 'n', 'q', 'r']);
+    for (const m of catture) assert.equal(m.captured, 'r');
+});
+
+test('promozione: la mossa veloce rispetta il pezzo scelto', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('8/P6k/8/8/8/8/6K1/8 w - - 0 1');
+
+    const cavallo = g.moves({ verbose: true }).find((m) => m.to === 'a8' && m.promotion === 'n');
+    g.move(cavallo, { fast: true });
+    assert.equal(g.get('a8').type, 'n');
+});
+
+test('promozione: la notazione dice in che cosa si promuove', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('8/P6k/8/8/8/8/6K1/8 w - - 0 1');
+
+    for (const [pezzo, atteso] of [['q', 'a8=Q'], ['r', 'a8=R'], ['b', 'a8=B'], ['n', 'a8=N']]) {
+        g.load('8/P6k/8/8/8/8/6K1/8 w - - 0 1');
+        g.move({ from: 'a7', to: 'a8', promotion: pezzo });
+        assert.equal(g.history().at(-1), atteso);
+    }
+});
