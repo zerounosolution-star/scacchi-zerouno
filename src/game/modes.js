@@ -132,6 +132,10 @@ export function resumeSavedMatch() {
     // cambierebbe le regole a meta'.
     state.timeControlId = timeControlById(snapshot.timeControlId).id;
     syncTimeControlSelects();
+
+    // Anche il menu del livello deve dire la verita' sulla partita ripresa
+    const livello = document.getElementById('aiDifficultySelect');
+    if (livello) livello.value = String(state.aiDifficulty);
     state.selectedSquare = null;
     state.legalMovesForSelected = [];
 
