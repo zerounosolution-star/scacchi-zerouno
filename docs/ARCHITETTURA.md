@@ -110,6 +110,8 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 | Cambiare i tempi di riflessione | `src/engine/search.js`, campo `timeBudgetMs` |
 | Aggiungere un tema di scacchiera | `src/css/styles.css` + `index.html` (menu a tendina) |
 | Cambiare i tasti di gioco | `src/ui/keyboard.js` |
+| Cambiare l'aspetto di una casella | `src/css/styles.css`, sezione marcatori |
+| Cambiare la soglia del tempo agli sgoccioli | `src/ui/panels.js`, `LOW_TIME_SECONDS` |
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
 | Cambiare i permessi del database | `firebase/firestore.rules` |
@@ -126,6 +128,13 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
   alzato `CACHE_VERSION` a mano.
 - L'abbandono di una partita online non viene notificato all'avversario in
   tempo reale se chi abbandona chiude il browser di colpo.
+- Il JavaScript assegna stringhe complete di classi Tailwind
+  (`panels.js`, `gameover.js`, `main.js`, `firestore.js`). Il CSS deve
+  rincorrerle rimappando i colori sulla superficie scura. Passando a un
+  attributo di stato (`dataset.state = 'check' | 'over'`) il disegno
+  tornerebbe tutto nel foglio di stile.
+- La notazione non e' navigabile: non evidenzia l'ultima mossa e le righe
+  non sono cliccabili per rivedere la posizione.
 - Il gioco da tastiera non ha una scorciatoia per inserire la mossa in
   notazione algebrica: si naviga casella per casella.
 - La ripetizione confronta la FEN senza contatori. E' il criterio usato da
