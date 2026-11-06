@@ -103,7 +103,8 @@ chooseMove(fen, livello)
    │     ├─ patte per regola            prima di tutto, costano poco
    │     ├─ tavola di trasposizione     posizione gia' vista?
    │     ├─ profondita' 0 → quiescenza  prosegue solo sulle catture
-   │     ├─ ordinamento delle mosse     mossa della tavola, poi MVV-LVA
+   │     ├─ ordinamento delle mosse     tavola, catture, promozioni,
+   │     │                            killer, storia
    │     └─ salva il risultato in tavola
    ▼
 mossa, punteggio, profondita' raggiunta, nodi visitati
@@ -143,6 +144,29 @@ nessuno. Fuori dalla ricerca il controllo resta.
 giocatore di club guarda per primo: pedoni doppiati, isolati e passati,
 torri su colonna aperta o semiaperta, coppia degli alfieri, riparo di pedoni
 davanti al re (solo a medio gioco: nel finale il re deve uscire).
+
+**Ordine di prova delle mosse.** La potatura alfa-beta rende quanto prima
+si prova la mossa giusta. Le fasce stanno lontane fra loro, cosi' nessun
+punteggio di una fascia scavalca quella sopra:
+
+| Fascia | Punteggio | Che cosa |
+|---|---|---|
+| tavola | 1.000.000 | la mossa che la tavola ricorda come migliore |
+| catture | 500.000 + MVV-LVA | il pezzo piu' prezioso preso dal meno prezioso |
+| promozioni | 400.000 | |
+| killer | 300.000 / 290.000 | mosse tranquille che hanno gia' tagliato a questa profondita' |
+| storia | 0 - 200.000 | quante volte quella mossa ha tagliato, pesata per profondita' |
+
+Killer e storia riguardano solo le mosse tranquille: una cattura che taglia
+si ritrova da sola in cima. A profondita' 5 fanno risparmiare dal 30% al 60%
+dei nodi, a parita' di punteggio. Che il punteggio non cambi va verificato a
+ogni modifica: un ordinamento che scarta mosse invece di riordinarle
+restituisce risultati diversi, e lo fa in silenzio.
+
+**Tempo di riflessione.** Il tetto del livello e' un massimo, non un
+diritto. `engine/ai.js` guarda l'orologio dell'AI, spalma il tempo rimasto
+su una ventina di mosse, aggiunge quasi tutto l'incremento e non tocca mai
+l'ultimo secondo. Serve a non perdere per il tempo una partita vinta.
 
 ## Modello dei dati online
 
@@ -188,9 +212,9 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 - `sw.js` non ha versionamento automatico: dopo una modifica ai file va
   alzato `CACHE_VERSION` a mano. Che tutti i moduli siano nella lista lo
   controlla un test, la versione no.
-- La ricerca promuove sempre a donna: il generatore produce una sola mossa
-  di promozione. Chi gioca puo' scegliere, l'AI no. La sottopromozione
-  decide poche partite, ma qualcuna la decide.
+- La tabella della storia non invecchia: i punteggi crescono per tutta la
+  scelta della mossa e un taglio trovato a profondita' 1 pesa quanto uno
+  trovato dopo. Sulle ricerche lunghe conviene dimezzarli ogni tanto.
 - La tavola di trasposizione vive per una sola mossa e si svuota a ogni
   ricerca. Tenerla fra una mossa e l'altra darebbe ancora qualcosa, ma
   servirebbe gestire l'invecchiamento delle posizioni.
