@@ -181,6 +181,11 @@ installare sul telefono.
 **Dopo ogni modifica ai file, alzare `CACHE_VERSION` in `sw.js`**, altrimenti
 chi ha gia' visitato il sito continua a vedere la versione vecchia.
 
+Tailwind e Tone.js arrivano da una CDN. Alla prima visita il service worker
+non controlla ancora la pagina, quindi quelle due richieste non passerebbero
+da lui: vengono scaricate durante l'installazione (`CDN_SHELL` in `sw.js`).
+Senza il foglio di stile di Tailwind la pagina perderebbe l'impaginazione.
+
 Il service worker funziona solo su HTTPS o su localhost. Aprendo i file con
 un doppio click non si attiva.
 

@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -53,11 +53,40 @@ const APP_SHELL = [
     './src/online/firestore.js'
 ];
 
+/**
+ * File di terze parti indispensabili all'aspetto della pagina.
+ *
+ * Alla prima visita il service worker non controlla ancora la pagina:
+ * queste richieste partono prima di lui e non finiscono in cache. Senza
+ * il foglio di stile di Tailwind la pagina perde tutta l'impaginazione,
+ * quindi conviene scaricarli durante l'installazione.
+ */
+const CDN_SHELL = [
+    'https://cdn.tailwindcss.com/',
+    'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js'
+];
+
+/**
+ * Mette in cache un file servito da un altro dominio.
+ *
+ * La risposta e' opaca (status 0) perche' quei domini non concedono
+ * CORS: cache.add la rifiuterebbe, cache.put la accetta.
+ */
+async function cacheCrossOrigin(cache, url) {
+    try {
+        const response = await fetch(url, { mode: 'no-cors', cache: 'reload' });
+        if (response) await cache.put(url, response);
+    } catch (err) {
+        // Senza rete non si puo' fare nulla: si riprova alla prossima installazione
+    }
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
         const cache = await caches.open(CACHE_NAME);
         // addAll fallisce in blocco se un file manca: meglio uno per uno
         await Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => null)));
+        await Promise.all(CDN_SHELL.map((url) => cacheCrossOrigin(cache, url)));
         await self.skipWaiting();
     })());
 });
