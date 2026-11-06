@@ -632,6 +632,37 @@ export class ZeroUnoChessEngine {
     }
 
     /**
+     * Quel poco di casa di partenza che serve a non confondere due pezzi.
+     *
+     * Se due cavalli possono andare sulla stessa casa, "Ce2" non dice
+     * quale: la notazione aggiunge la colonna ("Cge2"), o la traversa se
+     * la colonna non basta, o tutte e due. Senza questo il PGN copiato
+     * non si puo' rileggere.
+     *
+     * @param {{type: string, color: string}} piece
+     * @param {string} fromSq
+     * @param {string} toSq
+     * @returns {string} '', una lettera, un numero o la casa intera.
+     */
+    sanDisambiguation(piece, fromSq, toSq) {
+        const rivals = this.moves({ verbose: true }).filter((m) => (
+            m.to === toSq
+            && m.piece === piece.type
+            && m.color === piece.color
+            && m.from !== fromSq
+        ));
+
+        if (rivals.length === 0) return '';
+
+        const sameFile = rivals.some((m) => m.from[0] === fromSq[0]);
+        const sameRank = rivals.some((m) => m.from[1] === fromSq[1]);
+
+        if (!sameFile) return fromSq[0];
+        if (!sameRank) return fromSq[1];
+        return fromSq;
+    }
+
+    /**
      * Esegue una mossa.
      *
      * @param {object} moveInput      { from, to, promotion }.
@@ -687,6 +718,7 @@ export class ZeroUnoChessEngine {
         } else {
             if (movingPiece.type !== 'p') {
                 san += movingPiece.type.toUpperCase();
+                san += this.sanDisambiguation(movingPiece, fromSq, toSq);
             } else if (matched.captured) {
                 san += fromSq[0];
             }

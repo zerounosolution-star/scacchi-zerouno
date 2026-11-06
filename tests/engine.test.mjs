@@ -269,3 +269,43 @@ test('mossa veloce: porta alla stessa posizione della mossa normale', () => {
         }
     }
 });
+
+test('notazione: due cavalli sulla stessa casa si distinguono per colonna', () => {
+    const g = new ZeroUnoChessEngine();
+    // Cavalli bianchi in c3 e g1: tutti e due arrivano in e2
+    g.load('4k3/8/8/8/8/2N5/8/4K1N1 w - - 0 1');
+    play(g, 'c3e2');
+    assert.equal(g.history().at(-1), 'Nce2');
+
+    g.undo();
+    play(g, 'g1e2');
+    assert.equal(g.history().at(-1), 'Nge2');
+});
+
+test('notazione: stessa colonna, si distingue per traversa', () => {
+    const g = new ZeroUnoChessEngine();
+    // Torri bianche in a1 e a8: tutte e due arrivano in a4.
+    // Il re nero sta in f5, fuori dalla colonna a: la mossa non da' scacco.
+    g.load('R7/8/8/5k2/8/8/8/R3K3 w - - 0 1');
+    play(g, 'a1a4');
+    assert.equal(g.history().at(-1), 'R1a4');
+
+    g.undo();
+    play(g, 'a8a4');
+    assert.equal(g.history().at(-1), 'R8a4');
+});
+
+test('notazione: un pezzo solo non prende nessuna aggiunta', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('4k3/8/8/8/8/2N5/8/4K3 w - - 0 1');
+    play(g, 'c3e2');
+    assert.equal(g.history().at(-1), 'Ne2');
+});
+
+test('notazione: la cattura tiene la x e la disambiguazione', () => {
+    const g = new ZeroUnoChessEngine();
+    // Cavalli in c3 e g1, pedone nero in e2
+    g.load('4k3/8/8/8/8/2N5/4p3/4K1N1 w - - 0 1');
+    play(g, 'c3e2');
+    assert.equal(g.history().at(-1), 'Ncxe2');
+});

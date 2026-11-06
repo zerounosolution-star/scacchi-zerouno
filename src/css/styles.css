@@ -532,6 +532,27 @@ select.zu-field { cursor: pointer; appearance: auto; }
     50% { opacity: 0.5; }
 }
 
+/* Campo della mossa scritta: sta sul tavolo scuro, quindi non puo' usare
+   il colore dei campi del taccuino. */
+.zu-move-input {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid rgba(197, 166, 103, 0.35);
+    border-radius: var(--r-md);
+    background: var(--table-well);
+    color: var(--ink-on-dark);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+}
+.zu-move-input::placeholder { color: var(--ink-on-dark-2); opacity: 0.75; }
+.zu-move-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+}
+
 #selectedSquareIndicator {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 12px;

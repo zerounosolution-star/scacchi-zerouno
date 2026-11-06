@@ -244,6 +244,17 @@
                             </div>
                         </div>
 
+                        <!-- Mossa scritta: la via corta per chi gioca da tastiera -->
+                        <div class="flex items-center gap-2 mt-3">
+                            <label for="notationMoveInput" class="zu-sr">Mossa in notazione</label>
+                            <input id="notationMoveInput" type="text" inputmode="text" autocomplete="off"
+                                   spellcheck="false" maxlength="10" placeholder="Scrivi la mossa: e4, Nf6, O-O"
+                                   aria-describedby="notationMoveHint" class="zu-move-input" />
+                            <span id="notationMoveHint" class="zu-sr">
+                                Scrivi la mossa in notazione algebrica e premi Invio. Vanno bene anche le due case, per esempio e2e4.
+                            </span>
+                        </div>
+
                         <!-- Riga di stato: istruzione e casella selezionata -->
                         <div class="flex items-center justify-between gap-3 mt-3">
                             <div class="flex items-center gap-2 min-w-0">
