@@ -6,7 +6,7 @@
  */
 
 import { PIECE_SVGS } from '../data/pieces.js';
-import { PLAYER_CLOCK_SECONDS } from '../config/app.config.js';
+import { TIME_CONTROLS, timeControlById } from '../config/app.config.js';
 import { chess, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { triggerEndOfGame } from './gameover.js';
@@ -244,10 +244,59 @@ export function formatSeconds(sec) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/** Il tempo di gioco scelto per questa partita. */
+export function activeTimeControl() {
+    return timeControlById(state.timeControlId);
+}
+
+/**
+ * Incremento Fischer: chi ha appena mosso si riprende i secondi previsti.
+ *
+ * @param {string} colorThatMoved  'w' oppure 'b'.
+ */
+export function applyClockIncrement(colorThatMoved) {
+    const increment = activeTimeControl().incrementSeconds;
+    if (!increment || state.matchEnded) return;
+
+    if (colorThatMoved === 'w') state.whiteTimeSeconds += increment;
+    else state.blackTimeSeconds += increment;
+
+    renderTimersUI();
+}
+
+/**
+ * Riempie i menu del tempo di gioco e li tiene allineati fra loro.
+ * Le voci nascono da TIME_CONTROLS: l'elenco sta in un posto solo.
+ */
+export function setupTimeControlSelects() {
+    const selects = [...document.querySelectorAll('[data-time-control]')];
+
+    selects.forEach((select) => {
+        select.innerHTML = TIME_CONTROLS
+            .map((c) => `<option value="${c.id}">${c.label}</option>`)
+            .join('');
+
+        select.addEventListener('change', () => {
+            state.timeControlId = select.value;
+            syncTimeControlSelects();
+        });
+    });
+
+    syncTimeControlSelects();
+}
+
+/** Riporta i menu sul tempo di gioco scelto (sono piu' di uno). */
+export function syncTimeControlSelects() {
+    document.querySelectorAll('[data-time-control]').forEach((select) => {
+        select.value = state.timeControlId;
+    });
+}
+
 export function startMatchTimers() {
     if (state.timerInterval) clearInterval(state.timerInterval);
-    state.whiteTimeSeconds = PLAYER_CLOCK_SECONDS;
-    state.blackTimeSeconds = PLAYER_CLOCK_SECONDS;
+    const control = activeTimeControl();
+    state.whiteTimeSeconds = control.seconds;
+    state.blackTimeSeconds = control.seconds;
     renderTimersUI();
 
     state.timerInterval = setInterval(() => {

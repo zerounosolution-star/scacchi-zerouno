@@ -11,6 +11,7 @@ import { chess, dragState, state } from '../core/state.js';
 import { playChessSound } from '../core/sound.js';
 import { showToast, canHumanControlCurrentTurn } from '../core/utils.js';
 import { getSquareFromClientCoords, renderBoard } from './board.js';
+import { applyClockIncrement } from './panels.js';
 import { makeAiMove } from '../engine/ai.js';
 import { saveMatch } from '../core/persistence.js';
 import { checkAndHandleGameOver } from './gameover.js';
@@ -248,6 +249,9 @@ export async function executeMove(fromSq, toSq, promotionPiece = 'q') {
     state.selectedSquare = null;
     state.legalMovesForSelected = [];
     state.lastMoveSquares = { from: moveObj.from, to: moveObj.to };
+
+    // Incremento Fischer, se il tempo di gioco scelto ne prevede uno
+    applyClockIncrement(moveObj.color);
 
     if (chess.in_check()) {
         playChessSound('check');

@@ -11,7 +11,7 @@
  */
 
 import { ZeroUnoChessEngine } from '../engine/chess-engine.js';
-import { PLAYER_CLOCK_SECONDS } from '../config/app.config.js';
+import { DEFAULT_TIME_CONTROL_ID, timeControlById } from '../config/app.config.js';
 
 /** Istanza unica del motore scacchistico per la partita in corso. */
 export const chess = new ZeroUnoChessEngine();
@@ -62,8 +62,10 @@ export const state = {
     review: null,
 
     // --- Orologi ---
-    whiteTimeSeconds: PLAYER_CLOCK_SECONDS,
-    blackTimeSeconds: PLAYER_CLOCK_SECONDS,
+    /** Tempo di gioco scelto: vedi TIME_CONTROLS in config/app.config.js */
+    timeControlId: DEFAULT_TIME_CONTROL_ID,
+    whiteTimeSeconds: timeControlById(DEFAULT_TIME_CONTROL_ID).seconds,
+    blackTimeSeconds: timeControlById(DEFAULT_TIME_CONTROL_ID).seconds,
     timerInterval: null,
 
     // --- Audio ---

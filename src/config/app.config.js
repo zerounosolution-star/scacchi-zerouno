@@ -9,7 +9,29 @@
 export const APP_ID = 'scacchi-zerouno-world';
 
 /** Tempo iniziale di ciascun giocatore, in secondi (10 minuti). */
-export const PLAYER_CLOCK_SECONDS = 600;
+/**
+ * Tempi di gioco disponibili.
+ *
+ * `incrementSeconds` e' l'incremento Fischer: chi muove si riprende quei
+ * secondi sull'orologio. Serve a non perdere una partita vinta per pochi
+ * secondi nel finale, quando le mosse sono tante e semplici.
+ */
+export const TIME_CONTROLS = [
+    { id: 'rapid-10', label: '10 minuti, senza incremento', seconds: 600, incrementSeconds: 0 },
+    { id: 'rapid-10-5', label: '10 minuti + 5 secondi a mossa', seconds: 600, incrementSeconds: 5 },
+    { id: 'blitz-5-3', label: '5 minuti + 3 secondi a mossa', seconds: 300, incrementSeconds: 3 },
+    { id: 'blitz-3-2', label: '3 minuti + 2 secondi a mossa', seconds: 180, incrementSeconds: 2 }
+];
+
+/** Tempo di gioco usato finche' non se ne sceglie un altro. */
+export const DEFAULT_TIME_CONTROL_ID = 'rapid-10';
+
+/** Il tempo di gioco con questo identificativo, o quello predefinito. */
+export function timeControlById(id) {
+    return TIME_CONTROLS.find((c) => c.id === id)
+        || TIME_CONTROLS.find((c) => c.id === DEFAULT_TIME_CONTROL_ID)
+        || TIME_CONTROLS[0];
+}
 
 /** Canale YouTube collegato al progetto. */
 export const YOUTUBE_CHANNEL_URL = 'https://youtube.com/@zerounosolution';

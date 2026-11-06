@@ -10,7 +10,8 @@ import { chess, state } from '../core/state.js';
 import { showToast, getPlayerNickname } from '../core/utils.js';
 import { renderBoard } from '../ui/board.js';
 import { makeAiMove } from '../engine/ai.js';
-import { updatePlayerCardsUI, startMatchTimers, renderTimersUI } from '../ui/panels.js';
+import { updatePlayerCardsUI, startMatchTimers, renderTimersUI, syncTimeControlSelects } from '../ui/panels.js';
+import { timeControlById } from '../config/app.config.js';
 import { cleanupActiveOnlineMatch } from '../online/firestore.js';
 import { readSavedMatch, replayMoves, clearSavedMatch } from '../core/persistence.js';
 import { exitReview } from '../ui/review.js';
@@ -127,6 +128,10 @@ export function resumeSavedMatch() {
     state.playerColor = snapshot.playerColor || 'w';
     state.boardOrientation = snapshot.boardOrientation || state.playerColor;
     state.aiDifficulty = snapshot.aiDifficulty || 2;
+    // Il tempo di gioco fa parte della partita: ripartire con un altro
+    // cambierebbe le regole a meta'.
+    state.timeControlId = timeControlById(snapshot.timeControlId).id;
+    syncTimeControlSelects();
     state.selectedSquare = null;
     state.legalMovesForSelected = [];
 

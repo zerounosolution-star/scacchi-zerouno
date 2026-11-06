@@ -10,7 +10,7 @@ import { chess, state } from './core/state.js';
 import { saveMatch, readSavedMatch, clearSavedMatch } from './core/persistence.js';
 import { showToast, copyTextToClipboard } from './core/utils.js';
 import { initPersistentBoardDOM, renderBoard } from './ui/board.js';
-import { updatePlayerCardsUI, renderTimersUI } from './ui/panels.js';
+import { updatePlayerCardsUI, renderTimersUI, setupTimeControlSelects } from './ui/panels.js';
 import { setupReviewControls, exitReview } from './ui/review.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
@@ -252,6 +252,7 @@ window.onload = async function () {
     setupEventListeners();
 
     setupReviewControls();
+    setupTimeControlSelects();
 
     // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
     if (!resumeSavedMatch()) {

@@ -40,6 +40,7 @@ export function saveMatch(extra = {}) {
             playerColor: state.playerColor,
             boardOrientation: state.boardOrientation,
             aiDifficulty: state.aiDifficulty,
+            timeControlId: state.timeControlId,
             whiteTimeSeconds: state.whiteTimeSeconds,
             blackTimeSeconds: state.blackTimeSeconds,
             moves,
