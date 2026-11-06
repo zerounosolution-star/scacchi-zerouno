@@ -179,6 +179,24 @@ test('regola delle 50 mosse: a 100 semimosse e\' patta', () => {
     assert.equal(g.in_draw(), true);
 });
 
+test('conteggio posizioni: si puo\' passare a un altro motore', () => {
+    const partita = new ZeroUnoChessEngine();
+    play(partita, 'g1f3', 'g8f6', 'f3g1', 'f6g8');
+    const chiaveIniziale = partita.positionKey();
+
+    // L'AI riceve solo una FEN: senza la storia non sa di stare ripetendo
+    const analisi = new ZeroUnoChessEngine();
+    analisi.load(partita.fen());
+    assert.equal(analisi.positionCounts.get(chiaveIniziale), 1);
+
+    analisi.seedPositionCounts(partita.positionCountEntries());
+    assert.equal(analisi.positionCounts.get(chiaveIniziale), 2);
+
+    // Una terza comparsa della stessa posizione chiude la partita in patta
+    play(analisi, 'g1f3', 'g8f6', 'f3g1', 'f6g8');
+    assert.equal(analisi.in_threefold_repetition(), true);
+});
+
 test('FEN: caricamento e rilettura danno la stessa stringa', () => {
     const posizioni = [
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',

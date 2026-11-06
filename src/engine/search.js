@@ -301,7 +301,10 @@ export const LEVELS = {
  *
  * @param {string} fen              Posizione di partenza.
  * @param {number} level            1, 2 o 3.
- * @param {object} [options]        { timeBudgetMs } per forzare il tetto di tempo.
+ * @param {object} [options]        { timeBudgetMs, positionHistory }.
+ *                                  positionHistory e' il conteggio delle
+ *                                  posizioni gia' viste nella partita:
+ *                                  senza, l'AI non sa di stare ripetendo.
  * @returns {{from: string, to: string, promotion: string, score: number, depth: number, nodes: number, elapsedMs: number}|null}
  */
 export function chooseMove(fen, level = 2, options = {}) {
@@ -310,6 +313,9 @@ export function chooseMove(fen, level = 2, options = {}) {
 
     const game = new ZeroUnoChessEngine();
     if (!game.load(fen)) return null;
+
+    // La partita giocata finora: cosi' la ripetizione vale come patta
+    if (options.positionHistory) game.seedPositionCounts(options.positionHistory);
 
     const legalMoves = game.moves({ verbose: true });
     if (legalMoves.length === 0) return null;

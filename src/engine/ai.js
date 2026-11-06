@@ -72,9 +72,10 @@ function getWorker() {
  *
  * @param {string} fen
  * @param {number} level  1, 2 o 3.
+ * @param {Array<[string, number]>|null} positionHistory  Posizioni gia' viste.
  * @returns {Promise<{from: string, to: string, promotion: string}|null>}
  */
-export async function requestBestMove(fen, level) {
+export async function requestBestMove(fen, level, positionHistory = null) {
     const activeWorker = getWorker();
 
     if (activeWorker) {
@@ -82,7 +83,7 @@ export async function requestBestMove(fen, level) {
         try {
             return await new Promise((resolve, reject) => {
                 pendingRequests.set(id, { resolve, reject });
-                activeWorker.postMessage({ id, fen, level });
+                activeWorker.postMessage({ id, fen, level, positionHistory });
             });
         } catch (err) {
             // Il worker ha fallito: si prosegue nel thread principale
@@ -90,7 +91,7 @@ export async function requestBestMove(fen, level) {
         }
     }
 
-    return chooseMove(fen, level, { timeBudgetMs: FALLBACK_TIME_BUDGET_MS });
+    return chooseMove(fen, level, { timeBudgetMs: FALLBACK_TIME_BUDGET_MS, positionHistory });
 }
 
 /**
@@ -115,7 +116,7 @@ export async function makeAiMove() {
 
     let move = null;
     try {
-        move = await requestBestMove(fen, level);
+        move = await requestBestMove(fen, level, chess.positionCountEntries());
     } catch (err) {
         console.error('Errore nella ricerca della mossa:', err);
     } finally {

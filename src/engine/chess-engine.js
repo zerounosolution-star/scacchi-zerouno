@@ -80,6 +80,35 @@ export class ZeroUnoChessEngine {
         this.positionCounts.set(key, (this.positionCounts.get(key) || 0) + 1);
     }
 
+    /**
+     * Il conteggio delle posizioni, in forma trasferibile.
+     * Serve a passare la storia della partita alla ricerca dell'AI,
+     * anche dentro un Web Worker.
+     *
+     * @returns {Array<[string, number]>}
+     */
+    positionCountEntries() {
+        return Array.from(this.positionCounts.entries());
+    }
+
+    /**
+     * Riporta nel motore un conteggio di posizioni arrivato da fuori,
+     * sommandolo a quello corrente.
+     *
+     * Senza questo, l'AI che analizza una posizione caricata da FEN non
+     * sa quali posizioni sono gia' comparse e ripete le mosse anche
+     * quando sta vincendo.
+     *
+     * @param {Array<[string, number]>} entries
+     */
+    seedPositionCounts(entries) {
+        if (!Array.isArray(entries)) return;
+        for (const [key, count] of entries) {
+            if (typeof key !== 'string' || !Number.isFinite(count)) continue;
+            this.positionCounts.set(key, Math.max(this.positionCounts.get(key) || 0, count));
+        }
+    }
+
     /** Toglie la posizione corrente dal conteggio (serve a undo()). */
     forgetPosition() {
         const key = this.positionKey();
