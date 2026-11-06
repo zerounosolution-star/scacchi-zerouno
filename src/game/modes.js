@@ -10,7 +10,7 @@ import { chess, state } from '../core/state.js';
 import { showToast, getPlayerNickname } from '../core/utils.js';
 import { renderBoard } from '../ui/board.js';
 import { makeAiMove } from '../engine/ai.js';
-import { updatePlayerCardsUI, startMatchTimers } from '../ui/panels.js';
+import { updatePlayerCardsUI, startMatchTimers, renderTimersUI } from '../ui/panels.js';
 import { cleanupActiveOnlineMatch } from '../online/firestore.js';
 import { readSavedMatch, replayMoves, clearSavedMatch } from '../core/persistence.js';
 
@@ -153,6 +153,7 @@ export function resumeSavedMatch() {
     // Gli orologi ripartono dai secondi salvati, non da capo
     if (Number.isFinite(snapshot.whiteTimeSeconds)) state.whiteTimeSeconds = snapshot.whiteTimeSeconds;
     if (Number.isFinite(snapshot.blackTimeSeconds)) state.blackTimeSeconds = snapshot.blackTimeSeconds;
+    renderTimersUI();
 
     renderBoard();
     showToast('Partita ripresa da dove l\'avevi lasciata', 'gold');

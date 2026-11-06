@@ -6,6 +6,7 @@
  */
 
 import { PIECE_SVGS } from '../data/pieces.js';
+import { PLAYER_CLOCK_SECONDS } from '../config/app.config.js';
 import { chess, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { triggerEndOfGame } from './gameover.js';
@@ -183,8 +184,8 @@ export function formatSeconds(sec) {
 
 export function startMatchTimers() {
     if (state.timerInterval) clearInterval(state.timerInterval);
-    state.whiteTimeSeconds = 600;
-    state.blackTimeSeconds = 600;
+    state.whiteTimeSeconds = PLAYER_CLOCK_SECONDS;
+    state.blackTimeSeconds = PLAYER_CLOCK_SECONDS;
     renderTimersUI();
 
     state.timerInterval = setInterval(() => {
