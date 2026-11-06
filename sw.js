@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -44,9 +44,12 @@ const APP_SHELL = [
     './src/engine/search.js',
     './src/engine/ai.js',
     './src/engine/ai.worker.js',
+    './src/engine/notation.js',
     './src/ui/board.js',
     './src/ui/input.js',
     './src/ui/keyboard.js',
+    './src/ui/moveinput.js',
+    './src/ui/review.js',
     './src/ui/panels.js',
     './src/ui/gameover.js',
     './src/game/modes.js',

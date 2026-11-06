@@ -13,8 +13,12 @@ Documento di riferimento per chi mette le mani nel codice.
    quindi una variabile che cambia va letta e scritta come `state.campo`.
 4. **Il motore non conosce il DOM.** E' codice puro, si prova con `npm test`
    senza aprire un browser.
-5. **Niente numeri scritti a mano nel codice.** Durata degli orologi, limiti
+5. **Niente numeri scritti a mano nel codice.** Tempi di gioco, limiti
    della lobby e configurazione stanno in `src/config/app.config.js`.
+6. **Il JavaScript non scrive stringhe di classi.** Dichiara lo stato con un
+   attributo (`data-state`, `data-color`, `aria-pressed`) e il disegno lo
+   decide il foglio di stile. Un modulo che cambia non puo' rompere
+   l'aspetto senza che si veda nel CSS.
 
 ## Flusso di una mossa
 
@@ -61,12 +65,14 @@ data/*.js                   non dipendono da nessuno
 engine/chess-engine.js      non dipende da nessuno   ← puro, testabile
         ▲
 engine/search.js ───────────┤ (puro: gira anche nel worker)
+engine/notation.js ─────────┤ (puro: legge la mossa scritta)
         ▲
 core/state.js ──────────────┘ (crea l'istanza del motore)
         ▲
         ├── core/sound.js, core/utils.js
         ├── engine/ai.js
         ├── ui/board.js, ui/input.js, ui/panels.js, ui/gameover.js
+        ├── ui/review.js, ui/moveinput.js, ui/keyboard.js
         ├── game/modes.js
         └── online/firestore.js
                 ▲
@@ -79,6 +85,64 @@ I moduli ES reggono questi cicli perche' si tratta di dichiarazioni di
 funzione, risolte al momento della chiamata e non durante il caricamento.
 Se in futuro si aggiungono costanti condivise fra due moduli in ciclo,
 spostarle in `config/app.config.js` o in `core/state.js`.
+
+## Come cerca l'AI
+
+```
+chooseMove(fen, livello)
+   │  carica la FEN, semina le posizioni gia' viste nella partita
+   │
+   ├─ profondita' 1, 2, 3 ...        approfondimento progressivo
+   │     │                            si ferma quando il tempo finisce
+   │     │                            e tiene l'ultimo giro completo
+   │     ▼
+   │  per ogni mossa alla radice: finestra piena (-inf, +inf)
+   │     │
+   │     ▼
+   │  minimax con alfa-beta
+   │     ├─ patte per regola            prima di tutto, costano poco
+   │     ├─ tavola di trasposizione     posizione gia' vista?
+   │     ├─ profondita' 0 → quiescenza  prosegue solo sulle catture
+   │     ├─ ordinamento delle mosse     mossa della tavola, poi MVV-LVA
+   │     └─ salva il risultato in tavola
+   ▼
+mossa, punteggio, profondita' raggiunta, nodi visitati
+```
+
+**Perche' alla radice la finestra e' piena.** Con alfa e beta ristretti un
+ramo potato restituisce un limite, non il punteggio vero. Alla radice quel
+limite verrebbe scambiato per il punteggio della mossa, e si finirebbe per
+giocare una mossa qualunque con il punteggio del matto trovato da un'altra.
+E' un errore che e' gia' successo in questo progetto.
+
+**Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
+volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
+volte: alla regola della ripetizione e alla tavola di trasposizione. I
+numeri casuali nascono da un seme fisso, quindi due motori - anche in thread
+diversi - danno la stessa impronta alla stessa posizione.
+
+**Tavola di trasposizione.** Di ogni posizione si tiene profondita',
+punteggio, genere del punteggio (esatto o limite) e mossa migliore. Tre
+regole la tengono onesta:
+
+- i punteggi di matto si salvano contati dal nodo, non dalla radice: la
+  stessa posizione raggiunta a profondita' diverse ha distanze diverse;
+- un punteggio che e' solo un limite si riusa solo quando taglia davvero
+  contro la finestra corrente;
+- un giro interrotto dal tempo non si salva.
+
+Le patte si controllano prima della tavola, perche' la ripetizione dipende
+dalla partita giocata e non dalla sola posizione.
+
+**Mossa veloce.** Dentro la ricerca `move()` riceve `{ fast: true }` e salta
+controllo di legalita', notazione algebrica e simbolo di scacco: la mossa e'
+gia' uscita da `moves()` su quella posizione e la notazione non la legge
+nessuno. Fuori dalla ricerca il controllo resta.
+
+**Valutazione.** Materiale, tabelle posizionali, e poi quello che un
+giocatore di club guarda per primo: pedoni doppiati, isolati e passati,
+torri su colonna aperta o semiaperta, coppia degli alfieri, riparo di pedoni
+davanti al re (solo a medio gioco: nel finale il re deve uscire).
 
 ## Modello dei dati online
 
@@ -104,7 +168,7 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 
 | Serve | File |
 |---|---|
-| Cambiare la durata degli orologi | `src/config/app.config.js` |
+| Aggiungere o cambiare un tempo di gioco | `src/config/app.config.js` (`TIME_CONTROLS`) |
 | Attivare il multiplayer | `src/config/app.config.js` (`FIREBASE_CONFIG`) |
 | Rendere l'AI piu' forte | `src/engine/search.js` (tabella `LEVELS`, valutazione) |
 | Cambiare i tempi di riflessione | `src/engine/search.js`, campo `timeBudgetMs` |
@@ -115,29 +179,34 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
 | Cambiare i permessi del database | `firebase/firestore.rules` |
+| Cambiare la notazione accettata quando si scrive | `src/engine/notation.js` |
+| Cambiare quanto pesa un termine della valutazione | `src/engine/search.js`, costanti in cima |
+| Aggiungere un modulo | `src/...` **e** la lista `APP_SHELL` in `sw.js` |
 
 ## Limiti noti
 
-- Non c'e' incremento di tempo (modalita' Fischer): solo orologi a scalare.
-- La ricerca non ha tavola di trasposizione: le posizioni raggiunte per
-  strade diverse si ricalcolano da capo. E' il prossimo guadagno grosso
-  sulla forza di gioco.
-- La valutazione pesa materiale e posizione dei pezzi, ma non struttura
-  pedonale, sicurezza del re o colonne aperte.
 - `sw.js` non ha versionamento automatico: dopo una modifica ai file va
-  alzato `CACHE_VERSION` a mano.
+  alzato `CACHE_VERSION` a mano. Che tutti i moduli siano nella lista lo
+  controlla un test, la versione no.
+- La ricerca promuove sempre a donna: il generatore produce una sola mossa
+  di promozione. Chi gioca puo' scegliere, l'AI no. La sottopromozione
+  decide poche partite, ma qualcuna la decide.
+- La tavola di trasposizione vive per una sola mossa e si svuota a ogni
+  ricerca. Tenerla fra una mossa e l'altra darebbe ancora qualcosa, ma
+  servirebbe gestire l'invecchiamento delle posizioni.
+- La valutazione non conosce la mobilita' dei pezzi, le catene di pedoni,
+  i pezzi inchiodati e le torri sulla settima traversa.
 - L'abbandono di una partita online non viene notificato all'avversario in
   tempo reale se chi abbandona chiude il browser di colpo.
-- Il JavaScript assegna stringhe complete di classi Tailwind
-  (`panels.js`, `gameover.js`, `main.js`, `firestore.js`). Il CSS deve
-  rincorrerle rimappando i colori sulla superficie scura. Passando a un
-  attributo di stato (`dataset.state = 'check' | 'over'`) il disegno
-  tornerebbe tutto nel foglio di stile.
-- La notazione non e' navigabile: non evidenzia l'ultima mossa e le righe
-  non sono cliccabili per rivedere la posizione.
-- Il gioco da tastiera non ha una scorciatoia per inserire la mossa in
-  notazione algebrica: si naviga casella per casella.
-- La ripetizione confronta la FEN senza contatori. E' il criterio usato da
-  tutti i motori, ma considera diverse due posizioni identiche in cui la
-  presa en passant e' segnata in una sola: capita di rado e sbaglia
-  dichiarando patta un po' piu' tardi, mai prima.
+- La revisione di una mossa passata non si apre nelle partite online:
+  cominciano da una posizione caricata e rigiocare la storia darebbe
+  un'altra scacchiera. Il modulo se ne accorge e si rifiuta di aprirsi.
+- La mossa scritta accetta solo le lettere inglesi dei pezzi (K Q R B N).
+  In italiano la R vorrebbe dire re mentre qui vuol dire torre: accettare
+  tutte e due le notazioni renderebbe ambigue le mosse. Per farlo
+  servirebbe scegliere la lingua della notazione, non indovinarla.
+- L'impronta della ripetizione comprende pezzi, turno, diritti di arrocco e
+  casa di presa en passant, come fanno tutti i motori. Considera quindi
+  diverse due posizioni identiche in cui la presa en passant e' segnata in
+  una sola: capita di rado e sbaglia dichiarando patta un po' piu' tardi,
+  mai prima.

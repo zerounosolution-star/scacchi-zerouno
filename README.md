@@ -32,15 +32,22 @@ npx serve .
 npm test
 ```
 
-31 prove che girano fuori dal browser, senza dipendenze.
+53 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
-pezzi inchiodati, annullamento della mossa, lettura e scrittura FEN.
+pezzi inchiodati, annullamento della mossa, lettura e scrittura FEN,
+notazione non ambigua quando due pezzi arrivano sulla stessa casa.
 
 Il gioco dell'AI: trova il matto in una mossa, prende i pezzi lasciati in
-presa, non regala la propria donna, non fa scambi in perdita e rispetta il
-tetto di tempo.
+presa, non regala la propria donna, non fa scambi in perdita, rispetta il
+tetto di tempo, e la tavola di trasposizione non cambia i punteggi.
+
+La mossa scritta: notazione algebrica, due case, arrocco, promozione,
+mosse ambigue e scritture che non sono mosse.
+
+Il service worker: ogni modulo del progetto e' in cache (il guasto da
+evitare e' aggiungere un file e accorgersene solo senza rete).
 
 ---
 
@@ -75,12 +82,15 @@ tetto di tempo.
 │   ├── engine/
 │   │   ├── chess-engine.js     Motore scacchistico, regole FIDE complete
 │   │   ├── search.js           Ricerca della mossa (puro, testabile)
+│   │   ├── notation.js         Legge la mossa scritta (puro, testabile)
 │   │   ├── ai.worker.js        La ricerca in un thread separato
 │   │   └── ai.js               Ponte fra partita e ricerca
 │   ├── ui/
 │   │   ├── board.js            Costruzione e disegno della scacchiera
 │   │   ├── input.js            Click, trascinamento, tocco, promozione
 │   │   ├── keyboard.js         Gioco da tastiera e lettori di schermo
+│   │   ├── moveinput.js        Campo della mossa scritta
+│   │   ├── review.js           Rivedere una mossa passata
 │   │   ├── panels.js           Turno, notazione, catture, orologi
 │   │   └── gameover.js         Fine partita e video del canale
 │   ├── game/modes.js           Avvio delle modalita' di gioco
@@ -88,11 +98,18 @@ tetto di tempo.
 └── tests/
     ├── engine.test.mjs         Test delle regole
     ├── search.test.mjs         Test del gioco dell'AI
-    └── persistence.test.mjs    Test della partita salvata
+    ├── notation.test.mjs       Test della mossa scritta
+    ├── persistence.test.mjs    Test della partita salvata
+    └── serviceworker.test.mjs  Test della lista dei file in cache
 ```
 
 Regola del progetto: `index.html` contiene **solo** markup. Ogni stile sta nel
 CSS, ogni comportamento in un modulo sotto `src/`.
+
+Il JavaScript non scrive stringhe di classi: dichiara lo stato con un
+attributo (`data-state`, `data-color`, `aria-pressed`) e il disegno lo decide
+il foglio di stile. Cosi' chi cambia un modulo non rompe l'aspetto senza
+accorgersene.
 
 Lo stato che cambia vive in un unico oggetto (`src/core/state.js`) e si usa
 sempre nella forma `state.campo`: i moduli ES esportano riferimenti in sola
@@ -114,6 +131,54 @@ Gli sfidanti internazionali (Lukas Meyer, Sofia Rojas, Kenji Takahashi,
 Claire Dubois) **non sono persone reali**: sono l'AI locale con un nome e un
 punteggio. Nell'elenco sono contrassegnati "AI". Il contatore della lobby
 conta solo le persone vere in attesa.
+
+---
+
+## Tre modi di muovere
+
+| Come | Che cosa si fa |
+|---|---|
+| Mouse | Si clicca il pezzo e poi la casa, oppure si trascina |
+| Tastiera | Frecce per spostarsi, Invio per prendere e posare, Esc per annullare |
+| Scrivendo | Si scrive la mossa nel campo sotto la scacchiera e si preme Invio |
+
+La mossa scritta accetta la notazione algebrica (`e4`, `Nf6`, `O-O`, `e8=Q`,
+con o senza `+` e `#`), gli zeri al posto delle O nell'arrocco, le due case
+(`e2e4`, `e2-e4`, `e7e8n`) e tutto minuscolo.
+
+Le lettere dei pezzi sono quelle inglesi (K Q R B N), le stesse che il
+taccuino scrive. In italiano la R vorrebbe dire re mentre qui vuol dire
+torre: accettare tutte e due le notazioni renderebbe ambigue le mosse.
+
+---
+
+## Rivedere una mossa
+
+Ogni mossa nel taccuino e' un bottone. Cliccandola, la scacchiera torna a
+com'era in quel momento; l'ultima mossa giocata resta evidenziata, cosi' si
+vede sempre dove si trova la partita.
+
+La partita vera non si tocca: la posizione rivista vive in un secondo
+motore. Mentre si rivede non si puo' muovere, ma gli orologi continuano a
+scorrere e l'AI puo' rispondere. Si torna alla partita con Esc, con "Torna
+alla partita" o cliccando l'ultima mossa.
+
+Nelle partite online la revisione non si apre: quelle partite cominciano da
+una posizione caricata e rigiocare la storia darebbe un'altra scacchiera.
+
+---
+
+## Tempo di gioco
+
+Quattro tempi: 10 minuti senza incremento, 10+5, 5+3, 3+2. Il secondo numero
+e' l'incremento Fischer: chi muove si riprende quei secondi. Serve a non
+perdere una partita vinta proprio nel finale, dove le mosse sono tante e
+quasi obbligate.
+
+L'elenco sta in `TIME_CONTROLS`, dentro
+[`src/config/app.config.js`](src/config/app.config.js): aggiungere un tempo
+vuol dire aggiungere una riga. Il tempo scelto fa parte della partita
+salvata.
 
 ---
 
@@ -158,8 +223,19 @@ sulle catture e approfondimento progressivo con tetto di tempo.
 
 La profondita' effettiva dipende da quanto riesce a scendere nel tempo
 concesso: la ricerca tiene sempre la mossa migliore dell'ultimo livello
-completato. Su un portatile normale esamina circa 60.000 posizioni al
-secondo, e in mediogioco arriva a profondita' 3 o 4.
+completato. Su un portatile normale esamina circa 111.000 posizioni al
+secondo, e in mediogioco arriva a profondita' 4 o 5.
+
+La stessa posizione raggiunta per ordini di mosse diversi non si ricalcola:
+una tavola di trasposizione tiene da parte quello che ha gia' trovato, e la
+mossa che era risultata migliore si riprova per prima. Alla valutazione, che
+contava materiale e posizione dei pezzi, si sono aggiunti pedoni doppiati,
+isolati e passati, torri su colonna aperta, coppia degli alfieri e riparo di
+pedoni davanti al re.
+
+In un torneo di 20 partite con lo stesso tempo per mossa, questa versione ha
+fatto 16 punti su 20 (15 vittorie, 3 sconfitte, 2 patte) contro quella di
+prima.
 
 La partita in corso viene passata alla ricerca, non solo la posizione:
 cosi' l'AI sa quali posizioni sono gia' comparse e non chiude patta per
