@@ -109,6 +109,7 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 | Rendere l'AI piu' forte | `src/engine/search.js` (tabella `LEVELS`, valutazione) |
 | Cambiare i tempi di riflessione | `src/engine/search.js`, campo `timeBudgetMs` |
 | Aggiungere un tema di scacchiera | `src/css/styles.css` + `index.html` (menu a tendina) |
+| Cambiare i tasti di gioco | `src/ui/keyboard.js` |
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
 | Cambiare i permessi del database | `firebase/firestore.rules` |
@@ -125,6 +126,8 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
   alzato `CACHE_VERSION` a mano.
 - L'abbandono di una partita online non viene notificato all'avversario in
   tempo reale se chi abbandona chiude il browser di colpo.
+- Il gioco da tastiera non ha una scorciatoia per inserire la mossa in
+  notazione algebrica: si naviga casella per casella.
 - La ripetizione confronta la FEN senza contatori. E' il criterio usato da
   tutti i motori, ma considera diverse due posizioni identiche in cui la
   presa en passant e' segnata in una sola: capita di rado e sbaglia

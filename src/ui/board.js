@@ -10,6 +10,7 @@ import { PIECE_SVGS } from '../data/pieces.js';
 import { chess, squareElementsMap, dragState, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { setupDesktopMouseAndTouchHandlers } from './input.js';
+import { setupKeyboardPlay } from './keyboard.js';
 import { updateStatusAndHistoryUI, updateCapturedMaterialUI } from './panels.js';
 
 export function initPersistentBoardDOM() {
@@ -24,6 +25,12 @@ export function initPersistentBoardDOM() {
             sqDiv.dataset.vrow = visualRow;
             sqDiv.dataset.vcol = visualCol;
 
+            // Accessibilita': ogni casella e' una cella raggiungibile da
+            // tastiera e annunciata dai lettori di schermo. Una sola
+            // casella per volta entra nel giro di Tab (roving tabindex).
+            sqDiv.setAttribute('role', 'gridcell');
+            sqDiv.tabIndex = -1;
+
             sqDiv.innerHTML = `
                 <span class="coord-rank"></span>
                 <span class="coord-file"></span>
@@ -37,7 +44,32 @@ export function initPersistentBoardDOM() {
         }
     }
 
+    boardEl.setAttribute('role', 'grid');
+    boardEl.setAttribute('aria-label', 'Scacchiera. Usa le frecce per spostarti, Invio per selezionare e muovere.');
+
     setupDesktopMouseAndTouchHandlers();
+    setupKeyboardPlay();
+}
+
+/** Nomi dei pezzi per i lettori di schermo. */
+const PIECE_NAMES = { p: 'pedone', n: 'cavallo', b: 'alfiere', r: 'torre', q: 'donna', k: 're' };
+
+/**
+ * Descrizione parlata di una casella, per esempio
+ * "e4, pedone bianco" oppure "d5, vuota, mossa possibile".
+ */
+function describeSquare(squareName, piece, isLegalTarget) {
+    const parts = [squareName.toUpperCase()];
+
+    if (piece) {
+        parts.push(`${PIECE_NAMES[piece.type]} ${piece.color === 'w' ? 'bianco' : 'nero'}`);
+    } else {
+        parts.push('vuota');
+    }
+
+    if (isLegalTarget) parts.push(piece ? 'cattura possibile' : 'mossa possibile');
+
+    return parts.join(', ');
 }
 
 /* Calcola la casella (es. 'e4') direttamente dalle coordinate geometriche (clientX, clientY) */
@@ -126,7 +158,13 @@ export function renderBoard() {
                 }
             }
 
+            // Il fuoco della tastiera non si perde quando la scacchiera si ridisegna
+            if (sqDiv.classList.contains('keyboard-focus')) classList.push('keyboard-focus');
+
             sqDiv.className = classList.join(' ');
+
+            sqDiv.setAttribute('aria-label', describeSquare(squareName, piece, Boolean(legalMove)));
+            sqDiv.setAttribute('aria-selected', state.selectedSquare === squareName ? 'true' : 'false');
 
             // Aggiorna coordinate solo sui bordi
             const rankSpan = sqDiv.querySelector('.coord-rank');

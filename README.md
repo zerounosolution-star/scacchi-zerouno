@@ -79,6 +79,7 @@ tetto di tempo.
 │   ├── ui/
 │   │   ├── board.js            Costruzione e disegno della scacchiera
 │   │   ├── input.js            Click, trascinamento, tocco, promozione
+│   │   ├── keyboard.js         Gioco da tastiera e lettori di schermo
 │   │   ├── panels.js           Turno, notazione, catture, orologi
 │   │   └── gameover.js         Fine partita e video del canale
 │   ├── game/modes.js           Avvio delle modalita' di gioco
@@ -111,6 +112,21 @@ Gli sfidanti internazionali (Lukas Meyer, Sofia Rojas, Kenji Takahashi,
 Claire Dubois) **non sono persone reali**: sono l'AI locale con un nome e un
 punteggio. Nell'elenco sono contrassegnati "AI". Il contatore della lobby
 conta solo le persone vere in attesa.
+
+---
+
+## Si gioca anche senza mouse
+
+| Tasto | Cosa fa |
+|---|---|
+| Tab | Porta il fuoco sulla scacchiera |
+| Frecce | Spostano la casella attiva |
+| Invio o Spazio | Selezionano un pezzo, poi muovono |
+| Esc | Annulla la selezione |
+| Home / Fine | Prima e ultima colonna della traversa |
+
+Ogni casella si annuncia ai lettori di schermo con il proprio nome e il
+pezzo che ci sta sopra ("E4, pedone bianco", "D5, vuota, mossa possibile").
 
 ---
 

@@ -45,6 +45,7 @@ const APP_SHELL = [
     './src/engine/ai.worker.js',
     './src/ui/board.js',
     './src/ui/input.js',
+    './src/ui/keyboard.js',
     './src/ui/panels.js',
     './src/ui/gameover.js',
     './src/game/modes.js',
