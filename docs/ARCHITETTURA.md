@@ -141,9 +141,49 @@ gia' uscita da `moves()` su quella posizione e la notazione non la legge
 nessuno. Fuori dalla ricerca il controllo resta.
 
 **Valutazione.** Materiale, tabelle posizionali, e poi quello che un
-giocatore di club guarda per primo: pedoni doppiati, isolati e passati,
-torri su colonna aperta o semiaperta, coppia degli alfieri, riparo di pedoni
-davanti al re (solo a medio gioco: nel finale il re deve uscire).
+giocatore di club guarda per primo: pedoni doppiati, isolati, collegati e
+passati, torri su colonna aperta o semiaperta, coppia degli alfieri, riparo
+di pedoni davanti al re.
+
+**Fase della partita.** Il re sta al riparo a medio gioco e al centro nel
+finale: due tabelle opposte. Scegliere di colpo l'una o l'altra mette un
+gradino nella valutazione, e una cattura sola puo' far saltare il punteggio
+del re di quasi un pedone senza che per il re sia cambiato niente. Fra
+`PHASE_MIDDLEGAME` (3200 di materiale pesante, cioe' tutto in gioco) e
+`PHASE_ENDGAME` (1300) le due tabelle si mescolano in proporzione, e il
+riparo dei pedoni si spegne per gradi insieme a loro.
+
+**Spinta al matto.** Con un re nudo davanti, materiale e tabelle dicono che
+si sta vincendo, non come si vince. Senza una direzione il motore vaga,
+arriva alla regola delle 50 mosse, e li' ogni mossa vale zero: buttare la
+torre vale quanto tenerla, e capita. Due termini danno alla ricerca una
+direzione anche quando il matto e' fuori dal suo orizzonte: il re perdente
+lontano dal centro, il re vincente addosso. Valgono solo dove sono veri,
+cioe' quando una parte e' avanti di almeno una torre e l'altra non ha
+pedoni: con i pedoni in gioco spingere il re al bordo e' un consiglio
+sbagliato, e in posizione pari i due termini non entrano nemmeno nel conto.
+
+Misurato sui matti elementari (donna, torre, due alfieri e due torri contro
+re nudo, quattro posizioni per famiglia, tre giri per parte): da 10-11 matti
+su 16 a 12 su 16, e la conversione scende da 35 a 27 mezze mosse. In partita
+vera, 400 partite contro la versione precedente, il 52,8% con un intervallo
+al 95% da -11 a +49 punti Elo: tutti e quattro i blocchi da 100 sopra il
+pari, ma il pari resta dentro l'intervallo. Un guadagno probabile intorno ai
+20 punti Elo, non dimostrato; per dimostrarlo servirebbero circa 1100
+partite. Le partite chiuse per limite di mosse restano 41 su 400, le stesse
+di prima: la spinta al matto risolve il re nudo, non i finali con i pezzi.
+
+Una variante provata e scartata: portare il re perdente verso l'angolo
+invece che verso il bordo, sommando le due distanze dal centro invece di
+prendere la maggiore. Con i due alfieri il matto si da' solo in un angolo,
+quindi sembra la cosa giusta, ma misurata va peggio (12 matti su 16 contro
+13, conversione piu' lenta). Il motivo plausibile e' che la strada verso
+l'angolo e' piu' lunga e con la donna fa sfiorare lo stallo. Resta scritto
+nel codice: chi ci riprova lo misuri su tutte le famiglie, non solo sugli
+alfieri.
+
+Il matto con i due alfieri resta non risolto, 1 su 4: vuole una tecnica che
+un orizzonte di tre mezze mosse non vede.
 
 **Ordine di prova delle mosse.** La potatura alfa-beta rende quanto prima
 si prova la mossa giusta. Le fasce stanno lontane fra loro, cosi' nessun

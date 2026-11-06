@@ -228,9 +228,40 @@ const ROOK_OPEN_FILE = 18;     // colonna senza pedoni
 const ROOK_SEMI_OPEN_FILE = 9; // colonna senza pedoni propri
 const BISHOP_PAIR = 32;        // i due alfieri che si coprono i colori
 const KING_SHIELD_MISSING = -14; // colonna sguarnita davanti al re
+const CONNECTED_PAWN = 7;      // pedone amico di fianco o a sostegno in diagonale
 
 /** Pedone passato: vale secondo quanto e' avanzato (0 = casa di partenza). */
 const PASSED_PAWN = [0, 12, 22, 40, 70, 110];
+
+/*
+ * FASE DELLA PARTITA
+ *
+ * Il re sta al riparo a medio gioco e al centro nel finale: due tabelle
+ * opposte. Scegliere di colpo l'una o l'altra mette un gradino nella
+ * valutazione, e una cattura sola puo' far saltare il punteggio del re
+ * di quasi un pedone senza che sulla scacchiera sia cambiato niente per
+ * il re. Fra le due tabelle si passa invece per gradi, in proporzione al
+ * materiale pesante ancora in gioco.
+ */
+const PHASE_MIDDLEGAME = 3200; // materiale pesante delle due parti: medio gioco pieno
+const PHASE_ENDGAME = 1300;    // sotto questa soglia il finale e' pieno
+
+/*
+ * SPINTA AL MATTO
+ *
+ * Con un re nudo davanti, materiale e tabelle non bastano: dicono che si
+ * sta vincendo, non come si vince. Il motore vaga, arriva alla regola
+ * delle 50 mosse e lì ogni mossa vale zero, compreso buttare la torre.
+ *
+ * Questi due termini danno alla ricerca una direzione da seguire anche
+ * quando il matto e' fuori dal suo orizzonte: il re perdente verso il
+ * bordo, il re vincente addosso. Valgono solo dove sono veri, cioe'
+ * quando una parte e' avanti di almeno una torre e l'altra non ha
+ * pedoni: con i pedoni in gioco spingere il re al bordo e' un consiglio
+ * sbagliato.
+ */
+const MATE_DRIVE_EDGE = 12;  // per ogni passo del re perdente lontano dal centro
+const MATE_DRIVE_CLOSE = 5;  // per ogni passo guadagnato dal re vincente
 
 /*
  * Spazio di lavoro riusato a ogni valutazione.
@@ -294,6 +325,47 @@ function isPassedPawn(color, r, c) {
 }
 
 /**
+ * Un pedone e' collegato quando ha un pedone amico di fianco o a
+ * sostegno in diagonale dietro.
+ *
+ * Due pedoni collegati si difendono fra loro e avanzano insieme; un
+ * pedone solo va difeso con i pezzi. E' il rovescio del pedone isolato,
+ * che la valutazione punisce gia': qui si premia la catena.
+ */
+function isConnectedPawn(board, color, r, c) {
+    const behind = color === 'w' ? r + 1 : r - 1;
+
+    for (const f of [c - 1, c + 1]) {
+        if (f < 0 || f > 7) continue;
+
+        const side = board[r][f];
+        if (side && side.type === 'p' && side.color === color) return true;
+
+        if (behind >= 0 && behind <= 7) {
+            const support = board[behind][f];
+            if (support && support.type === 'p' && support.color === color) return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Quanto il re perdente e' lontano dal centro: 1 al centro, 7 sul bordo.
+ * Sul bordo ha meno case per scappare, e lungo il bordo si da' matto.
+ *
+ * Si prende la maggiore delle due distanze, non la somma. La somma
+ * distinguerebbe l'angolo dal bordo, e con i due alfieri il matto si da'
+ * solo in un angolo: sembra la cosa giusta, ma misurata va peggio.
+ * Portare il re verso l'angolo allunga la strada e con la donna fa
+ * sfiorare lo stallo. Chi ci riprova lo misuri su tutte le famiglie di
+ * matto, non solo sugli alfieri.
+ */
+function distanceFromCentre(r, c) {
+    return Math.max(Math.abs(2 * r - 7), Math.abs(2 * c - 7));
+}
+
+/**
  * Riparo del re: quante delle tre colonne intorno al re hanno ancora un
  * pedone amico subito davanti. Conta solo a medio gioco: nel finale il
  * re deve uscire, non nascondersi.
@@ -338,15 +410,45 @@ export function evaluatePosition(game, ply = 0) {
      */
     const board = game.board();
 
-    // Finale: pochi pezzi pesanti in giro, il re va al centro.
+    /*
+     * Un giro solo per tutto quello che serve prima di valutare i pezzi
+     * uno per uno: la fase della partita, chi e' avanti, chi ha pedoni e
+     * dove stanno i due re.
+     */
     let heavyMaterial = 0;
+    let whiteMaterial = 0;
+    let blackMaterial = 0;
+    let whitePawns = 0;
+    let blackPawns = 0;
+    let whiteKing = null;
+    let blackKing = null;
+
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const p = board[r][c];
-            if (p && p.type !== 'k' && p.type !== 'p') heavyMaterial += PIECE_VALUES[p.type];
+            if (!p) continue;
+
+            if (p.type === 'k') {
+                if (p.color === 'w') whiteKing = { r, c };
+                else blackKing = { r, c };
+                continue;
+            }
+
+            if (p.type === 'p') {
+                if (p.color === 'w') whitePawns++;
+                else blackPawns++;
+            } else {
+                heavyMaterial += PIECE_VALUES[p.type];
+            }
+
+            if (p.color === 'w') whiteMaterial += PIECE_VALUES[p.type];
+            else blackMaterial += PIECE_VALUES[p.type];
         }
     }
-    const isEndgame = heavyMaterial <= 1300;
+
+    // 1 = medio gioco pieno, 0 = finale pieno, in mezzo si passa per gradi
+    const phase = Math.max(0, Math.min(1,
+        (heavyMaterial - PHASE_ENDGAME) / (PHASE_MIDDLEGAME - PHASE_ENDGAME)));
 
     scanPawns(board);
 
@@ -360,13 +462,20 @@ export function evaluatePosition(game, ply = 0) {
             if (!piece) continue;
 
             const isWhite = piece.color === 'w';
-            const table = piece.type === 'k'
-                ? (isEndgame ? PST.kEnd : PST.kMiddle)
-                : PST[piece.type];
 
-            // Il Nero legge la stessa tabella specchiata in verticale
+            // Il Nero legge le stesse tabelle specchiate in verticale
             const row = isWhite ? r : 7 - r;
-            let value = PIECE_VALUES[piece.type] + table[row][c];
+
+            let positional;
+            if (piece.type === 'k') {
+                // Fra riparo e centro si passa per gradi, non di colpo
+                positional = Math.round(
+                    PST.kMiddle[row][c] * phase + PST.kEnd[row][c] * (1 - phase));
+            } else {
+                positional = PST[piece.type][row][c];
+            }
+
+            let value = PIECE_VALUES[piece.type] + positional;
 
             if (piece.type === 'p') {
                 const own = isWhite ? pawnCount.w : pawnCount.b;
@@ -376,6 +485,7 @@ export function evaluatePosition(game, ply = 0) {
                 const left = c > 0 ? own[c - 1] : 0;
                 const right = c < 7 ? own[c + 1] : 0;
                 if (left === 0 && right === 0) value += ISOLATED_PAWN;
+                else if (isConnectedPawn(board, piece.color, r, c)) value += CONNECTED_PAWN;
 
                 if (isPassedPawn(piece.color, r, c)) {
                     // Quante traverse ha gia' percorso, dalla sua casa di partenza
@@ -391,8 +501,9 @@ export function evaluatePosition(game, ply = 0) {
             } else if (piece.type === 'b') {
                 if (isWhite) whiteBishops++;
                 else blackBishops++;
-            } else if (piece.type === 'k' && !isEndgame) {
-                value += kingShieldPenalty(board, piece.color, r, c);
+            } else if (piece.type === 'k' && phase > 0) {
+                // Il riparo conta quanto la partita e' ancora di medio gioco
+                value += Math.round(kingShieldPenalty(board, piece.color, r, c) * phase);
             }
 
             score += isWhite ? value : -value;
@@ -401,6 +512,29 @@ export function evaluatePosition(game, ply = 0) {
 
     if (whiteBishops >= 2) score += BISHOP_PAIR;
     if (blackBishops >= 2) score -= BISHOP_PAIR;
+
+    /*
+     * Spinta al matto: vale solo quando una parte e' avanti di almeno una
+     * torre e la parte debole non ha pedoni. Sono le posizioni dove il
+     * materiale ha gia' deciso la partita e manca solo la tecnica.
+     */
+    const edge = whiteMaterial - blackMaterial;
+    if (whiteKing && blackKing && Math.abs(edge) >= PIECE_VALUES.r) {
+        const strongIsWhite = edge > 0;
+        const weakPawns = strongIsWhite ? blackPawns : whitePawns;
+
+        if (weakPawns === 0) {
+            const strong = strongIsWhite ? whiteKing : blackKing;
+            const weak = strongIsWhite ? blackKing : whiteKing;
+
+            // Distanza fra i re: da 14 (lontanissimi) a 2 (addosso)
+            const between = Math.abs(strong.r - weak.r) + Math.abs(strong.c - weak.c);
+            const drive = distanceFromCentre(weak.r, weak.c) * MATE_DRIVE_EDGE
+                + (14 - between) * MATE_DRIVE_CLOSE;
+
+            score += strongIsWhite ? drive : -drive;
+        }
+    }
 
     return score;
 }

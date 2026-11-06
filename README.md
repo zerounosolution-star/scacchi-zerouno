@@ -238,8 +238,16 @@ invece di pensare come se avesse tutto il tempo del mondo.
 E promuove anche in torre, alfiere o cavallo quando serve: ci sono posizioni
 dove la donna sarebbe stallo, cioe' una partita vinta buttata via. Alla valutazione, che
 contava materiale e posizione dei pezzi, si sono aggiunti pedoni doppiati,
-isolati e passati, torri su colonna aperta, coppia degli alfieri e riparo di
-pedoni davanti al re.
+isolati, collegati e passati, torri su colonna aperta, coppia degli alfieri e
+riparo di pedoni davanti al re.
+
+Fra medio gioco e finale la valutazione passa per gradi, non di colpo: il re
+smette di cercare il riparo e comincia ad andare al centro mentre i pezzi
+pesanti lasciano la scacchiera. E quando l'avversario resta col re nudo,
+l'AI sa come finire: prima vagava fino alla regola delle 50 mosse, e in
+qualche partita arrivava a buttare via la torre perche' ormai ogni mossa
+valeva zero. Ora da' matto in 12 casi su 16 invece di 10, e ci arriva in un
+quarto di mosse in meno.
 
 In un torneo di 20 partite con lo stesso tempo per mossa, questa versione ha
 fatto 16 punti su 20 (15 vittorie, 3 sconfitte, 2 patte) contro quella di
