@@ -17,6 +17,9 @@
  * - tavola di trasposizione: la stessa posizione raggiunta per strade
  *   diverse non si ricalcola, e la mossa che era risultata migliore si
  *   riprova per prima
+ * - mosse killer e tabella della storia: una mossa tranquilla che ha
+ *   gia' fatto saltare altri rami si riprova presto, anche dove non e'
+ *   una cattura
  */
 
 import { ZeroUnoChessEngine } from './chess-engine.js';
@@ -124,6 +127,55 @@ const TT_MAX_ENTRIES = 300000;
 
 /** La ricerca muove sempre mosse gia' verificate: salta i controlli. */
 const FAST_MOVE = { fast: true };
+
+/*
+ * ORDINE DI PROVA DELLE MOSSE
+ *
+ * La potatura alfa-beta rende quanto prima si prova la mossa giusta.
+ * Le fasce sono distanti fra loro perche' il confronto resti leggibile:
+ * nessun punteggio di una fascia puo' scavalcare quella sopra.
+ */
+const ORDER_TT_MOVE = 1000000;     // la mossa che la tavola ricorda
+const ORDER_CAPTURE = 500000;      // catture, poi MVV-LVA fra loro
+const ORDER_PROMOTION = 400000;    // promozioni
+const ORDER_KILLER_FIRST = 300000; // mossa tranquilla che ha gia' tagliato qui
+const ORDER_KILLER_SECOND = 290000;
+const ORDER_HISTORY_MAX = 200000;  // tetto della tabella della storia
+
+/** Quante mosse killer si ricordano per ogni livello di profondita'. */
+const KILLERS_PER_PLY = 2;
+
+/**
+ * Ricorda una mossa tranquilla che ha fatto saltare questo nodo.
+ *
+ * Una mossa che taglia in un ramo taglia spesso anche nei rami vicini,
+ * alla stessa profondita': provarla subito fa risparmiare molto.
+ */
+function rememberKiller(ctx, ply, move) {
+    if (!ctx.killers) return;
+    const slot = ctx.killers[ply] || (ctx.killers[ply] = []);
+    if (slot[0] && slot[0].from === move.from && slot[0].to === move.to) return;
+    slot.unshift({ from: move.from, to: move.to });
+    slot.length = Math.min(slot.length, KILLERS_PER_PLY);
+}
+
+/**
+ * Alza il punteggio di una mossa tranquilla che ha tagliato.
+ *
+ * Il peso cresce con il quadrato della profondita': un taglio trovato a
+ * profondita' alta vale piu' di uno trovato vicino alle foglie.
+ */
+function bumpHistory(ctx, move, depth) {
+    if (!ctx.history) return;
+    const key = move.from + move.to;
+    ctx.history.set(key, (ctx.history.get(key) || 0) + depth * depth);
+}
+
+/** Quanto spesso questa mossa ha gia' tagliato, con un tetto. */
+function historyScore(ctx, move) {
+    if (!ctx.history) return 0;
+    return Math.min(ctx.history.get(move.from + move.to) || 0, ORDER_HISTORY_MAX);
+}
 
 /*
  * I punteggi di matto contengono la distanza dalla radice. La stessa
@@ -374,18 +426,40 @@ function isDrawByRule(game) {
  * MVV-LVA: cattura il pezzo piu' prezioso con il pezzo meno prezioso.
  *
  * @param {Array<object>} moves
+ * @param {{from: string, to: string}|null} ttMove  Mossa ricordata dalla tavola.
+ * @param {object|null} ctx   Serve per killer e storia: senza, si ordina
+ *                            solo per tavola, catture e promozioni.
+ * @param {number} ply        Profondita' del nodo, per le mosse killer.
  * @returns {Array<object>}
  */
-function orderMoves(moves, ttMove = null) {
+function orderMoves(moves, ttMove = null, ctx = null, ply = 0) {
+    const killers = (ctx && ctx.killers && ctx.killers[ply]) || null;
+
     return moves
         .map((m) => {
             let priority = 0;
-            // La mossa che la tavola ricorda come migliore si prova per prima
-            if (ttMove && m.from === ttMove.from && m.to === ttMove.to) priority = 1000000;
-            else if (m.captured) {
-                priority = 10000 + (PIECE_VALUES[m.captured] || 0) - (PIECE_VALUES[m.piece] || 0);
+
+            if (ttMove && m.from === ttMove.from && m.to === ttMove.to) {
+                priority = ORDER_TT_MOVE;
+            } else {
+                if (m.captured) {
+                    priority += ORDER_CAPTURE
+                        + (PIECE_VALUES[m.captured] || 0)
+                        - (PIECE_VALUES[m.piece] || 0);
+                }
+                if (m.flags && m.flags.includes('p')) priority += ORDER_PROMOTION;
+
+                // Mossa tranquilla: valgono i ricordi delle ricerche precedenti
+                if (priority === 0 && killers) {
+                    if (killers[0] && killers[0].from === m.from && killers[0].to === m.to) {
+                        priority = ORDER_KILLER_FIRST;
+                    } else if (killers[1] && killers[1].from === m.from && killers[1].to === m.to) {
+                        priority = ORDER_KILLER_SECOND;
+                    }
+                }
+                if (priority === 0 && ctx) priority = historyScore(ctx, m);
             }
-            if (m.flags && m.flags.includes('p')) priority += 9000;
+
             return { move: m, priority };
         })
         .sort((a, b) => b.priority - a.priority)
@@ -481,7 +555,7 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
         return evaluatePosition(game, ctx.ply);
     }
 
-    const moves = orderMoves(game.moves({ verbose: true }), ttMove);
+    const moves = orderMoves(game.moves({ verbose: true }), ttMove, ctx, ctx.ply);
 
     /*
      * Niente mosse legali: o e' matto, o e' stallo. Si riconosce qui,
@@ -510,7 +584,18 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
             if (value < best) { best = value; bestMoveHere = m; }
             if (value < beta) beta = value;
         }
-        if (beta <= alpha) break;
+        if (beta <= alpha) {
+            /*
+             * Una cattura che taglia si ritrova da sola nell'ordinamento:
+             * si ricordano solo le mosse tranquille, che altrimenti
+             * finirebbero in fondo alla lista.
+             */
+            if (!m.captured) {
+                rememberKiller(ctx, ctx.ply, m);
+                bumpHistory(ctx, m, depth);
+            }
+            break;
+        }
         if (ctx.timedOut) break;
     }
 
@@ -581,10 +666,13 @@ export function chooseMove(fen, level = 2, options = {}) {
     let bestScore = isMaximizing ? -Infinity : Infinity;
 
     /*
-     * La tavola vive per tutta la scelta della mossa: il giro a
-     * profondita' 4 riusa quello che ha imparato il giro a profondita' 3.
+     * Tavola, killer e storia vivono per tutta la scelta della mossa: il
+     * giro a profondita' 4 riusa quello che ha imparato il giro a
+     * profondita' 3.
      */
     const tt = new Map();
+    const killers = [];
+    const history = new Map();
     let reachedDepth = 0;
     let totalNodes = 0;
 
@@ -596,7 +684,9 @@ export function chooseMove(fen, level = 2, options = {}) {
             ply: 0,
             nodes: 0,
             timedOut: false,
-            tt
+            tt,
+            killers,
+            history
         };
 
         let roundBest = null;
