@@ -173,17 +173,42 @@ pari, ma il pari resta dentro l'intervallo. Un guadagno probabile intorno ai
 partite. Le partite chiuse per limite di mosse restano 41 su 400, le stesse
 di prima: la spinta al matto risolve il re nudo, non i finali con i pezzi.
 
-Una variante provata e scartata: portare il re perdente verso l'angolo
-invece che verso il bordo, sommando le due distanze dal centro invece di
-prendere la maggiore. Con i due alfieri il matto si da' solo in un angolo,
-quindi sembra la cosa giusta, ma misurata va peggio (12 matti su 16 contro
-13, conversione piu' lenta). Il motivo plausibile e' che la strada verso
-l'angolo e' piu' lunga e con la donna fa sfiorare lo stallo. Resta scritto
-nel codice: chi ci riprova lo misuri su tutte le famiglie, non solo sugli
-alfieri.
+**Il matto con i due alfieri resta non risolto**, 1 o 2 volte su 4, e qui
+sotto c'e' il resoconto di un tentativo fallito, perche' valga almeno a non
+rifarlo.
 
-Il matto con i due alfieri resta non risolto, 1 su 4: vuole una tecnica che
-un orizzonte di tre mezze mosse non vede.
+Il motore inchioda il re nudo in un angolo, ma gli servono piu' di 45 mosse
+e la regola delle 50 ne concede meno: il matto con i due alfieri esiste in
+non piu' di 19 mosse, quindi il problema non e' la direzione ma la durata.
+Le posizioni vinte arrivano a 65-99 mezze mosse, cioe' a un soffio dal
+limite, ed e' per questo che il risultato oscilla fra 0 e 4 su 4 da un giro
+all'altro: un giro solo di misura qui non dice niente.
+
+Tre cose provate, tutte misurate su tre giri da quattro posizioni:
+
+1. Portare il re verso l'angolo invece che verso il bordo (si sommano le due
+   distanze dal centro invece di prendere la maggiore). Con i due alfieri il
+   matto si da' solo in un angolo, quindi e' la cosa giusta in teoria.
+2. Togliere al re che attacca la tabella `kEnd`, che lo vuole al centro e
+   vale -50 in un angolo: mentre la spinta lo chiama addosso al re nudo, la
+   tabella lo tira indietro. Il conflitto fra i due termini e' reale.
+3. Quattro combinazioni di pesi fra spinta verso l'angolo e avvicinamento
+   dei re (8/3, 8/8, 14/6, 20/3), per vedere se con due alfieri il motore
+   del progresso e' il re invece degli alfieri.
+
+Esito: 2, 3, 4 e 3 matti su 12 per le quattro combinazioni, tutte dentro il
+rumore; e la versione con le prime due modifiche fa 40 matti su 48 contro i
+39 di quella senza. Niente. Le modifiche sono state annullate: il
+ragionamento regge, la misura no, e qui vale la misura.
+
+Cosa servirebbe davvero, per chi ci riprova: non una regolazione dei pesi.
+Una tecnica esatta per questo materiale (una procedura scritta a mano per
+K+A+A contro K), oppure una tavola di finali a quattro pezzi, oppure una
+ricerca molto piu' profonda - a 150 ms per mossa qui si arriva a profondita'
+5 o 6, e per vedere il matto da lontano ne servirebbero 12. Il valore
+pratico e' quasi nullo: in 400 partite questo materiale non ha deciso
+niente, e le 41 partite chiuse per limite di mosse sono finali con i pezzi
+ancora in gioco, non re nudi.
 
 **Ordine di prova delle mosse.** La potatura alfa-beta rende quanto prima
 si prova la mossa giusta. Le fasce stanno lontane fra loro, cosi' nessun
