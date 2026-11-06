@@ -7,11 +7,12 @@
 import { ZEROUNO_VIDEOS } from './data/videos.js';
 import { APP_ID } from './config/app.config.js';
 import { chess, state } from './core/state.js';
+import { saveMatch, readSavedMatch, clearSavedMatch } from './core/persistence.js';
 import { showToast, copyTextToClipboard } from './core/utils.js';
 import { initPersistentBoardDOM, renderBoard } from './ui/board.js';
 import { updatePlayerCardsUI, renderTimersUI } from './ui/panels.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
-import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch } from './game/modes.js';
+import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
 
 export function setupEventListeners() {
@@ -95,6 +96,7 @@ export function setupEventListeners() {
         const last = hist[hist.length - 1];
         state.lastMoveSquares = last ? { from: last.from, to: last.to } : { from: null, to: null };
         renderBoard();
+        saveMatch();
         showToast("Mossa annullata");
     });
 
@@ -245,7 +247,12 @@ function registerServiceWorker() {
 window.onload = async function () {
     initPersistentBoardDOM();
     setupEventListeners();
-    startNewAiGame();
+
+    // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
+    if (!resumeSavedMatch()) {
+        startNewAiGame();
+    }
+
     registerServiceWorker();
     await initFirebase();
 };

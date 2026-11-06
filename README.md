@@ -32,7 +32,7 @@ npx serve .
 npm test
 ```
 
-27 prove che girano fuori dal browser, senza dipendenze.
+30 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
@@ -66,6 +66,7 @@ tetto di tempo.
 │   ├── core/
 │   │   ├── state.js            Stato condiviso dell'applicazione
 │   │   ├── sound.js            Feedback sonoro
+│   │   ├── persistence.js      Partita salvata nel browser
 │   │   └── utils.js            Notifiche, appunti, utilita'
 │   ├── data/
 │   │   ├── pieces.js           Disegni SVG dei 12 pezzi
@@ -86,7 +87,8 @@ tetto di tempo.
 │   └── online/firestore.js     Multiplayer in tempo reale
 └── tests/
     ├── engine.test.mjs         Test delle regole
-    └── search.test.mjs         Test del gioco dell'AI
+    ├── search.test.mjs         Test del gioco dell'AI
+    └── persistence.test.mjs    Test della partita salvata
 ```
 
 Regola del progetto: `index.html` contiene **solo** markup. Ogni stile sta nel
@@ -112,6 +114,18 @@ Gli sfidanti internazionali (Lukas Meyer, Sofia Rojas, Kenji Takahashi,
 Claire Dubois) **non sono persone reali**: sono l'AI locale con un nome e un
 punteggio. Nell'elenco sono contrassegnati "AI". Il contatore della lobby
 conta solo le persone vere in attesa.
+
+---
+
+## La partita non si perde
+
+Ogni mossa viene salvata nella memoria del browser. Se si chiude la pagina
+per sbaglio o si ricarica, alla riapertura la partita riprende da dove era
+rimasta, con la notazione, i pezzi catturati e gli orologi.
+
+Si salvano solo le partite locali: quelle online vivono su Firestore e le
+comanda anche l'avversario. Il salvataggio sparisce a fine partita e quando
+se ne avvia una nuova.
 
 ---
 

@@ -8,7 +8,7 @@
   "homepage": "https://youtube.com/@zerounosolution",
   "scripts": {
     "start": "python -m http.server 8099",
-    "test": "node --test tests/engine.test.mjs tests/search.test.mjs"
+    "test": "node --test tests/engine.test.mjs tests/search.test.mjs tests/persistence.test.mjs"
   },
   "engines": {
     "node": ">=20"

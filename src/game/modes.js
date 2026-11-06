@@ -12,9 +12,11 @@ import { renderBoard } from '../ui/board.js';
 import { makeAiMove } from '../engine/ai.js';
 import { updatePlayerCardsUI, startMatchTimers } from '../ui/panels.js';
 import { cleanupActiveOnlineMatch } from '../online/firestore.js';
+import { readSavedMatch, replayMoves, clearSavedMatch } from '../core/persistence.js';
 
 export function startNewAiGame() {
     cleanupActiveOnlineMatch();
+    clearSavedMatch();
     state.gameMode = 'ai';
     state.matchEnded = false;
     chess.reset();
@@ -54,6 +56,7 @@ export function startNewAiGame() {
 
 export function startNewLocalGame() {
     cleanupActiveOnlineMatch();
+    clearSavedMatch();
     state.gameMode = 'local';
     state.matchEnded = false;
     chess.reset();
@@ -72,6 +75,7 @@ export function startNewLocalGame() {
 
 export function startWorldChallengerMatch(challengerObj) {
     cleanupActiveOnlineMatch();
+    clearSavedMatch();
     const chosen = challengerObj || WORLD_CHALLENGERS[Math.floor(Math.random() * WORLD_CHALLENGERS.length)];
     state.gameMode = 'world-challenger';
     state.matchEnded = false;
@@ -91,4 +95,72 @@ export function startWorldChallengerMatch(challengerObj) {
     startMatchTimers();
     renderBoard();
     showToast(`Connesso con ${chosen.name} (${chosen.country}). Tocca a te col Bianco!`, 'gold');
+}
+
+/** Nomi dei tre livelli dell'AI, usati nelle schede dei giocatori. */
+const LEVEL_NAMES = { 1: 'Principiante', 2: 'Club', 3: 'Maestro' };
+
+/**
+ * Riprende la partita lasciata a meta' alla visita precedente.
+ *
+ * @returns {boolean} false se non c'era niente da riprendere, o se il
+ *                    salvataggio non tornava: in quel caso chi chiama
+ *                    avvia una partita nuova.
+ */
+export function resumeSavedMatch() {
+    const snapshot = readSavedMatch();
+    if (!snapshot) return false;
+
+    if (!replayMoves(snapshot)) {
+        clearSavedMatch();
+        return false;
+    }
+
+    cleanupActiveOnlineMatch();
+
+    state.gameMode = snapshot.gameMode;
+    state.matchEnded = false;
+    state.playerColor = snapshot.playerColor || 'w';
+    state.boardOrientation = snapshot.boardOrientation || state.playerColor;
+    state.aiDifficulty = snapshot.aiDifficulty || 2;
+    state.selectedSquare = null;
+    state.legalMovesForSelected = [];
+
+    const history = chess.history({ verbose: true });
+    const last = history[history.length - 1];
+    state.lastMoveSquares = last ? { from: last.from, to: last.to } : { from: null, to: null };
+
+    if (snapshot.gameMode === 'local') {
+        updatePlayerCardsUI('Giocatore 1 (Bianco)', 'Giocatore 2 (Nero)');
+        document.getElementById('gameModePill').textContent = '2 Giocatori in Locale';
+    } else {
+        const opponentLabel = snapshot.opponentName
+            || `Maestro AI (${LEVEL_NAMES[state.aiDifficulty] || 'Club'})`;
+        const humanLabel = `${getPlayerNickname()} (Tu)`;
+
+        if (state.playerColor === 'w') {
+            updatePlayerCardsUI(humanLabel, opponentLabel);
+        } else {
+            updatePlayerCardsUI(opponentLabel, humanLabel);
+        }
+        document.getElementById('gameModePill').textContent = snapshot.gameMode === 'world-challenger'
+            ? `Sfida: ${opponentLabel}`
+            : `Contro AI (${LEVEL_NAMES[state.aiDifficulty] || 'Club'})`;
+    }
+
+    startMatchTimers();
+
+    // Gli orologi ripartono dai secondi salvati, non da capo
+    if (Number.isFinite(snapshot.whiteTimeSeconds)) state.whiteTimeSeconds = snapshot.whiteTimeSeconds;
+    if (Number.isFinite(snapshot.blackTimeSeconds)) state.blackTimeSeconds = snapshot.blackTimeSeconds;
+
+    renderBoard();
+    showToast('Partita ripresa da dove l\'avevi lasciata', 'gold');
+
+    // Se tocca all'AI, muove lei
+    if (snapshot.gameMode !== 'local' && chess.turn() !== state.playerColor) {
+        setTimeout(() => makeAiMove(), 600);
+    }
+
+    return true;
 }

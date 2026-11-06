@@ -36,6 +36,7 @@ const APP_SHELL = [
     './src/core/state.js',
     './src/core/sound.js',
     './src/core/utils.js',
+    './src/core/persistence.js',
     './src/data/pieces.js',
     './src/data/videos.js',
     './src/data/challengers.js',

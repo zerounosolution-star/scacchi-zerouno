@@ -12,6 +12,7 @@ import { playChessSound } from '../core/sound.js';
 import { showToast, canHumanControlCurrentTurn } from '../core/utils.js';
 import { getSquareFromClientCoords, renderBoard } from './board.js';
 import { makeAiMove } from '../engine/ai.js';
+import { saveMatch } from '../core/persistence.js';
 import { checkAndHandleGameOver } from './gameover.js';
 import { syncOnlineMove } from '../online/firestore.js';
 
@@ -262,6 +263,9 @@ export async function executeMove(fromSq, toSq, promotionPiece = 'q') {
     if (checkAndHandleGameOver()) {
         return;
     }
+
+    // La partita in corso resta nella memoria del browser
+    saveMatch();
 
     // Se siamo contro AI o contro uno Sfidante Internazionale simulato ed è il suo turno
     if ((state.gameMode === 'ai' || state.gameMode === 'world-challenger') && chess.turn() !== state.playerColor && !state.matchEnded) {

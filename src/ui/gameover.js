@@ -7,6 +7,7 @@
 
 import { ZEROUNO_VIDEOS } from '../data/videos.js';
 import { chess, state } from '../core/state.js';
+import { clearSavedMatch } from '../core/persistence.js';
 import { playChessSound } from '../core/sound.js';
 
 export function checkAndHandleGameOver() {
@@ -63,6 +64,9 @@ export function loadZeroUnoVideoInModal(videoObj) {
 }
 
 export function triggerEndOfGame(outcomeTitle, outcomeSubtitle = 'Partita Conclusa') {
+    // Partita finita: non c'e' piu' niente da riprendere
+    clearSavedMatch();
+
     state.matchEnded = true;
     if (state.timerInterval) clearInterval(state.timerInterval);
     playChessSound('end');
