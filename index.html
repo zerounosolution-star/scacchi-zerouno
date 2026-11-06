@@ -35,63 +35,69 @@
     <!-- Fogli di stile del progetto -->
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-bronze-400/30">
+<body class="min-h-screen flex flex-col selection:bg-bronze-400/30">
 
-    <!-- Pezzo flottante per Drag & Drop fluido su Desktop -->
+    <!-- Pezzo flottante per il trascinamento con il mouse -->
     <div id="floatingDragPiece" aria-hidden="true"></div>
 
-    <!-- ================= HEADER / NAVBAR ================= -->
+    <!-- ================= INTESTAZIONE ================= -->
     <header class="border-b border-ivory-200 bg-ivory-50/95 backdrop-blur-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-0 sm:h-16 flex flex-wrap sm:flex-nowrap items-center justify-between gap-y-2 gap-x-3">
-            <!-- Brand -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+
+            <!-- Marchio -->
             <div class="flex items-center gap-3 min-w-0">
-                <div class="w-9 h-9 shrink-0 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center shadow-sm border border-bronze-500/40">
+                <div class="hidden sm:flex w-9 h-9 shrink-0 rounded-lg bg-anthracite-900 items-center justify-center border border-bronze-500/40" aria-hidden="true">
                     <span class="font-serif text-xl font-semibold tracking-tighter text-bronze-400">01</span>
                 </div>
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-anthracite-900 leading-none whitespace-nowrap">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <h1 class="font-serif text-[17px] sm:text-2xl font-semibold tracking-tight text-anthracite-900 leading-none truncate">
                             Scacchi ZeroUno
                         </h1>
-                        <span class="hidden md:inline-block text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 rounded-full bg-ivory-200/80 text-anthracite-800 font-medium">
+                        <span class="hidden lg:inline-block zu-tag bg-ivory-100 text-anthracite-800 border border-ivory-200">
                             World Edition
                         </span>
                     </div>
-                    <p class="text-[11px] text-neutral-500 hidden sm:block">
-                        Atelier Scacchistico Internazionale &bull; Canale <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">@zerounosolution</a>
+                    <p class="zu-micro zu-muted hidden xl:block mt-0.5 whitespace-nowrap truncate">
+                        Atelier Scacchistico Internazionale &bull;
+                        <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">@zerounosolution</a>
                     </p>
                 </div>
             </div>
 
-            <!-- Strumenti Rapidi Header -->
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto justify-end">
-                <!-- Stato Rete Mondiale -->
-                <div id="networkStatusBadge" class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-ivory-100 border border-ivory-200 text-xs text-neutral-600">
+            <!-- Strumenti -->
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+
+                <!-- Stato della rete -->
+                <div id="networkStatusBadge" class="zu-pill zu-pill--paper">
                     <span id="networkDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span id="networkText" class="hidden sm:inline font-medium">Pronto a Giocare</span>
+                    <span id="networkText" class="hidden sm:inline">Pronto a Giocare</span>
                 </div>
 
-                <!-- Selettore Tema Scacchiera -->
-                <select id="boardThemeSelect" aria-label="Tema Scacchiera" class="text-[11px] sm:text-xs max-w-[104px] sm:max-w-none bg-ivory-100 border border-ivory-200 rounded-lg px-2.5 py-1.5 text-anthracite-800 focus:outline-none focus:border-bronze-500 cursor-pointer">
+                <!-- Tema della scacchiera -->
+                <select id="boardThemeSelect" aria-label="Tema della scacchiera"
+                        class="zu-field w-[92px] sm:w-[148px] px-2 sm:px-3">
                     <option value="classic">Avorio &amp; Noce</option>
                     <option value="onyx">Onice &amp; Pietra</option>
                     <option value="club">Verde Torneo</option>
                 </select>
 
-                <!-- Audio Toggle -->
-                <button id="soundToggleBtn" type="button" title="Attiva/Disattiva Suoni" class="p-2 rounded-lg bg-ivory-100 hover:bg-ivory-200 border border-ivory-200 text-anthracite-800 transition cursor-pointer">
-                    <svg id="soundOnIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <!-- Suoni -->
+                <button id="soundToggleBtn" type="button" aria-label="Attiva o disattiva i suoni"
+                        class="zu-btn zu-btn--outline zu-btn--icon">
+                    <svg id="soundOnIcon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                     </svg>
-                    <svg id="soundOffIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <svg id="soundOffIcon" class="hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                     </svg>
                 </button>
 
-                <!-- Bottone Archivio Video ZeroUno / Anteprima Fine Partita -->
-                <button id="openVideoPreviewBtn" type="button" title="Video del canale ZeroUno" class="flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-lg bg-anthracite-900 text-ivory-50 hover:bg-anthracite-800 transition shadow-sm cursor-pointer shrink-0">
-                    <svg class="w-3.5 h-3.5 text-bronze-400" fill="currentColor" viewBox="0 0 24 24">
+                <!-- Video del canale -->
+                <button id="openVideoPreviewBtn" type="button" aria-label="Guarda un video del canale ZeroUno"
+                        class="zu-btn zu-btn--primary zu-btn--icon sm:w-auto sm:px-4">
+                    <svg class="text-bronze-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M8 5v14l11-7z"/>
                     </svg>
                     <span class="hidden sm:inline">Video ZeroUno</span>
@@ -101,402 +107,411 @@
     </header>
 
     <!-- ================= CONTENUTO PRINCIPALE ================= -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,662px)_minmax(340px,1fr)] gap-7 lg:gap-10 items-start">
 
-            <!-- COLONNA SINISTRA / CENTRALE: SCACCHIERA E GIOCATORI (7 Colonne su Desktop) -->
-            <div class="lg:col-span-7 flex flex-col items-center w-full">
+            <!-- ======================================================
+                 IL TAVOLO: stato della partita, giocatori, scacchiera
+                 ====================================================== -->
+            <section class="flex justify-center w-full" aria-label="Partita in corso">
+                <div class="zu-table">
 
-                <!-- Barra Guida Interazione Mouse Desktop -->
-                <div class="w-full max-w-[580px] mb-2.5 flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-ivory-100/90 border border-ivory-200 text-xs text-anthracite-800">
-                    <div class="flex items-center gap-2">
-                        <span id="turnIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                        <span id="mouseInstructionBanner" class="font-medium">
-                            Tocca a te (Bianco) &mdash; Clicca o trascina un pezzo con il mouse
-                        </span>
-                    </div>
-                    <span id="selectedSquareIndicator" class="font-mono text-[11px] text-bronze-600 font-semibold"></span>
-                </div>
-
-                <!-- Scheda Avversario (Superiore) -->
-                <div class="w-full max-w-[580px] mb-3 flex items-center justify-between bg-white/90 border border-ivory-200 rounded-xl px-4 py-2.5 shadow-sm">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div id="topPlayerAvatar" class="w-9 h-9 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center font-serif font-semibold text-base shrink-0">
-                            N
-                        </div>
+                    <!-- Stato della partita: unico titolo della pagina -->
+                    <div class="flex items-start justify-between gap-3 mb-3">
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span id="topPlayerName" class="font-medium text-sm text-anthracite-900 truncate">Maestro AI (Livello Club)</span>
-                                <span id="topPlayerBadge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-ivory-100 text-neutral-600 border border-ivory-200">Nero</span>
-                            </div>
-                            <!-- Pezzi catturati dal giocatore superiore -->
-                            <div class="flex items-center gap-1 min-h-[18px] mt-0.5">
-                                <div id="topCapturedPieces" class="flex items-center -space-x-1 overflow-hidden"></div>
-                                <span id="topMaterialDiff" class="text-[11px] font-mono text-bronze-600 font-medium ml-1"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Timer Giocatore Superiore -->
-                    <div id="topTimerBox" class="px-3 py-1.5 rounded-lg bg-ivory-100 border border-ivory-200 font-mono text-sm sm:text-base font-medium text-anthracite-900 tracking-wider shrink-0">
-                        10:00
-                    </div>
-                </div>
-
-                <!-- CONTENITORE SCACCHIERA -->
-                <div id="boardWrapper" class="chess-board-container relative rounded-xl overflow-hidden border border-ivory-300 bg-ivory-100">
-                    <!-- Griglia 8x8 persistente per mouse desktop e touch -->
-                    <div id="chessboard" class="chess-grid"></div>
-
-                    <!-- Overlay Scelta Promozione Pedone -->
-                    <div id="promotionOverlay" class="hidden absolute inset-0 bg-anthracite-950/65 backdrop-blur-xs z-20 flex items-center justify-center p-4">
-                        <div class="bg-ivory-50 border border-ivory-200 rounded-2xl p-5 shadow-2xl max-w-xs w-full text-center">
-                            <h3 class="font-serif text-2xl font-semibold text-anthracite-900 mb-1">Promozione del Pedone</h3>
-                            <p class="text-xs text-neutral-500 mb-4">Clicca sul pezzo con cui sostituire il pedone</p>
-                            <div id="promotionChoices" class="grid grid-cols-4 gap-2"></div>
-                        </div>
-                    </div>
-
-                    <!-- Overlay Ricerca Avversario Mondiale -->
-                    <div id="matchmakingOverlay" class="hidden absolute inset-0 bg-anthracite-950/80 backdrop-blur-xs z-20 flex flex-col items-center justify-center p-6 text-center text-ivory-50">
-                        <div class="w-12 h-12 rounded-full border-2 border-bronze-400 border-t-transparent animate-spin mb-4"></div>
-                        <h3 class="font-serif text-2xl font-semibold mb-1">Ricerca Avversario nel Mondo...</h3>
-                        <p id="matchmakingSubtext" class="text-xs text-ivory-200 max-w-xs mb-4">
-                            Connessione alla sala globale in corso. Puoi condividere il codice stanza o iniziare subito contro uno sfidante internazionale online.
-                        </p>
-                        <div class="flex items-center gap-2 bg-anthracite-800 border border-bronze-500/40 rounded-lg px-3.5 py-2 mb-4">
-                            <span class="text-xs text-ivory-200">Codice Stanza:</span>
-                            <span id="waitingRoomCodeDisplay" class="font-mono text-sm font-semibold text-bronze-400 tracking-widest">------</span>
-                            <button id="copyWaitingCodeBtn" type="button" class="text-xs underline text-ivory-200 hover:text-white ml-2 cursor-pointer">Copia</button>
-                        </div>
-                        <div class="flex flex-wrap items-center justify-center gap-2">
-                            <button id="instantWorldOpponentBtn" type="button" class="text-xs font-medium px-4 py-2 rounded-lg bg-bronze-500 hover:bg-bronze-400 text-white transition cursor-pointer">
-                                Gioca Subito con Sfidante Internazionale
-                            </button>
-                            <button id="cancelMatchmakingBtn" type="button" class="text-xs px-4 py-2 rounded-lg bg-ivory-50/10 hover:bg-ivory-50/20 border border-ivory-50/20 text-ivory-100 transition cursor-pointer">
-                                Annulla
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Scheda Giocatore Utente (Inferiore) -->
-                <div class="w-full max-w-[580px] mt-3 flex items-center justify-between bg-white/90 border border-ivory-200 rounded-xl px-4 py-2.5 shadow-sm">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div id="bottomPlayerAvatar" class="w-9 h-9 rounded-lg bg-ivory-200 text-anthracite-900 border border-ivory-300 flex items-center justify-center font-serif font-semibold text-base shrink-0">
-                            B
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span id="bottomPlayerName" class="font-medium text-sm text-anthracite-900 truncate">Tu (Giocatore)</span>
-                                <span id="bottomPlayerBadge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-ivory-100 text-neutral-600 border border-ivory-200">Bianco</span>
-                            </div>
-                            <div class="flex items-center gap-1 min-h-[18px] mt-0.5">
-                                <div id="bottomCapturedPieces" class="flex items-center -space-x-1 overflow-hidden"></div>
-                                <span id="bottomMaterialDiff" class="text-[11px] font-mono text-bronze-600 font-medium ml-1"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Timer Giocatore Inferiore -->
-                    <div id="bottomTimerBox" class="px-3 py-1.5 rounded-lg bg-anthracite-900 text-ivory-50 font-mono text-sm sm:text-base font-medium tracking-wider shrink-0">
-                        10:00
-                    </div>
-                </div>
-
-                <!-- Barra Controlli Rapidi Sotto Scacchiera -->
-                <div class="w-full max-w-[580px] mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                        <button id="flipBoardBtn" type="button" class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-white border border-ivory-200 hover:border-bronze-400 text-anthracite-800 transition shadow-2xs cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                            </svg>
-                            <span>Ruota</span>
-                        </button>
-                        <button id="undoMoveBtn" type="button" class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-white border border-ivory-200 hover:border-bronze-400 text-anthracite-800 transition shadow-2xs cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                            </svg>
-                            <span>Annulla Mossa</span>
-                        </button>
-                        <button id="newGameQuickBtn" type="button" class="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-white border border-ivory-200 hover:border-bronze-400 text-anthracite-800 transition shadow-2xs cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            <span>Nuova Partita</span>
-                        </button>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button id="drawGameBtn" type="button" class="text-xs font-medium px-3 py-2 rounded-lg bg-ivory-100 hover:bg-ivory-200 border border-ivory-200 text-neutral-700 transition cursor-pointer">
-                            Patta
-                        </button>
-                        <button id="resignGameBtn" type="button" class="flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-lg bg-rose-950/90 hover:bg-rose-900 text-rose-50 transition shadow-2xs cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-rose-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
-                            </svg>
-                            <span>Concludi / Video ZeroUno</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COLONNA DESTRA: SALA GIOCHI MONDIALE, NOTAZIONE E CONTROLLI (5 Colonne su Desktop) -->
-            <div class="lg:col-span-5 flex flex-col gap-5 w-full">
-
-                <!-- Card Stato Partita e Turno -->
-                <div class="bg-white/95 border border-ivory-200 rounded-2xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between border-b border-ivory-200 pb-3 mb-4">
-                        <div>
-                            <span class="text-[10px] uppercase tracking-[0.18em] text-bronze-600 font-semibold block">Sala Scacchistica</span>
-                            <h2 id="gameStatusHeadline" class="font-serif text-2xl font-semibold text-anthracite-900">
+                            <span class="zu-eyebrow">Partita in corso</span>
+                            <h2 id="gameStatusHeadline" class="font-serif text-2xl font-semibold text-anthracite-900" aria-live="polite">
                                 Turno del Bianco
                             </h2>
                         </div>
-                        <span id="gameModePill" class="text-xs font-medium px-3 py-1 rounded-full bg-ivory-100 border border-ivory-200 text-anthracite-800">
+                        <span id="gameModePill" class="zu-pill zu-pill--onDark mt-1">
                             Partita Attiva
                         </span>
                     </div>
 
-                    <!-- Selettore Modalità di Gioco (Tabs) -->
-                    <div class="grid grid-cols-3 gap-1.5 bg-ivory-100 p-1 rounded-xl border border-ivory-200 mb-4">
-                        <button type="button" data-mode-tab="online" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center bg-anthracite-900 text-ivory-50 shadow-xs cursor-pointer">
-                            Mondiale Online
-                        </button>
-                        <button type="button" data-mode-tab="ai" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900 cursor-pointer">
+                    <div class="zu-table-rule mb-3"></div>
+
+                    <!-- Giocatore in alto -->
+                    <div class="zu-seat mb-2.5">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div id="topPlayerAvatar" class="bg-anthracite-900 text-ivory-50 flex items-center justify-center font-serif font-semibold shrink-0" aria-hidden="true">
+                                N
+                            </div>
+                            <div class="min-w-0">
+                                <div id="topPlayerName" class="truncate">Maestro AI (Livello Club)</div>
+                                <div class="flex items-center gap-2 min-h-[20px] mt-1">
+                                    <span id="topPlayerBadge" class="shrink-0">Nero</span>
+                                    <div id="topCapturedPieces" class="flex items-center -space-x-0.5"></div>
+                                    <span id="topMaterialDiff"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="topTimerBox" class="shrink-0" aria-label="Tempo del giocatore in alto">
+                            10:00
+                        </div>
+                    </div>
+
+                    <!-- Scacchiera: cornice scura, coordinate incise nel bordo -->
+                    <div id="boardWrapper" class="chess-board-container relative overflow-hidden">
+                        <div id="chessboard" class="chess-grid"></div>
+
+                        <!-- Scelta del pezzo di promozione -->
+                        <div id="promotionOverlay" class="hidden absolute inset-0 bg-anthracite-950/70 backdrop-blur-xs z-20 flex items-center justify-center p-4">
+                            <div class="bg-ivory-50 border border-ivory-200 rounded-2xl p-5 shadow-2xl max-w-xs w-full text-center">
+                                <h3 class="font-serif text-2xl font-semibold text-anthracite-900 mb-1">Promozione del Pedone</h3>
+                                <p class="zu-small zu-muted mb-4">Scegli il pezzo con cui sostituire il pedone</p>
+                                <div id="promotionChoices" class="grid grid-cols-4 gap-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Ricerca di un avversario online -->
+                        <div id="matchmakingOverlay" class="hidden absolute inset-0 bg-anthracite-950/85 backdrop-blur-xs z-20 flex flex-col items-center justify-center p-5 text-center text-ivory-50">
+                            <div class="w-11 h-11 rounded-full border-2 border-bronze-400 border-t-transparent animate-spin mb-4" aria-hidden="true"></div>
+                            <h3 class="zu-display mb-2">Ricerca avversario</h3>
+                            <p id="matchmakingSubtext" class="zu-small text-ivory-200 max-w-xs mb-4">
+                                Connessione alla sala globale in corso. Puoi condividere il codice stanza o iniziare subito contro uno sfidante internazionale online.
+                            </p>
+                            <div class="flex items-center gap-2 bg-anthracite-800 border border-bronze-500/40 rounded-lg px-3.5 py-2 mb-4">
+                                <span class="zu-micro text-ivory-200">Codice stanza</span>
+                                <span id="waitingRoomCodeDisplay" class="zu-mono text-base font-medium text-bronze-400 tracking-widest">------</span>
+                                <button id="copyWaitingCodeBtn" type="button" class="zu-btn zu-btn--quiet zu-btn--sm">Copia</button>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-center gap-2">
+                                <button id="instantWorldOpponentBtn" type="button" class="zu-btn zu-btn--accent zu-btn--sm">
+                                    Gioca con uno sfidante internazionale
+                                </button>
+                                <button id="cancelMatchmakingBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                    Annulla
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Giocatore in basso -->
+                    <div class="zu-seat mt-2.5">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div id="bottomPlayerAvatar" class="bg-ivory-200 text-anthracite-900 flex items-center justify-center font-serif font-semibold shrink-0" aria-hidden="true">
+                                B
+                            </div>
+                            <div class="min-w-0">
+                                <div id="bottomPlayerName" class="truncate">Tu (Giocatore)</div>
+                                <div class="flex items-center gap-2 min-h-[20px] mt-1">
+                                    <span id="bottomPlayerBadge" class="shrink-0">Bianco</span>
+                                    <div id="bottomCapturedPieces" class="flex items-center -space-x-0.5"></div>
+                                    <span id="bottomMaterialDiff"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="bottomTimerBox" class="shrink-0" aria-label="Tempo del giocatore in basso">
+                            10:00
+                        </div>
+                    </div>
+
+                    <div class="zu-table-rule mt-3.5 pt-3.5">
+                        <!-- Controlli della partita -->
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <button id="flipBoardBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                    </svg>
+                                    <span>Ruota</span>
+                                </button>
+                                <button id="undoMoveBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                    </svg>
+                                    <span>Annulla</span>
+                                </button>
+                                <button id="newGameQuickBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <span>Nuova partita</span>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button id="drawGameBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                    Patta
+                                </button>
+                                <button id="resignGameBtn" type="button" class="zu-btn zu-btn--danger zu-btn--sm">
+                                    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
+                                    </svg>
+                                    <span>Abbandona</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Riga di stato: istruzione e casella selezionata -->
+                        <div class="flex items-center justify-between gap-3 mt-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span id="turnIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                <span id="mouseInstructionBanner" class="sm:truncate">
+                                    Tocca a te (Bianco) &mdash; Clicca o trascina un pezzo con il mouse
+                                </span>
+                            </div>
+                            <span id="selectedSquareIndicator" class="shrink-0"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ======================================================
+                 IL TACCUINO: modalita', notazione, canale
+                 ====================================================== -->
+            <div class="w-full">
+
+                <!-- ---------- Modalita' di gioco ---------- -->
+                <section class="zu-block" aria-labelledby="modeBlockTitle">
+                    <div class="zu-block-head">
+                        <div>
+                            <span class="zu-eyebrow">Sala scacchistica</span>
+                            <h2 id="modeBlockTitle" class="zu-section mt-0.5">Scegli come giocare</h2>
+                        </div>
+                    </div>
+
+                    <!-- Linguette delle modalita' -->
+                    <div class="grid grid-cols-3 gap-1.5 bg-ivory-100 p-1 rounded-xl border border-ivory-200 mb-4" role="tablist">
+                        <button type="button" data-mode-tab="ai" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center bg-anthracite-900 text-ivory-50 shadow-xs cursor-pointer">
                             Contro AI
                         </button>
                         <button type="button" data-mode-tab="local" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900 cursor-pointer">
                             2 Giocatori
                         </button>
+                        <button type="button" data-mode-tab="online" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900 cursor-pointer">
+                            Mondiale Online
+                        </button>
                     </div>
 
-                    <!-- PANNELLO 1: MULTIPLAYER MONDIALE ONLINE -->
-                    <div id="tabPanelOnline" class="space-y-4">
-                        <!-- Nome Giocatore e ID -->
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <div class="flex-1">
-                                <label for="playerNicknameInput" class="block text-[11px] font-medium text-neutral-500 mb-1">Il tuo Nome in Sala</label>
-                                <input id="playerNicknameInput" type="text" maxlength="22" placeholder="Es. Marco_Roma" class="w-full text-xs bg-ivory-50 border border-ivory-200 rounded-lg px-3 py-2 text-anthracite-900 focus:outline-none focus:border-bronze-500" />
-                            </div>
-                            <div class="sm:w-44">
-                                <label class="block text-[11px] font-medium text-neutral-500 mb-1">ID Giocatore Globale</label>
-                                <div class="flex items-center justify-between bg-ivory-100 border border-ivory-200 rounded-lg px-2.5 py-2 text-[11px] font-mono text-neutral-600">
-                                    <span id="userIdDisplay" class="truncate" title="ID Utente">ONLINE-01</span>
-                                    <button id="copyUserIdBtn" type="button" class="text-bronze-600 hover:underline ml-1.5 shrink-0 cursor-pointer">Copia</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pulsante Matchmaking Globale Immediato -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <button id="findWorldMatchBtn" type="button" class="w-full py-2.5 px-4 rounded-xl bg-anthracite-900 hover:bg-anthracite-800 text-ivory-50 font-medium text-xs flex items-center justify-center gap-2 transition shadow-sm cursor-pointer">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                <span>Gioca nel Mondo Ora</span>
-                            </button>
-                            <button id="createPrivateRoomBtn" type="button" class="w-full py-2.5 px-4 rounded-xl bg-ivory-100 hover:bg-ivory-200 border border-ivory-300 text-anthracite-900 font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer">
-                                <span>Crea Stanza Privata</span>
-                            </button>
-                        </div>
-
-                        <!-- Entra con Codice Stanza -->
-                        <div class="flex items-center gap-2 pt-1">
-                            <input id="joinRoomCodeInput" type="text" maxlength="8" placeholder="Codice stanza amico (es. ZU4819)" class="flex-1 text-xs uppercase font-mono bg-ivory-50 border border-ivory-200 rounded-lg px-3 py-2 text-anthracite-900 focus:outline-none focus:border-bronze-500" />
-                            <button id="joinRoomByCodeBtn" type="button" class="px-4 py-2 rounded-lg bg-bronze-500 hover:bg-bronze-600 text-white text-xs font-medium transition shrink-0 cursor-pointer">
-                                Entra
-                            </button>
-                        </div>
-
-                        <!-- Lista Giocatori e Stanze nel Mondo in Tempo Reale -->
-                        <div class="border-t border-ivory-200 pt-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Sfidanti e Stanze nel Mondo</span>
-                                <span id="openRoomsCountBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Online</span>
-                            </div>
-                            <div id="openRoomsList" class="max-h-36 overflow-y-auto space-y-1.5 pr-1"></div>
-                        </div>
-                    </div>
-
-                    <!-- PANNELLO 2: GIOCA CONTRO AI -->
-                    <div id="tabPanelAi" class="hidden space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
+                    <!-- Pannello: contro l'AI (e' la partita che parte all'apertura) -->
+                    <div id="tabPanelAi" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label for="aiDifficultySelect" class="block text-[11px] font-medium text-neutral-500 mb-1">Livello Maestro AI</label>
-                                <select id="aiDifficultySelect" class="w-full text-xs bg-ivory-50 border border-ivory-200 rounded-lg px-3 py-2 text-anthracite-900 focus:outline-none focus:border-bronze-500">
+                                <label for="aiDifficultySelect" class="zu-label">Livello del Maestro AI</label>
+                                <select id="aiDifficultySelect" class="zu-field">
                                     <option value="1">Livello 1 &mdash; Principiante</option>
-                                    <option value="2" selected>Livello 2 &mdash; Club (Consigliato)</option>
-                                    <option value="3">Livello 3 &mdash; Maestro Tattico</option>
+                                    <option value="2" selected>Livello 2 &mdash; Club (consigliato)</option>
+                                    <option value="3">Livello 3 &mdash; Maestro tattico</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="aiColorSelect" class="block text-[11px] font-medium text-neutral-500 mb-1">Il tuo Colore</label>
-                                <select id="aiColorSelect" class="w-full text-xs bg-ivory-50 border border-ivory-200 rounded-lg px-3 py-2 text-anthracite-900 focus:outline-none focus:border-bronze-500">
-                                    <option value="w" selected>Bianco (Muovi per primo)</option>
+                                <label for="aiColorSelect" class="zu-label">Il tuo colore</label>
+                                <select id="aiColorSelect" class="zu-field">
+                                    <option value="w" selected>Bianco (muovi per primo)</option>
                                     <option value="b">Nero</option>
                                     <option value="random">Casuale</option>
                                 </select>
                             </div>
                         </div>
-                        <button id="startAiMatchBtn" type="button" class="w-full py-2.5 px-4 rounded-xl bg-anthracite-900 hover:bg-anthracite-800 text-ivory-50 font-medium text-xs transition shadow-sm cursor-pointer">
-                            Inizia Nuova Partita contro AI
+                        <button id="startAiMatchBtn" type="button" class="zu-btn zu-btn--primary zu-btn--block">
+                            Inizia una nuova partita contro l'AI
                         </button>
                     </div>
 
-                    <!-- PANNELLO 3: 2 GIOCATORI SULLO STESSO DISPOSITIVO -->
-                    <div id="tabPanelLocal" class="hidden space-y-3">
-                        <p class="text-xs text-neutral-600 leading-relaxed">
-                            Modalit&agrave; scacchiera da tavolo: due giocatori muovono a turno con il mouse sullo stesso schermo.
+                    <!-- Pannello: due giocatori sullo stesso dispositivo -->
+                    <div id="tabPanelLocal" class="hidden space-y-4">
+                        <p class="zu-note">
+                            Scacchiera da tavolo: due persone muovono a turno sullo stesso schermo.
+                            Usa <strong class="font-medium text-anthracite-900">Ruota</strong> per girare la scacchiera fra una mossa e l'altra.
                         </p>
-                        <button id="startLocalMatchBtn" type="button" class="w-full py-2.5 px-4 rounded-xl bg-anthracite-900 hover:bg-anthracite-800 text-ivory-50 font-medium text-xs transition shadow-sm cursor-pointer">
-                            Avvia Partita 2 Giocatori con il Mouse
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Card Cronologia Mosse (Notazione Algebrica) -->
-                <div class="bg-white/95 border border-ivory-200 rounded-2xl p-5 shadow-sm flex flex-col">
-                    <div class="flex items-center justify-between border-b border-ivory-200 pb-2.5 mb-3">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-serif text-lg font-semibold text-anthracite-900">Notazione Algebrica</h3>
-                            <span id="moveCounterBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-ivory-100 text-neutral-600">0 mosse</span>
-                        </div>
-                        <button id="copyPgnBtn" type="button" class="text-[11px] text-bronze-600 hover:underline font-medium cursor-pointer">
-                            Copia Mosse
+                        <button id="startLocalMatchBtn" type="button" class="zu-btn zu-btn--primary zu-btn--block">
+                            Avvia una partita in due
                         </button>
                     </div>
 
-                    <div id="moveHistoryContainer" class="h-40 overflow-y-auto pr-1 font-mono text-xs">
-                        <div id="moveHistoryEmpty" class="h-full flex items-center justify-center text-neutral-400 font-sans italic text-xs text-center px-4">
-                            Clicca o trascina un pezzo bianco sulla scacchiera per eseguire la prima mossa
+                    <!-- Pannello: multiplayer online -->
+                    <div id="tabPanelOnline" class="hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1">
+                                <label for="playerNicknameInput" class="zu-label">Il tuo nome in sala</label>
+                                <input id="playerNicknameInput" type="text" maxlength="22" placeholder="Es. Marco_Roma" class="zu-field" />
+                            </div>
+                            <div class="sm:w-44">
+                                <span class="zu-label">Il tuo identificativo</span>
+                                <div class="zu-field flex items-center justify-between gap-2 px-3">
+                                    <span id="userIdDisplay" class="zu-mono text-[13px] truncate zu-muted" title="Identificativo del giocatore">ONLINE-01</span>
+                                    <button id="copyUserIdBtn" type="button" class="zu-btn zu-btn--quiet zu-btn--sm shrink-0">Copia</button>
+                                </div>
+                            </div>
                         </div>
-                        <table class="w-full text-left border-collapse hidden" id="moveHistoryTable">
-                            <tbody id="moveHistoryBody" class="divide-y divide-ivory-100"></tbody>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <button id="findWorldMatchBtn" type="button" class="zu-btn zu-btn--primary">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+                                <span>Gioca nel mondo ora</span>
+                            </button>
+                            <button id="createPrivateRoomBtn" type="button" class="zu-btn zu-btn--outline">
+                                Crea una stanza privata
+                            </button>
+                        </div>
+
+                        <div class="flex items-end gap-2">
+                            <div class="flex-1">
+                                <label for="joinRoomCodeInput" class="zu-label">Hai un codice stanza?</label>
+                                <input id="joinRoomCodeInput" type="text" maxlength="8" placeholder="ZU4819" class="zu-field zu-mono uppercase" />
+                            </div>
+                            <button id="joinRoomByCodeBtn" type="button" class="zu-btn zu-btn--accent shrink-0">
+                                Entra
+                            </button>
+                        </div>
+
+                        <div class="pt-1">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="zu-eyebrow">Sfidanti e stanze</span>
+                                <span id="openRoomsCountBadge" class="zu-pill zu-pill--paper">Online</span>
+                            </div>
+                            <div id="openRoomsList" class="max-h-44 overflow-y-auto space-y-1.5 pr-1"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ---------- Notazione: il blocco dominante del taccuino ---------- -->
+                <section class="zu-block" aria-labelledby="notationBlockTitle">
+                    <div class="zu-block-head">
+                        <div class="flex items-baseline gap-2.5">
+                            <h2 id="notationBlockTitle" class="zu-section">Notazione</h2>
+                            <span id="moveCounterBadge">0 mosse</span>
+                        </div>
+                        <button id="copyPgnBtn" type="button" class="zu-btn zu-btn--quiet zu-btn--sm">
+                            Copia PGN
+                        </button>
+                    </div>
+
+                    <div id="moveHistoryContainer" class="h-40 sm:h-56 overflow-y-auto pr-1">
+                        <div id="moveHistoryEmpty" class="h-full flex items-center justify-center zu-small text-center px-6">
+                            La partita comincia quando muovi il primo pezzo bianco.
+                        </div>
+                        <table class="text-left border-collapse hidden" id="moveHistoryTable">
+                            <caption class="zu-sr">Mosse della partita in notazione algebrica</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col"><span class="zu-sr">Numero della mossa</span></th>
+                                    <th scope="col">Bianco</th>
+                                    <th scope="col">Nero</th>
+                                </tr>
+                            </thead>
+                            <tbody id="moveHistoryBody"></tbody>
                         </table>
                     </div>
-                </div>
+                </section>
 
-                <!-- Card Canale ZeroUno Solution Info -->
-                <div class="bg-anthracite-900 text-ivory-50 rounded-2xl p-4 shadow-sm border border-bronze-500/30 flex items-center justify-between gap-4">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            <span class="text-[10px] uppercase tracking-[0.2em] text-bronze-400 font-semibold">Fine Partita ZeroUno</span>
+                <!-- ---------- Canale: una riga, non una vetrina ---------- -->
+                <section class="zu-block" aria-labelledby="channelBlockTitle">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <h2 id="channelBlockTitle" class="zu-eyebrow">Fine partita ZeroUno</h2>
+                            <p class="zu-note mt-1.5">
+                                A ogni partita conclusa parte un video dal canale
+                                <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">@zerounosolution</a>.
+                            </p>
                         </div>
-                        <p class="text-xs text-ivory-200 leading-relaxed">
-                            Ad ogni fine partita parte in automatico un video casuale dal canale YouTube <strong class="text-white">@zerounosolution</strong>.
-                        </p>
+                        <button id="triggerEndVideoTestBtn" type="button" class="zu-btn zu-btn--outline zu-btn--sm shrink-0">
+                            Guarda ora
+                        </button>
                     </div>
-                    <button id="triggerEndVideoTestBtn" type="button" class="shrink-0 px-3 py-2 rounded-xl bg-bronze-500 hover:bg-bronze-400 text-white font-semibold text-xs transition cursor-pointer">
-                        Guarda Ora
-                    </button>
-                </div>
+                </section>
 
             </div>
         </div>
     </main>
 
-    <!-- ================= MODALE FINE PARTITA + VIDEO CASUALE ZEROUNO SOLUTION ================= -->
-    <div id="gameOverModal" class="hidden fixed inset-0 z-50 bg-anthracite-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-ivory-50 border border-ivory-200 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl my-auto">
-            <!-- Intestazione Risultato Partita -->
-            <div class="flex items-start justify-between gap-4 border-b border-ivory-200 pb-4 mb-4">
-                <div>
-                    <span id="modalOutcomeSubtitle" class="text-[10px] uppercase tracking-[0.2em] text-bronze-600 font-semibold block">
+    <!-- ================= FINE PARTITA + VIDEO DEL CANALE ================= -->
+    <div id="gameOverModal" class="hidden fixed inset-0 z-50 bg-anthracite-950/85 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="zu-modal max-w-xl w-full p-5 sm:p-7 my-auto">
+
+            <!-- Risultato: e' lui la notizia, non il player -->
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div class="min-w-0">
+                    <span id="modalOutcomeSubtitle" class="zu-eyebrow">
                         Partita Conclusa
                     </span>
-                    <h2 id="modalOutcomeTitle" class="font-serif text-2xl sm:text-3xl font-semibold text-anthracite-900 mt-0.5">
+                    <h2 id="modalOutcomeTitle" class="mt-1">
                         Scacco Matto
                     </h2>
                 </div>
-                <button id="closeGameOverModalBtn" type="button" class="p-2 rounded-lg bg-ivory-100 hover:bg-ivory-200 text-neutral-600 transition cursor-pointer" title="Chiudi">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <button id="closeGameOverModalBtn" type="button" aria-label="Chiudi la finestra di fine partita"
+                        class="zu-btn zu-btn--onDark zu-btn--icon shrink-0">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- Player YouTube Video Casuale @zerounosolution -->
-            <div class="bg-anthracite-900 rounded-xl p-3.5 text-ivory-50 border border-bronze-500/30 mb-4">
-                <div class="flex items-center justify-between gap-2 mb-2.5">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
-                        <span class="text-[11px] uppercase tracking-wider text-bronze-400 font-semibold truncate">
-                            ZeroUno Solution &bull; Video Casuale di Fine Partita
-                        </span>
-                    </div>
-                    <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-[11px] text-ivory-200 hover:text-white underline shrink-0">
-                        Vai al Canale
+            <!-- Video del canale -->
+            <div class="mb-5">
+                <div class="flex items-center justify-between gap-3 mb-2.5">
+                    <span class="zu-eyebrow truncate">ZeroUno Solution &bull; Video di fine partita</span>
+                    <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="zu-micro text-ivory-200 hover:text-white underline shrink-0">
+                        Vai al canale
                     </a>
                 </div>
 
-                <!-- Iframe 16:9 / Shorts Responsive -->
-                <div class="relative w-full aspect-video rounded-lg overflow-hidden bg-black border border-anthracite-800">
+                <div class="relative w-full aspect-video rounded-lg overflow-hidden bg-black border border-bronze-500/30">
                     <iframe
                         id="zeroUnoYoutubeIframe"
                         class="w-full h-full"
                         src=""
-                        title="ZeroUno Solution Video"
+                        title="Video del canale ZeroUno Solution"
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowfullscreen>
                     </iframe>
                 </div>
 
-                <!-- Titolo Video e Azioni Video -->
                 <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <p id="currentZeroUnoVideoTitle" class="text-xs font-medium text-ivory-100 truncate">
+                    <p id="currentZeroUnoVideoTitle" class="zu-small truncate">
                         ZeroUno Solution — Pillola Tecnologica
                     </p>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button id="nextRandomVideoBtn" type="button" class="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-ivory-50/10 hover:bg-ivory-50/20 text-ivory-50 transition cursor-pointer">
-                            Altro Video Casuale
-                        </button>
-                        <a id="directVideoYoutubeLink" href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-bronze-500 hover:bg-bronze-400 text-white transition">
-                            Apri su YouTube
-                        </a>
-                    </div>
+                    <button id="nextRandomVideoBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm shrink-0">
+                        Un altro video
+                    </button>
                 </div>
             </div>
 
-            <!-- Aggiunta Rapida Video Personalizzato del Canale ZeroUno -->
-            <details class="mb-4 text-xs bg-ivory-100/80 border border-ivory-200 rounded-xl px-3.5 py-2">
-                <summary class="cursor-pointer font-medium text-neutral-600 hover:text-anthracite-900 select-none">
-                    Personalizza / Aggiungi link video di @zerounosolution (<span id="videoPoolCount">6</span> video in rotazione)
+            <!-- Azioni -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5">
+                <a id="directVideoYoutubeLink" href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="zu-btn zu-btn--quiet sm:mr-auto">
+                    Apri su YouTube
+                </a>
+                <button id="modalReviewBoardBtn" type="button" class="zu-btn zu-btn--onDark">
+                    Osserva la scacchiera
+                </button>
+                <button id="modalPlayAgainBtn" type="button" class="zu-btn zu-btn--accent">
+                    Nuova partita
+                </button>
+            </div>
+
+            <!-- Aggiunta di un video del canale: strumento, non contenuto -->
+            <details class="mt-5 pt-4 border-t border-bronze-500/20">
+                <summary class="zu-micro text-ivory-200 cursor-pointer select-none hover:text-white">
+                    Aggiungi un video di @zerounosolution alla rotazione (<span id="videoPoolCount">6</span> in elenco)
                 </summary>
-                <div class="mt-2.5 flex flex-col sm:flex-row gap-2">
-                    <input id="customVideoUrlInput" type="text" placeholder="Incolla link YouTube o Shorts di ZeroUno" class="flex-1 text-xs bg-white border border-ivory-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-bronze-500" />
-                    <input id="customVideoTitleInput" type="text" placeholder="Titolo (opzionale)" class="sm:w-40 text-xs bg-white border border-ivory-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-bronze-500" />
-                    <button id="addCustomVideoBtn" type="button" class="px-3 py-1.5 rounded-lg bg-anthracite-900 text-ivory-50 text-xs font-medium hover:bg-anthracite-800 transition cursor-pointer">
+                <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                    <input id="customVideoUrlInput" type="text" placeholder="Link YouTube o Shorts" class="zu-field flex-1" />
+                    <input id="customVideoTitleInput" type="text" placeholder="Titolo (facoltativo)" class="zu-field sm:w-40" />
+                    <button id="addCustomVideoBtn" type="button" class="zu-btn zu-btn--onDark shrink-0">
                         Aggiungi
                     </button>
                 </div>
             </details>
-
-            <!-- Pulsanti Azione Fine Partita -->
-            <div class="flex flex-wrap items-center justify-end gap-2.5">
-                <button id="modalReviewBoardBtn" type="button" class="px-4 py-2 rounded-xl bg-ivory-100 hover:bg-ivory-200 border border-ivory-200 text-xs font-medium text-anthracite-800 transition cursor-pointer">
-                    Osserva Scacchiera
-                </button>
-                <button id="modalPlayAgainBtn" type="button" class="px-5 py-2 rounded-xl bg-anthracite-900 hover:bg-anthracite-800 text-ivory-50 text-xs font-medium transition shadow-sm cursor-pointer">
-                    Nuova Partita
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- Container Notifiche Toast -->
+    <!-- Notifiche -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- ================= FOOTER ================= -->
-    <footer class="border-t border-ivory-200 bg-ivory-50 py-4 px-4 text-center text-xs text-neutral-500">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <span>Scacchi ZeroUno &mdash; Design Semplice e Fine &bull; Desktop Mouse &amp; Mobile</span>
+    <!-- ================= PIEDE ================= -->
+    <footer class="border-t border-ivory-200 bg-ivory-50 py-4 px-4 mt-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 zu-micro zu-muted">
+            <span>Scacchi ZeroUno &mdash; Motore, interfaccia e pezzi originali</span>
             <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">
                 YouTube: @zerounosolution
             </a>
         </div>
     </footer>
-
 
     <!-- Applicazione: moduli ES, punto di ingresso unico -->
     <script type="module" src="src/main.js"></script>

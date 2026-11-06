@@ -1,38 +1,511 @@
+/* ============================================================================
+   SCACCHI ZEROUNO — SISTEMA VISIVO
+   ----------------------------------------------------------------------------
+   Direzione: "il tavolo e il taccuino".
+   La scacchiera e i due giocatori vivono su un'unica superficie scura (il
+   tavolo): e' l'unico punto focale della pagina. Tutto il resto — modalita',
+   notazione, canale — e' un taccuino tipografico su avorio, senza cornici,
+   separato solo da filetti. Una sola cosa pesa, le altre accompagnano.
+
+   SCALA TIPOGRAFICA (dichiarata, non improvvisata)
+     display   Cormorant 600  34 px (26 su telefono)  lh 1.08
+     titolo    Cormorant 600  26 px (21 su telefono)  lh 1.15
+     sezione   Cormorant 600  19 px                   lh 1.2
+     occhiello Inter 600      11 px  maiuscolo, tracking .16em
+     corpo     Inter 400      14 px                   lh 1.55
+     piccolo   Inter 400      13 px                   lh 1.5
+     micro     Inter 500      12 px                   lh 1.4
+     orologio  JetBrains 500  30 px (24 su telefono)  tabular
+     notazione JetBrains 500  13 px                   lh 1.6
+
+   PALETTE (hex dichiarati, contrasti misurati in rapporto al fondo)
+     fondo pagina   #FAF7F2    tavolo       #1C1B18   fascia  #2A2825
+     inchiostro     #1C1B18    secondario   #57534E   (7.14:1 su avorio)
+     bronzo testo   #84633B    (5.13:1 su avorio)
+     bronzo accento #C5A667    (7.40:1 su antracite — testo scuro sopra: 8.11:1)
+     avorio su scuro#F2ECE1    (14.65:1)  secondario #D3C5AC (10.13:1)
+     allarme        #A51D1D    (7.04:1 su avorio)
+     conferma       #047857    (5.13:1 su avorio)
+
+   GRIGLIA: base 4. Raggi: 4 / 10 / 16 / pieno. Nessun quarto raggio.
+   ========================================================================= */
+
 :root {
+    /* --- superfici e inchiostri ------------------------------------------ */
+    --paper: #FAF7F2;
+    --paper-2: #F2ECE1;
+    --rule: #E5DCCB;
+    --rule-strong: #D3C5AC;
+    --ink: #1C1B18;
+    --ink-2: #57534E;
+    --ink-on-dark: #F2ECE1;
+    --ink-on-dark-2: #D3C5AC;
+    --table: #1C1B18;
+    --table-band: #2A2825;
+    --table-well: #12110F;
+    --accent: #C5A667;
+    --accent-ink: #84633B;
+    --accent-line: #9E7B4F;
+    --alert: #A51D1D;
+    --ok: #047857;
+
+    /* --- misure ---------------------------------------------------------- */
+    --r-sm: 4px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --tap: 44px;
+    --frame: 22px;
+
+    /* --- scacchiera: tema Avorio & Noce ---------------------------------- */
     --sq-light: #EFE9DF;
     --sq-dark: #B59A72;
-    --sq-selected: rgba(158, 123, 79, 0.48);
-    --sq-last-move: rgba(197, 166, 103, 0.34);
-    --sq-check: radial-gradient(circle, rgba(220, 53, 34, 0.8) 0%, rgba(220, 53, 34, 0) 75%);
+    --sq-selected: rgba(197, 166, 103, 0.55);
+    --sq-last-move: rgba(197, 166, 103, 0.30);
+    --sq-check: radial-gradient(circle, rgba(165, 29, 29, 0.85) 0%, rgba(165, 29, 29, 0) 72%);
+    --frame-bg: #12110F;
+    --frame-ink: #C5A667;
+
+    /* Marcatori delle mosse: tinta piena, una per ciascuna tonalita' di
+       casella, scelta per restare sopra 3:1 (WCAG 1.4.11) anche sulle
+       caselle scure, dove un velo traslucido scendeva a 2.3:1. */
+    --mark-on-light: #4A4134;  /* 8.29:1 su #EFE9DF */
+    --mark-on-dark: #3B3327;   /* 4.64:1 su #B59A72 */
+    --check-on-light: #A51D1D; /* 6.26:1 su #EFE9DF */
+    --check-on-dark: #7F1D1D;  /* 3.74:1 su #B59A72 */
 }
 
 [data-board-theme="onyx"] {
     --sq-light: #DFDDD7;
     --sq-dark: #64676B;
-    --sq-selected: rgba(197, 166, 103, 0.48);
-    --sq-last-move: rgba(197, 166, 103, 0.30);
+    --sq-selected: rgba(197, 166, 103, 0.52);
+    --sq-last-move: rgba(197, 166, 103, 0.28);
+    --frame-bg: #18191B;
+    --mark-on-light: #4A4A4D;  /* 6.50:1 su #DFDDD7 */
+    --mark-on-dark: #F5F3EE;   /* 5.13:1 su #64676B — qui serve chiaro */
+    --check-on-light: #A51D1D;
+    --check-on-dark: #FFC9C4;
 }
 
 [data-board-theme="club"] {
     --sq-light: #EEEED2;
     --sq-dark: #769656;
-    --sq-selected: rgba(246, 246, 105, 0.62);
-    --sq-last-move: rgba(186, 202, 68, 0.48);
+    --sq-selected: rgba(246, 246, 105, 0.68);
+    --sq-last-move: rgba(186, 202, 68, 0.46);
+    --frame-bg: #1A2314;
+    --frame-ink: #CBD9A8;
+    --mark-on-light: #44492F;  /* 7.95:1 su #EEEED2 */
+    --mark-on-dark: #2F3A1F;   /* 3.59:1 su #769656 */
+    --check-on-light: #A51D1D;
+    --check-on-dark: #4A1010;
 }
 
+/* ============================================================================
+   1. BASE
+   ========================================================================= */
+
+* { -webkit-tap-highlight-color: transparent; }
+
 body {
-    background-color: #FAF7F2;
-    color: #1C1B18;
-    font-family: 'Inter', sans-serif;
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Scacchiera quadrata responsiva e interattiva su Desktop & Mobile */
+/* Stato di focus da tastiera: unico per tutta l'applicazione, visibile anche
+   sui controlli che il JavaScript crea a runtime (lobby, promozione, toast). */
+:focus { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--accent-line);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+}
+.zu-table :focus-visible,
+#gameOverModal :focus-visible,
+#matchmakingOverlay :focus-visible {
+    outline-color: var(--accent);
+}
+
+.zu-sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Area di tocco portata a 44x44 senza ingrandire il disegno: i controlli
+   compatti restano alti 36 px (densita' da desktop) ma il bersaglio cliccabile
+   arriva comunque a 44x44, come chiede WCAG 2.2 SC 2.5.5 (AAA).
+   Fonte: https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html */
+.zu-hit,
+.zu-btn--sm,
+#openRoomsList > div button,
+#promotionChoices button { position: relative; }
+
+.zu-hit::after,
+.zu-btn--sm::after,
+#openRoomsList > div button::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: max(100%, var(--tap));
+    height: max(100%, var(--tap));
+    transform: translate(-50%, -50%);
+}
+
+/* ============================================================================
+   2. TIPOGRAFIA
+   ========================================================================= */
+
+.zu-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+}
+.zu-table .zu-eyebrow,
+#gameOverModal .zu-eyebrow { color: var(--accent); }
+
+.zu-display {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+}
+.zu-section {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+}
+.zu-micro { font-size: 12px; font-weight: 500; line-height: 1.4; }
+.zu-small { font-size: 13px; line-height: 1.5; }
+.zu-muted { color: var(--ink-2); }
+.zu-note { font-size: 13px; line-height: 1.6; color: var(--ink-2); max-width: 56ch; }
+
+.zu-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Filetto di sezione del taccuino: separa senza costruire una scatola. */
+.zu-rule { border-top: 1px solid var(--rule); }
+
+/* ============================================================================
+   3. CONTROLLI
+   ========================================================================= */
+
+.zu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: var(--tap);
+    padding: 0 16px;
+    border-radius: var(--r-md);
+    border: 1px solid transparent;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.zu-btn svg { width: 16px; height: 16px; flex: none; }
+
+/* scuro: azione primaria su avorio */
+.zu-btn--primary { background: var(--ink); color: var(--paper); }
+.zu-btn--primary:hover { background: #3A3833; }
+
+/* bronzo: accento. Inchiostro scuro sopra il bronzo (8.11:1); il bianco sul
+   bronzo-500 si fermava a 3.64:1 e non passava AA. */
+.zu-btn--accent { background: var(--accent); color: #12110F; font-weight: 600; }
+.zu-btn--accent:hover { background: #D7BC83; }
+
+/* contorno: azione secondaria su avorio */
+.zu-btn--outline {
+    background: #FFFFFF;
+    color: var(--ink);
+    border-color: var(--rule-strong);
+}
+.zu-btn--outline:hover { border-color: var(--accent-line); background: var(--paper); }
+
+/* su fondo scuro */
+.zu-btn--onDark {
+    background: rgba(250, 247, 242, 0.08);
+    color: var(--ink-on-dark);
+    border-color: rgba(250, 247, 242, 0.18);
+}
+.zu-btn--onDark:hover { background: rgba(250, 247, 242, 0.16); border-color: var(--accent); }
+
+.zu-btn--danger { background: #5B1118; color: #FBEAEA; }
+.zu-btn--danger:hover { background: #7A1620; }
+
+/* testuale: terza gerarchia, nessun contorno */
+.zu-btn--quiet {
+    background: transparent;
+    color: var(--accent-ink);
+    padding: 0 8px;
+    font-weight: 600;
+}
+.zu-btn--quiet:hover { color: var(--ink); text-decoration: underline; }
+
+.zu-btn--sm { min-height: 36px; font-size: 12px; padding: 0 12px; }
+
+/* Controlli isolati che vivono su fondo scuro o dentro un campo */
+#boardThemeSelect { font-size: 13px; }
+#copyWaitingCodeBtn { color: var(--ink-on-dark-2); }
+#copyWaitingCodeBtn:hover { color: #FFFFFF; }
+#directVideoYoutubeLink { color: var(--accent); }
+#directVideoYoutubeLink:hover { color: #E3CFA2; }
+#copyUserIdBtn { padding: 0 4px; }
+.zu-btn--icon { width: var(--tap); min-height: var(--tap); padding: 0; }
+.zu-btn--block { display: flex; width: 100%; }
+
+.zu-field {
+    width: 100%;
+    min-height: var(--tap);
+    padding: 10px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-md);
+    background: #FFFFFF;
+    color: var(--ink);
+    font-size: 14px;
+    font-family: inherit;
+}
+.zu-field::placeholder { color: #8A827A; }
+.zu-field:hover { border-color: var(--accent-line); }
+select.zu-field { cursor: pointer; appearance: auto; }
+
+.zu-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+}
+
+.zu-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.zu-pill--onDark {
+    background: rgba(250, 247, 242, 0.08);
+    color: var(--ink-on-dark-2);
+    border: 1px solid rgba(197, 166, 103, 0.35);
+}
+.zu-pill--paper { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); }
+
+.zu-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: var(--r-sm);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.6;
+}
+
+/* Linguette delle modalita'. Il JavaScript riscrive la stringa di classi a
+   ogni click: qui si fissa solo cio' che quella stringa non porta (altezza di
+   tocco, cursore), senza combattere le utility che imposta. */
+.mode-tab-btn {
+    min-height: var(--tap);
+    cursor: pointer;
+    border-radius: var(--r-md);
+    font-size: 13px;
+}
+
+/* ============================================================================
+   4. IL TAVOLO
+   ========================================================================= */
+
+.zu-table {
+    background: var(--table);
+    border-radius: var(--r-lg);
+    border: 1px solid rgba(197, 166, 103, 0.22);
+    box-shadow: 0 28px 60px -28px rgba(18, 17, 15, 0.45);
+    color: var(--ink-on-dark);
+    width: 100%;
+    /* 620 px di scacchiera + 2x20 di padding + 2x1 di bordo */
+    max-width: 662px;
+    padding: 20px;
+}
+.zu-table-rule { border-top: 1px solid rgba(197, 166, 103, 0.20); }
+
+/* Fascia del giocatore: lo stesso disegno sopra e sotto la scacchiera, perche'
+   i due giocatori hanno lo stesso peso. */
+.zu-seat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--table-band);
+    border: 1px solid rgba(197, 166, 103, 0.16);
+    border-radius: var(--r-md);
+    padding: 10px 12px;
+}
+
+#topPlayerAvatar,
+#bottomPlayerAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-md);
+    font-size: 17px;
+    box-shadow: inset 0 0 0 1px rgba(197, 166, 103, 0.45);
+}
+/* Il JS assegna all'avatar del Nero lo stesso antracite del tavolo: qui
+   scende di un gradino, altrimenti sparisce nella fascia. */
+#topPlayerAvatar.bg-anthracite-900,
+#bottomPlayerAvatar.bg-anthracite-900 { background-color: #0B0A09; color: var(--ink-on-dark); }
+
+#topPlayerName,
+#bottomPlayerName { font-size: 14px; font-weight: 500; color: var(--ink-on-dark); }
+
+#topPlayerBadge,
+#bottomPlayerBadge {
+    padding: 2px 7px;
+    border-radius: var(--r-sm);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(250, 247, 242, 0.10);
+    color: var(--ink-on-dark-2);
+    border: 1px solid rgba(197, 166, 103, 0.28);
+}
+
+/* Vassoio dei pezzi catturati: compare solo quando c'e' qualcosa dentro, e su
+   avorio, perche' i pezzi neri (#23211E) sulla fascia scura non si leggono. */
+#topCapturedPieces,
+#bottomCapturedPieces { border-radius: 999px; }
+#topCapturedPieces:not(:empty),
+#bottomCapturedPieces:not(:empty) { background: var(--paper-2); padding: 2px 7px; }
+#topCapturedPieces span,
+#bottomCapturedPieces span { width: 15px; height: 15px; }
+
+#topMaterialDiff,
+#bottomMaterialDiff {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* L'orologio e' il dato che si legge sotto pressione: stesso trattamento per
+   entrambi i giocatori, cifre a larghezza fissa, nessun salto di layout. */
+#topTimerBox,
+#bottomTimerBox {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--ink-on-dark);
+    background: var(--table-well);
+    border: 1px solid rgba(197, 166, 103, 0.28);
+    border-radius: var(--r-md);
+    padding: 8px 12px;
+    min-width: 116px;
+    text-align: center;
+}
+
+/* --- Orologio in corsa e tempo agli sgoccioli -----------------------------
+   Queste due regole sono gia' pronte ma restano inerti finche' il JavaScript
+   non marca l'orologio attivo. Serve una riga sola in `renderTimersUI`:
+
+     const bottomIsBlack = state.boardOrientation !== 'w';
+     bottomTimerEl.dataset.active = (chess.turn() === (bottomIsBlack ? 'b' : 'w')) ? '1' : '';
+     topTimerEl.dataset.active    = bottomTimerEl.dataset.active === '1' ? '' : '1';
+     // e, per il tempo quasi finito:
+     el.dataset.low = secondi <= 30 ? '1' : '';
+
+   Senza questo, i due orologi restano identici: e' l'unico dato della partita
+   che oggi non si legge a colpo d'occhio, e non si puo' dedurre dal solo CSS. */
+#topTimerBox[data-active="1"],
+#bottomTimerBox[data-active="1"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #12110F;              /* 8.11:1 */
+}
+#topTimerBox[data-low="1"],
+#bottomTimerBox[data-low="1"] {
+    background: #5B1118;
+    border-color: #8E2430;
+    color: #FBEAEA;
+}
+
+/* Scacchiera navigabile da tastiera: frecce per spostarsi, Invio per
+   selezionare e muovere (src/ui/keyboard.js). L'anello di fuoco sta dentro
+   la casella, per non uscire dalla griglia.
+   .keyboard-focus accompagna :focus-visible: il fuoco viene spostato dal
+   codice, e non tutti i browser trattano un focus() come "da tastiera". */
+.square:focus-visible,
+.square.keyboard-focus {
+    outline: 3px solid var(--mark);
+    outline-offset: -3px;
+}
+
+/* Titolo di stato: il JavaScript riscrive l'intera stringa di classi e usa
+   colori pensati per il fondo chiaro. Qui ogni token viene rimappato sulla
+   superficie scura, conservando il significato (normale / scacco / finita). */
+#gameStatusHeadline {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-top: 2px;
+}
+#gameStatusHeadline.text-anthracite-900 { color: var(--ink-on-dark); }
+#gameStatusHeadline.text-rose-700 { color: #FF9D93; }
+#gameStatusHeadline.text-bronze-600 { color: var(--accent); }
+
+#turnIndicatorDot { width: 9px; height: 9px; flex: none; }
+
+#selectedSquareIndicator {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+#mouseInstructionBanner { font-size: 12.5px; color: var(--ink-on-dark-2); }
+
+/* ============================================================================
+   5. LA SCACCHIERA
+   ========================================================================= */
+
+/* La cornice e' il bordo del tavolo: le coordinate sono incise li', non
+   stampate dentro le caselle dove litigano con i pezzi. */
 .chess-board-container {
     aspect-ratio: 1 / 1;
     width: 100%;
-    max-width: 580px;
-    box-shadow: 0 22px 50px -12px rgba(28, 27, 24, 0.16), 0 0 0 1px rgba(28, 27, 24, 0.14);
+    padding: var(--frame);
+    background: var(--frame-bg);
+    border-radius: 12px;
+    box-shadow:
+        inset 0 0 0 1px rgba(197, 166, 103, 0.30),
+        0 18px 40px -16px rgba(18, 17, 15, 0.55);
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
@@ -60,7 +533,8 @@ body {
     -webkit-user-drag: none;
 }
 
-/* Tutti gli elementi figli dentro la casella non devono mai intercettare o bloccare il mouse */
+/* Nessun figlio della casella intercetta il mouse: la mossa si calcola dalla
+   geometria della griglia. */
 .square * {
     pointer-events: none !important;
     user-select: none !important;
@@ -68,29 +542,46 @@ body {
     -webkit-user-drag: none !important;
 }
 
-.square.light { background-color: var(--sq-light); }
-.square.dark { background-color: var(--sq-dark); }
+.square.light { background-color: var(--sq-light); --mark: var(--mark-on-light); --check-ink: var(--check-on-light); }
+.square.dark { background-color: var(--sq-dark); --mark: var(--mark-on-dark); --check-ink: var(--check-on-dark); }
+
+/* --- Stati, distinti per FORMA prima che per colore ---------------------- */
+
+/* I veli di stato sono un livello di background-image sopra il colore della
+   casella: cosi' si compongono sempre con la tonalita' vera (chiara o scura,
+   in tutti e tre i temi) invece che con quello che sta dietro alla griglia. */
+
+/* Selezionata: anello continuo, pieno caldo. */
 .square.selected {
-    background-color: var(--sq-selected) !important;
-    box-shadow: inset 0 0 0 2.5px rgba(158, 123, 79, 0.85);
-}
-.square.last-move { background-color: var(--sq-last-move); }
-
-/* Cursori Desktop chiari per i pezzi giocabili e le caselle di destinazione */
-.square.playable-piece {
-    cursor: grab;
-}
-.square.playable-piece:active {
-    cursor: grabbing;
-}
-.square.valid-move,
-.square.valid-capture {
-    cursor: pointer !important;
-}
-.square.drag-hover {
-    box-shadow: inset 0 0 0 3px #1C1B18 !important;
+    background-image: linear-gradient(var(--sq-selected), var(--sq-selected));
+    box-shadow: inset 0 0 0 3px var(--mark);
 }
 
+/* Ultima mossa: quattro angoli, come la squadratura di una lastra. Non puo'
+   essere scambiata per la casella selezionata nemmeno con la coda dell'occhio. */
+.square.last-move { background-image: linear-gradient(var(--sq-last-move), var(--sq-last-move)); }
+.square.last-move::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image:
+        linear-gradient(var(--mark), var(--mark)), linear-gradient(var(--mark), var(--mark)),
+        linear-gradient(var(--mark), var(--mark)), linear-gradient(var(--mark), var(--mark)),
+        linear-gradient(var(--mark), var(--mark)), linear-gradient(var(--mark), var(--mark)),
+        linear-gradient(var(--mark), var(--mark)), linear-gradient(var(--mark), var(--mark));
+    background-repeat: no-repeat;
+    background-size: 26% 3px, 3px 26%, 26% 3px, 3px 26%, 26% 3px, 3px 26%, 26% 3px, 3px 26%;
+    background-position:
+        left top, left top,
+        right top, right top,
+        left bottom, left bottom,
+        right bottom, right bottom;
+    opacity: 0.85;
+}
+
+/* Scacco: alone rosso piu' anello, cosi' resta leggibile anche sulle caselle
+   scure dove il solo alone si perdeva. */
 .square.in-check::before {
     content: '';
     position: absolute;
@@ -99,49 +590,49 @@ body {
     pointer-events: none;
     z-index: 1;
 }
+.square.in-check { box-shadow: inset 0 0 0 3px var(--check-ink); }
 
-/* Indicatori mosse legali */
+/* Cursori */
+.square.playable-piece { cursor: grab; }
+.square.playable-piece:active { cursor: grabbing; }
+.square.valid-move,
+.square.valid-capture { cursor: pointer !important; }
+
+/* Casella sotto il pezzo trascinato: anello spesso, nella stessa tinta piena
+   dei marcatori, cosi' tiene il contrasto su entrambe le tonalita' e su tutti
+   i temi (un anello chiaro spariva sulle caselle chiare). */
+.square.drag-hover { box-shadow: inset 0 0 0 5px var(--mark) !important; }
+
+/* --- Indicatori di mossa legale ----------------------------------------- */
+
 .move-dot {
     display: none;
-    width: 28%;
-    height: 28%;
+    width: 26%;
+    height: 26%;
     border-radius: 9999px;
-    background-color: rgba(28, 27, 24, 0.28);
+    background-color: var(--mark);
     pointer-events: none;
     z-index: 3;
-    transition: transform 0.12s ease, background-color 0.12s ease;
+    transition: transform 0.12s ease;
 }
-
-.square.valid-move .move-dot {
-    display: block;
-}
-
-.square.valid-move:hover .move-dot {
-    transform: scale(1.28);
-    background-color: rgba(158, 123, 79, 0.85);
-}
+.square.valid-move .move-dot { display: block; }
+.square.valid-move:hover .move-dot { transform: scale(1.3); }
 
 .capture-ring {
     display: none;
     position: absolute;
-    inset: 6%;
+    inset: 5%;
     border-radius: 9999px;
-    border: 4px solid rgba(28, 27, 24, 0.32);
+    border: 5px solid var(--mark);
     pointer-events: none;
     z-index: 3;
-    transition: border-color 0.12s ease, transform 0.12s ease;
+    transition: transform 0.12s ease;
 }
+.square.valid-capture .capture-ring { display: block; }
+.square.valid-capture:hover .capture-ring { transform: scale(1.05); }
 
-.square.valid-capture .capture-ring {
-    display: block;
-}
+/* --- Pezzi --------------------------------------------------------------- */
 
-.square.valid-capture:hover .capture-ring {
-    border-color: rgba(158, 123, 79, 0.9);
-    transform: scale(1.04);
-}
-
-/* Pezzi SVG */
 .piece-layer {
     width: 84%;
     height: 84%;
@@ -151,68 +642,245 @@ body {
     justify-content: center;
     transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.12s ease;
 }
-
 .chess-piece {
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 3px 4px rgba(18, 17, 15, 0.22));
 }
+.square.playable-piece:hover .piece-layer { transform: translateY(-2px) scale(1.04); }
+.square.dragging-source .piece-layer { opacity: 0.26; transform: scale(0.9); }
 
-.square.playable-piece:hover .piece-layer {
-    transform: translateY(-2px) scale(1.03);
-}
-
-.square.dragging-source .piece-layer {
-    opacity: 0.28;
-    transform: scale(0.92);
-}
-
-/* Pezzo flottante durante il Drag & Drop con il mouse su Desktop */
 #floatingDragPiece {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 68px;
-    height: 68px;
+    top: 0; left: 0;
+    width: 72px; height: 72px;
     pointer-events: none !important;
-    z-index: 9999;
+    z-index: 50;
     transform: translate(-50%, -50%);
-    filter: drop-shadow(0 12px 18px rgba(18, 17, 15, 0.38));
+    filter: drop-shadow(0 14px 20px rgba(18, 17, 15, 0.45));
     display: none;
 }
 
-/* Coordinate sulla scacchiera */
-.coord-rank {
-    position: absolute;
-    top: 3px;
-    left: 5px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    line-height: 1;
-    pointer-events: none;
-    opacity: 0.78;
-    font-family: 'JetBrains Mono', monospace;
-}
+/* --- Coordinate incise nella cornice ------------------------------------ */
 
+.coord-rank,
 .coord-file {
     position: absolute;
-    bottom: 2px;
-    right: 5px;
-    font-size: 0.65rem;
-    font-weight: 600;
-    line-height: 1;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: var(--frame);
+    letter-spacing: 0.05em;
+    color: var(--frame-ink);
+    opacity: 0.9;
     pointer-events: none;
-    opacity: 0.78;
-    font-family: 'JetBrains Mono', monospace;
+}
+.coord-rank {
+    top: 50%;
+    left: calc(-1 * var(--frame));
+    width: var(--frame);
+    height: var(--frame);
+    margin-top: calc(var(--frame) / -2);
+    text-align: center;
+}
+.coord-file {
+    bottom: calc(-1 * var(--frame));
+    left: 50%;
+    width: var(--frame);
+    height: var(--frame);
+    margin-left: calc(var(--frame) / -2);
+    text-align: center;
 }
 
-.square.light .coord-rank,
-.square.light .coord-file { color: var(--sq-dark); }
-.square.dark .coord-rank,
-.square.dark .coord-file { color: var(--sq-light); }
+/* --- Sovrapposizioni sulla scacchiera ------------------------------------ */
 
-/* Scrollbar minimalista */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+#promotionOverlay,
+#matchmakingOverlay { border-radius: 12px; }
+
+#promotionChoices button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 84px;
+    padding: 8px 4px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--rule-strong);
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+#promotionChoices button:hover { background: var(--paper-2); border-color: var(--accent-line); }
+#promotionChoices button span { font-size: 11px; font-weight: 500; color: var(--ink-2); }
+
+/* ============================================================================
+   6. IL TACCUINO (colonna destra)
+   ========================================================================= */
+
+.zu-block + .zu-block { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--rule); }
+
+.zu-block-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+/* --- Notazione ----------------------------------------------------------- */
+
+#moveHistoryContainer {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+/* Larghezza da foglio di notazione: le due colonne restano vicine e leggibili
+   invece di allargarsi per tutta la colonna. */
+#moveHistoryTable { table-layout: fixed; width: 100%; max-width: 360px; }
+#moveHistoryTable thead th {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding: 0 8px 8px;
+    border-bottom: 1px solid var(--rule-strong);
+}
+#moveHistoryTable thead th:first-child { width: 44px; }
+#moveHistoryBody tr { border-bottom: 1px solid var(--rule); }
+#moveHistoryBody tr:last-child { border-bottom: 0; }
+/* Il JS scrive text-neutral-400 sul numero di mossa: 2.54:1, sotto la soglia.
+   Qui torna leggibile senza toccare il modulo. */
+#moveHistoryBody td:first-child { color: var(--ink-2) !important; width: 44px; }
+#moveHistoryBody td { padding: 7px 8px; font-size: 13px; }
+#moveHistoryBody td:nth-child(2) { color: var(--ink) !important; font-weight: 500; }
+#moveHistoryBody td:nth-child(3) { color: var(--ink-2) !important; font-weight: 500; }
+
+#moveHistoryEmpty { color: var(--ink-2); }
+
+#moveCounterBadge {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    background: var(--paper-2);
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+/* --- Lobby --------------------------------------------------------------- */
+
+/* Senza piu' la scatola bianca attorno, le righe della lobby hanno bisogno di
+   un fondo proprio per leggersi come elenco: il bordo bronzo continua a
+   distinguere le stanze di persone vere dagli sfidanti AI. */
+#openRoomsList > div {
+    background: var(--paper-2);
+    min-height: 44px;
+    border-radius: var(--r-md) !important;
+    padding: 6px 8px 6px 12px !important;
+    font-size: 13px !important;
+}
+#openRoomsList > div button {
+    min-height: 32px;
+    padding: 0 12px !important;
+    border-radius: var(--r-sm) !important;
+    cursor: pointer;
+}
+#openRoomsList .text-neutral-500 { color: var(--ink-2) !important; }
+
+#openRoomsCountBadge {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   7. FINE PARTITA
+   ========================================================================= */
+
+#gameOverModal .zu-modal {
+    background: var(--table);
+    border: 1px solid rgba(197, 166, 103, 0.28);
+    border-radius: var(--r-lg);
+    color: var(--ink-on-dark);
+    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+}
+#modalOutcomeTitle {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.08;
+    color: var(--ink-on-dark);
+}
+#currentZeroUnoVideoTitle { color: var(--ink-on-dark-2); }
+
+/* ============================================================================
+   8. NOTIFICHE
+   ========================================================================= */
+
+#toastContainer > div {
+    border-radius: var(--r-md) !important;
+    font-size: 13px !important;
+    padding: 10px 14px !important;
+}
+
+/* ============================================================================
+   9. BARRE DI SCORRIMENTO
+   ========================================================================= */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D3C5AC; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #9E7B4F; }
+::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-line); }
+.zu-table ::-webkit-scrollbar-thumb { background: rgba(197, 166, 103, 0.4); }
+
+/* ============================================================================
+   10. ADATTAMENTO
+   ========================================================================= */
+
+/* Da 1024 px in su il tavolo si accorcia con l'altezza della finestra, cosi'
+   scacchiera, giocatori e controlli stanno quasi sempre in una schermata.
+   Il pavimento di 520 px impedisce che su uno schermo basso la scacchiera
+   diventi un francobollo pur avendo spazio in larghezza. */
+@media (min-width: 1024px) {
+    .zu-table { max-width: min(662px, max(580px, calc(100vh - 436px))); }
+}
+
+/* Telefono: tutto si stringe di un gradino, ma nessun bersaglio scende sotto
+   44 px e nessun campo sotto 16 px (sotto i 16 px iOS ingrandisce la pagina
+   al focus). */
+@media (max-width: 639px) {
+    :root { --frame: 12px; }
+
+    .zu-table { padding: 12px; border-radius: 12px; }
+    .zu-seat { padding: 8px 10px; border-radius: var(--r-sm); }
+
+    /* Sul telefono la scacchiera esce al vivo sui due lati del tavolo: ogni
+       pixel recuperato va alle caselle, che restano l'unico bersaglio di
+       tocco davvero stretto (41 px invece di 37). */
+    .chess-board-container {
+        margin-left: -12px;
+        margin-right: -12px;
+        width: calc(100% + 24px);
+        border-radius: 0;
+    }
+
+    #topPlayerAvatar, #bottomPlayerAvatar { width: 34px; height: 34px; font-size: 15px; border-radius: 8px; }
+    #topTimerBox, #bottomTimerBox { font-size: 24px; min-width: 92px; padding: 6px 8px; }
+    #gameStatusHeadline { font-size: 21px; }
+    #modalOutcomeTitle { font-size: 26px; }
+
+    .zu-display { font-size: 26px; }
+    .zu-field { font-size: 16px; }
+    .zu-block + .zu-block { margin-top: 20px; padding-top: 18px; }
+}
+
+/* Chi ha chiesto meno movimento non riceve rotazioni ne' pulsazioni. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
