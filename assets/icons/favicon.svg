@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Scacchi ZeroUno">
+  <rect width="512" height="512" rx="112" fill="#1C1B18"/>
+  <rect x="28" y="28" width="456" height="456" rx="88" fill="none" stroke="#C5A667" stroke-width="10" opacity="0.55"/>
+  <text x="256" y="258" fill="#C5A667" font-family="Georgia, 'Cormorant Garamond', serif" font-size="196" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="-6">01</text>
+  <rect x="150" y="358" width="212" height="8" rx="4" fill="#C5A667" opacity="0.8"/>
+</svg>

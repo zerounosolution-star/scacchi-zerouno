@@ -1,0 +1,16 @@
+{
+  "name": "scacchi-zerouno",
+  "version": "1.0.0",
+  "description": "Scacchiera web di ZeroUno Solution: partite contro l'AI, in due sullo stesso dispositivo o online. Moduli ES, nessuna dipendenza da installare.",
+  "private": true,
+  "type": "module",
+  "author": "ZeroUno Solution",
+  "homepage": "https://youtube.com/@zerounosolution",
+  "scripts": {
+    "start": "python -m http.server 8099",
+    "test": "node --test tests/engine.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

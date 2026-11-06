@@ -1,0 +1,218 @@
+:root {
+    --sq-light: #EFE9DF;
+    --sq-dark: #B59A72;
+    --sq-selected: rgba(158, 123, 79, 0.48);
+    --sq-last-move: rgba(197, 166, 103, 0.34);
+    --sq-check: radial-gradient(circle, rgba(220, 53, 34, 0.8) 0%, rgba(220, 53, 34, 0) 75%);
+}
+
+[data-board-theme="onyx"] {
+    --sq-light: #DFDDD7;
+    --sq-dark: #64676B;
+    --sq-selected: rgba(197, 166, 103, 0.48);
+    --sq-last-move: rgba(197, 166, 103, 0.30);
+}
+
+[data-board-theme="club"] {
+    --sq-light: #EEEED2;
+    --sq-dark: #769656;
+    --sq-selected: rgba(246, 246, 105, 0.62);
+    --sq-last-move: rgba(186, 202, 68, 0.48);
+}
+
+body {
+    background-color: #FAF7F2;
+    color: #1C1B18;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Scacchiera quadrata responsiva e interattiva su Desktop & Mobile */
+.chess-board-container {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 580px;
+    box-shadow: 0 22px 50px -12px rgba(28, 27, 24, 0.16), 0 0 0 1px rgba(28, 27, 24, 0.14);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.chess-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.12s ease, box-shadow 0.12s ease;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Tutti gli elementi figli dentro la casella non devono mai intercettare o bloccare il mouse */
+.square * {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-user-drag: none !important;
+}
+
+.square.light { background-color: var(--sq-light); }
+.square.dark { background-color: var(--sq-dark); }
+.square.selected {
+    background-color: var(--sq-selected) !important;
+    box-shadow: inset 0 0 0 2.5px rgba(158, 123, 79, 0.85);
+}
+.square.last-move { background-color: var(--sq-last-move); }
+
+/* Cursori Desktop chiari per i pezzi giocabili e le caselle di destinazione */
+.square.playable-piece {
+    cursor: grab;
+}
+.square.playable-piece:active {
+    cursor: grabbing;
+}
+.square.valid-move,
+.square.valid-capture {
+    cursor: pointer !important;
+}
+.square.drag-hover {
+    box-shadow: inset 0 0 0 3px #1C1B18 !important;
+}
+
+.square.in-check::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--sq-check);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Indicatori mosse legali */
+.move-dot {
+    display: none;
+    width: 28%;
+    height: 28%;
+    border-radius: 9999px;
+    background-color: rgba(28, 27, 24, 0.28);
+    pointer-events: none;
+    z-index: 3;
+    transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.square.valid-move .move-dot {
+    display: block;
+}
+
+.square.valid-move:hover .move-dot {
+    transform: scale(1.28);
+    background-color: rgba(158, 123, 79, 0.85);
+}
+
+.capture-ring {
+    display: none;
+    position: absolute;
+    inset: 6%;
+    border-radius: 9999px;
+    border: 4px solid rgba(28, 27, 24, 0.32);
+    pointer-events: none;
+    z-index: 3;
+    transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.square.valid-capture .capture-ring {
+    display: block;
+}
+
+.square.valid-capture:hover .capture-ring {
+    border-color: rgba(158, 123, 79, 0.9);
+    transform: scale(1.04);
+}
+
+/* Pezzi SVG */
+.piece-layer {
+    width: 84%;
+    height: 84%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.12s ease;
+}
+
+.chess-piece {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 3px 4px rgba(18, 17, 15, 0.22));
+}
+
+.square.playable-piece:hover .piece-layer {
+    transform: translateY(-2px) scale(1.03);
+}
+
+.square.dragging-source .piece-layer {
+    opacity: 0.28;
+    transform: scale(0.92);
+}
+
+/* Pezzo flottante durante il Drag & Drop con il mouse su Desktop */
+#floatingDragPiece {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 68px;
+    height: 68px;
+    pointer-events: none !important;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 12px 18px rgba(18, 17, 15, 0.38));
+    display: none;
+}
+
+/* Coordinate sulla scacchiera */
+.coord-rank {
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0.78;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.coord-file {
+    position: absolute;
+    bottom: 2px;
+    right: 5px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0.78;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.square.light .coord-rank,
+.square.light .coord-file { color: var(--sq-dark); }
+.square.dark .coord-rank,
+.square.dark .coord-file { color: var(--sq-light); }
+
+/* Scrollbar minimalista */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D3C5AC; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9E7B4F; }

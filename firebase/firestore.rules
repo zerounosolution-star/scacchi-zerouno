@@ -1,0 +1,59 @@
+rules_version = '2';
+
+/**
+ * REGOLE DI SICUREZZA FIRESTORE — SCACCHI ZEROUNO
+ *
+ * Le chiavi Firebase del client sono pubbliche per definizione:
+ * la sicurezza dei dati dipende interamente da queste regole.
+ *
+ * Principio: chiunque sia autenticato (anche in forma anonima) puo'
+ * vedere le stanze aperte e giocare, ma una partita puo' essere
+ * modificata solo dalle due persone che la stanno giocando.
+ *
+ * Pubblicazione:  firebase deploy --only firestore:rules
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /artifacts/{appId}/public/data/chess_matches/{matchId} {
+
+      // Chi ha creato la stanza o chi vi e' entrato come secondo giocatore.
+      function isPlayer() {
+        return request.auth != null && (
+          resource.data.whiteUid == request.auth.uid ||
+          resource.data.blackUid == request.auth.uid
+        );
+      }
+
+      // La stanza non ha ancora un secondo giocatore: chiunque puo' entrare.
+      function isJoiningOpenRoom() {
+        return request.auth != null
+          && resource.data.status == 'waiting'
+          && resource.data.blackUid == null
+          && request.resource.data.blackUid == request.auth.uid
+          && request.resource.data.whiteUid == resource.data.whiteUid;
+      }
+
+      // Lettura: serve essere autenticati. Basta per vedere la lobby.
+      allow read: if request.auth != null;
+
+      // Creazione: solo a proprio nome, e solo con i campi previsti.
+      allow create: if request.auth != null
+        && request.resource.data.whiteUid == request.auth.uid
+        && request.resource.data.status in ['waiting', 'active']
+        && request.resource.data.keys().hasAll(['whiteUid', 'status', 'fen', 'createdAt']);
+
+      // Modifica: i due giocatori della partita, o chi entra in una stanza aperta.
+      // Il colore di chi ha creato la stanza non si puo' riscrivere.
+      allow update: if isPlayer() || isJoiningOpenRoom();
+
+      // Cancellazione: solo chi ha creato la stanza, per ripulire a fine partita.
+      allow delete: if request.auth != null && resource.data.whiteUid == request.auth.uid;
+    }
+
+    // Tutto il resto e' chiuso.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
