@@ -226,10 +226,26 @@ export function setupEventListeners() {
     });
 }
 
+/**
+ * Registra il service worker, che rende l'applicazione giocabile
+ * anche senza rete e installabile sul telefono.
+ *
+ * Funziona solo su HTTPS o su localhost: aperta da file:// la
+ * registrazione viene saltata senza disturbare nessuno.
+ */
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker
+        .register('sw.js')
+        .catch((err) => console.warn('Service worker non registrato:', err.message));
+}
+
 // Avvio applicazione al caricamento della finestra
 window.onload = async function () {
     initPersistentBoardDOM();
     setupEventListeners();
     startNewAiGame();
+    registerServiceWorker();
     await initFirebase();
 };

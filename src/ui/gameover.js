@@ -25,6 +25,12 @@ export function checkAndHandleGameOver() {
     } else if (chess.insufficient_material()) {
         title = 'Patta per Materiale Insufficiente';
         subtitle = 'Impossibile dare scacco matto con i pezzi rimasti';
+    } else if (chess.in_threefold_repetition()) {
+        title = 'Patta per Ripetizione';
+        subtitle = 'La stessa posizione e\' comparsa tre volte';
+    } else if (chess.halfMoves >= 100) {
+        title = 'Patta per la Regola delle 50 Mosse';
+        subtitle = '50 mosse senza catture e senza mosse di pedone';
     } else if (chess.in_draw()) {
         title = 'Partita Patta';
         subtitle = 'Equilibrio perfetto sulla scacchiera';

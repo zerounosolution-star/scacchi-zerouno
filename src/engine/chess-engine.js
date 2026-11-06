@@ -22,6 +22,15 @@ export function coordsToSq(r, c) {
     return `${FILES[c]}${8 - r}`;
 }
 
+/*
+ * Tabelle di direzione, create una volta sola.
+ * Erano letterali dentro isSquareAttacked: allocarle a ogni chiamata
+ * pesava sulla ricerca dell'AI, che chiama quella funzione milioni di volte.
+ */
+const KNIGHT_JUMPS = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+const ORTHO_DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const DIAG_DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
 export function inBounds(r, c) {
     return r >= 0 && r < 8 && c >= 0 && c < 8;
 }
@@ -46,6 +55,40 @@ export class ZeroUnoChessEngine {
         this.halfMoves = 0;
         this.fullMoves = 1;
         this.moveStack = [];
+
+        // Conta quante volte ogni posizione si e' ripetuta nella partita.
+        this.positionCounts = new Map();
+        this.recordPosition();
+    }
+
+    /**
+     * Impronta di una posizione per la regola della ripetizione.
+     *
+     * E' la FEN senza i due contatori di mossa: due posizioni sono "la
+     * stessa" quando coincidono pezzi, turno, diritti di arrocco e
+     * possibilita' di presa en passant.
+     *
+     * @returns {string}
+     */
+    positionKey() {
+        return this.fen().split(' ').slice(0, 4).join(' ');
+    }
+
+    /** Registra la posizione corrente nel conteggio delle ripetizioni. */
+    recordPosition() {
+        const key = this.positionKey();
+        this.positionCounts.set(key, (this.positionCounts.get(key) || 0) + 1);
+    }
+
+    /** Toglie la posizione corrente dal conteggio (serve a undo()). */
+    forgetPosition() {
+        const key = this.positionKey();
+        const count = this.positionCounts.get(key) || 0;
+        if (count <= 1) {
+            this.positionCounts.delete(key);
+        } else {
+            this.positionCounts.set(key, count - 1);
+        }
     }
 
     turn() {
@@ -91,11 +134,7 @@ export class ZeroUnoChessEngine {
         }
 
         // 2. Attacchi da cavalli
-        const knightJumps = [
-            [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-            [1, -2], [1, 2], [2, -1], [2, 1]
-        ];
-        for (const [dr, dc] of knightJumps) {
+        for (const [dr, dc] of KNIGHT_JUMPS) {
             const nr = targetR + dr;
             const nc = targetC + dc;
             if (inBounds(nr, nc)) {
@@ -118,8 +157,7 @@ export class ZeroUnoChessEngine {
         }
 
         // 4. Attacchi ortogonali (Torre / Regina)
-        const orthoDirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-        for (const [dr, dc] of orthoDirs) {
+        for (const [dr, dc] of ORTHO_DIRS) {
             let nr = targetR + dr;
             let nc = targetC + dc;
             while (inBounds(nr, nc)) {
@@ -134,8 +172,7 @@ export class ZeroUnoChessEngine {
         }
 
         // 5. Attacchi diagonali (Alfiere / Regina)
-        const diagDirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-        for (const [dr, dc] of diagDirs) {
+        for (const [dr, dc] of DIAG_DIRS) {
             let nr = targetR + dr;
             let nc = targetC + dc;
             while (inBounds(nr, nc)) {
@@ -366,35 +403,84 @@ export class ZeroUnoChessEngine {
         return moves;
     }
 
-    isMoveLegal(moveObj) {
-        const testGrid = this.cloneBoardGrid();
+    /**
+     * Dice se una mossa pseudo-legale lascia il proprio re al sicuro.
+     *
+     * La mossa si applica sulla scacchiera vera e poi si annulla,
+     * salvando soltanto le caselle toccate (al massimo quattro).
+     * Copiare tutte e 64 le caselle a ogni controllo costava all'AI la
+     * maggior parte del suo tempo.
+     *
+     * @param {object} moveObj
+     * @returns {boolean}
+     */
+    isMoveLegal(moveObj, knownKingSquare = null) {
         const from = sqToCoords(moveObj.from);
         const to = sqToCoords(moveObj.to);
-        const movingPiece = testGrid[from.r][from.c];
+        const grid = this.boardGrid;
+        const movingPiece = grid[from.r][from.c];
+        if (!movingPiece) return false;
 
-        testGrid[from.r][from.c] = null;
-        if (moveObj.flags === 'e') {
-            // En passant rimuove il pedone avversario sulla riga di partenza
-            testGrid[from.r][to.c] = null;
-        } else if (moveObj.flags === 'k') {
-            testGrid[from.r][5] = testGrid[from.r][7];
-            testGrid[from.r][7] = null;
-        } else if (moveObj.flags === 'q') {
-            testGrid[from.r][3] = testGrid[from.r][0];
-            testGrid[from.r][0] = null;
-        }
-
-        testGrid[to.r][to.c] = {
-            type: moveObj.promotion || movingPiece.type,
-            color: movingPiece.color
+        const touched = [];
+        const put = (r, c, value) => {
+            touched.push([r, c, grid[r][c]]);
+            grid[r][c] = value;
         };
 
-        return !this.isKingInCheck(movingPiece.color, testGrid);
+        put(from.r, from.c, null);
+        if (moveObj.flags === 'e') {
+            // En passant toglie il pedone avversario dalla riga di partenza
+            put(from.r, to.c, null);
+        } else if (moveObj.flags === 'k') {
+            put(from.r, 5, grid[from.r][7]);
+            put(from.r, 7, null);
+        } else if (moveObj.flags === 'q') {
+            put(from.r, 3, grid[from.r][0]);
+            put(from.r, 0, null);
+        }
+        put(to.r, to.c, {
+            type: moveObj.promotion || movingPiece.type,
+            color: movingPiece.color
+        });
+
+        /*
+         * La casella del re e' nota: se non si muove il re, e' quella
+         * passata da moves(); se si muove il re, e' la casella d'arrivo.
+         * Cosi' si evita di ricercare il re su tutte e 64 le caselle a
+         * ogni singola mossa da verificare.
+         */
+        let kingR;
+        let kingC;
+        if (movingPiece.type === 'k') {
+            kingR = to.r;
+            kingC = to.c;
+        } else if (knownKingSquare) {
+            kingR = knownKingSquare.r;
+            kingC = knownKingSquare.c;
+        } else {
+            const found = this.findKingSquare(movingPiece.color, grid);
+            kingR = found ? found.r : -1;
+            kingC = found ? found.c : -1;
+        }
+
+        const enemyColor = movingPiece.color === 'w' ? 'b' : 'w';
+        const kingExposed = kingR >= 0 && this.isSquareAttacked(kingR, kingC, enemyColor, grid);
+
+        // Ripristino in ordine inverso: regge anche se una casella
+        // e' stata scritta due volte.
+        for (let i = touched.length - 1; i >= 0; i--) {
+            grid[touched[i][0]][touched[i][1]] = touched[i][2];
+        }
+
+        return !kingExposed;
     }
 
     moves(options = {}) {
         const squareFilter = options.square || null;
         const legalMoves = [];
+
+        // Una sola ricerca del re per tutta la generazione delle mosse
+        const kingSquare = this.findKingSquare(this.activeTurn);
 
         if (squareFilter) {
             const { r, c } = sqToCoords(squareFilter);
@@ -403,7 +489,7 @@ export class ZeroUnoChessEngine {
                 if (p && p.color === this.activeTurn) {
                     const pseudo = this.generatePseudoMovesForSquare(r, c);
                     for (const m of pseudo) {
-                        if (this.isMoveLegal(m)) legalMoves.push(m);
+                        if (this.isMoveLegal(m, kingSquare)) legalMoves.push(m);
                     }
                 }
             }
@@ -414,7 +500,7 @@ export class ZeroUnoChessEngine {
                     if (p && p.color === this.activeTurn) {
                         const pseudo = this.generatePseudoMovesForSquare(r, c);
                         for (const m of pseudo) {
-                            if (this.isMoveLegal(m)) legalMoves.push(m);
+                            if (this.isMoveLegal(m, kingSquare)) legalMoves.push(m);
                         }
                     }
                 }
@@ -433,9 +519,11 @@ export class ZeroUnoChessEngine {
         const matched = legalForSquare.find(m => m.to === toSq);
         if (!matched) return null;
 
-        // Salva stato precedente per undo()
+        // Salva stato precedente per undo(): solo le caselle toccate,
+        // non una copia dell'intera scacchiera.
+        const touchedCells = [];
         const prevSnapshot = {
-            boardGrid: this.cloneBoardGrid(),
+            cells: touchedCells,
             activeTurn: this.activeTurn,
             castling: { ...this.castling },
             enPassantSq: this.enPassantSq,
@@ -465,23 +553,28 @@ export class ZeroUnoChessEngine {
             if (isPromo) san += `=${promotionType.toUpperCase()}`;
         }
 
-        // Applica mossa sulla griglia
-        this.boardGrid[from.r][from.c] = null;
+        // Applica mossa sulla griglia, annotando ogni casella toccata
+        const put = (r, c, value) => {
+            touchedCells.push([r, c, this.boardGrid[r][c]]);
+            this.boardGrid[r][c] = value;
+        };
+
+        put(from.r, from.c, null);
 
         if (matched.flags === 'e') {
-            this.boardGrid[from.r][to.c] = null;
+            put(from.r, to.c, null);
         } else if (matched.flags === 'k') {
-            this.boardGrid[from.r][5] = this.boardGrid[from.r][7];
-            this.boardGrid[from.r][7] = null;
+            put(from.r, 5, this.boardGrid[from.r][7]);
+            put(from.r, 7, null);
         } else if (matched.flags === 'q') {
-            this.boardGrid[from.r][3] = this.boardGrid[from.r][0];
-            this.boardGrid[from.r][0] = null;
+            put(from.r, 3, this.boardGrid[from.r][0]);
+            put(from.r, 0, null);
         }
 
-        this.boardGrid[to.r][to.c] = {
+        put(to.r, to.c, {
             type: isPromo ? promotionType : movingPiece.type,
             color: movingPiece.color
-        };
+        });
 
         // Aggiorna diritti di arrocco
         if (movingPiece.type === 'k') {
@@ -530,14 +623,25 @@ export class ZeroUnoChessEngine {
         };
 
         this.moveStack.push(executedMove);
+        this.recordPosition();
         return executedMove;
     }
 
     undo() {
         const last = this.moveStack.pop();
         if (!last) return null;
+
+        // La posizione che sto per abbandonare esce dal conteggio
+        this.forgetPosition();
+
         const snap = last.prevSnapshot;
-        this.boardGrid = snap.boardGrid;
+
+        // Ripristino in ordine inverso: regge anche se una casella
+        // e' stata scritta due volte dalla stessa mossa.
+        for (let i = snap.cells.length - 1; i >= 0; i--) {
+            this.boardGrid[snap.cells[i][0]][snap.cells[i][1]] = snap.cells[i][2];
+        }
+
         this.activeTurn = snap.activeTurn;
         this.castling = snap.castling;
         this.enPassantSq = snap.enPassantSq;
@@ -554,8 +658,14 @@ export class ZeroUnoChessEngine {
         return !this.in_check() && this.moves().length === 0;
     }
 
+    /**
+     * Patta per ripetizione: la stessa posizione comparsa tre volte,
+     * con lo stesso giocatore al tratto.
+     *
+     * @returns {boolean}
+     */
     in_threefold_repetition() {
-        return false;
+        return (this.positionCounts.get(this.positionKey()) || 0) >= 3;
     }
 
     insufficient_material() {
@@ -571,8 +681,17 @@ export class ZeroUnoChessEngine {
         return false;
     }
 
+    /**
+     * Patta: stallo, materiale insufficiente, regola delle 50 mosse
+     * (100 semimosse senza catture ne' mosse di pedone) o ripetizione.
+     *
+     * @returns {boolean}
+     */
     in_draw() {
-        return this.in_stalemate() || this.insufficient_material() || this.halfMoves >= 100;
+        return this.in_stalemate()
+            || this.insufficient_material()
+            || this.halfMoves >= 100
+            || this.in_threefold_repetition();
     }
 
     game_over() {
@@ -659,6 +778,12 @@ export class ZeroUnoChessEngine {
             this.enPassantSq = tokens[3] && tokens[3] !== '-' ? tokens[3] : null;
             this.halfMoves = parseInt(tokens[4] || '0', 10);
             this.fullMoves = parseInt(tokens[5] || '1', 10);
+
+            // La posizione caricata e' un nuovo inizio: la storia delle
+            // mosse precedenti non le appartiene piu'.
+            this.moveStack = [];
+            this.positionCounts = new Map();
+            this.recordPosition();
             return true;
         } catch (e) {
             return false;

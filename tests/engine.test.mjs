@@ -132,6 +132,53 @@ test('re inchiodato: non si puo\' esporre il proprio re allo scacco', () => {
     }
 });
 
+test('ripetizione: tre volte la stessa posizione e\' patta', () => {
+    const g = new ZeroUnoChessEngine();
+    assert.equal(g.in_threefold_repetition(), false);
+
+    // I cavalli vanno avanti e indietro: la posizione iniziale torna
+    // una seconda e poi una terza volta.
+    play(g, 'g1f3', 'g8f6', 'f3g1', 'f6g8');
+    assert.equal(g.in_threefold_repetition(), false, 'alla seconda volta non e\' ancora patta');
+
+    play(g, 'g1f3', 'g8f6', 'f3g1', 'f6g8');
+    assert.equal(g.in_threefold_repetition(), true);
+    assert.equal(g.in_draw(), true);
+    assert.equal(g.game_over(), true);
+});
+
+test('ripetizione: annullare la mossa toglie la posizione dal conteggio', () => {
+    const g = new ZeroUnoChessEngine();
+    play(g, 'g1f3', 'g8f6', 'f3g1', 'f6g8', 'g1f3', 'g8f6', 'f3g1', 'f6g8');
+    assert.equal(g.in_threefold_repetition(), true);
+
+    g.undo();
+    assert.equal(g.in_threefold_repetition(), false, 'dopo undo la posizione e\' comparsa due volte');
+    assert.equal(g.game_over(), false);
+});
+
+test('ripetizione: posizioni uguali ma con diritti di arrocco diversi non contano', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1');
+    const conArrocco = g.positionKey();
+
+    // Il re bianco esce e torna: perde i diritti di arrocco per sempre.
+    play(g, 'e1e2', 'e8e7', 'e2e1', 'e7e8');
+    assert.notEqual(g.positionKey(), conArrocco, 'i diritti di arrocco fanno parte della posizione');
+    assert.equal(g.in_threefold_repetition(), false);
+});
+
+test('regola delle 50 mosse: a 100 semimosse e\' patta', () => {
+    const g = new ZeroUnoChessEngine();
+    g.load('4k3/8/8/8/8/8/8/4K2R w K - 98 60');
+    play(g, 'h1h2');
+    assert.equal(g.halfMoves, 99);
+    assert.equal(g.in_draw(), false);
+    play(g, 'e8e7');
+    assert.equal(g.halfMoves, 100);
+    assert.equal(g.in_draw(), true);
+});
+
 test('FEN: caricamento e rilettura danno la stessa stringa', () => {
     const posizioni = [
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',

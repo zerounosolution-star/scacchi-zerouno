@@ -36,7 +36,22 @@ ui/input.js  executeMove
         ├─► ui/gameover.js           controlla matto, stallo, patta
         ├─► online/firestore.js      se la partita e' online, sincronizza
         └─► engine/ai.js  makeAiMove se tocca all'AI
+                 │
+                 ▼
+          ai.worker.js (thread separato)
+                 │  engine/search.js  chooseMove(fen, livello)
+                 ▼
+          executeMove della mossa scelta
 ```
+
+La ricerca riceve soltanto una FEN e restituisce una mossa: non vede ne' il
+DOM ne' lo stato dell'applicazione. Per questo lo stesso file gira dentro il
+worker e dentro i test.
+
+Ogni richiesta all'AI porta un numero progressivo. Se parte una partita nuova
+mentre l'AI sta pensando, la risposta vecchia arriva con un numero superato e
+viene buttata; in piu' si controlla che la posizione sia ancora quella su cui
+la mossa e' stata calcolata.
 
 ## Mappa delle dipendenze
 
@@ -44,6 +59,8 @@ ui/input.js  executeMove
 config/app.config.js        non dipende da nessuno
 data/*.js                   non dipendono da nessuno
 engine/chess-engine.js      non dipende da nessuno   ← puro, testabile
+        ▲
+engine/search.js ───────────┤ (puro: gira anche nel worker)
         ▲
 core/state.js ──────────────┘ (crea l'istanza del motore)
         ▲
@@ -89,7 +106,8 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 |---|---|
 | Cambiare la durata degli orologi | `src/config/app.config.js` |
 | Attivare il multiplayer | `src/config/app.config.js` (`FIREBASE_CONFIG`) |
-| Rendere l'AI piu' forte | `src/engine/ai.js` (profondita' e valutazione) |
+| Rendere l'AI piu' forte | `src/engine/search.js` (tabella `LEVELS`, valutazione) |
+| Cambiare i tempi di riflessione | `src/engine/search.js`, campo `timeBudgetMs` |
 | Aggiungere un tema di scacchiera | `src/css/styles.css` + `index.html` (menu a tendina) |
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
@@ -97,14 +115,17 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 
 ## Limiti noti
 
-- L'AI gira nello stesso thread dell'interfaccia: a profondita' 3 la pagina
-  puo' restare ferma per qualche decimo di secondo. Per salire di livello
-  serve spostarla in un Web Worker.
 - Non c'e' incremento di tempo (modalita' Fischer): solo orologi a scalare.
-- **La patta per ripetizione non e' implementata.** Il metodo
-  `in_threefold_repetition()` del motore restituisce sempre `false`: e' un
-  segnaposto. La regola delle 50 mosse funziona (`halfMoves >= 100`).
-  Per completare la regola FIDE serve tenere il conto delle posizioni gia'
-  viste, confrontando la parte di FEN senza i contatori di mossa.
+- La ricerca non ha tavola di trasposizione: le posizioni raggiunte per
+  strade diverse si ricalcolano da capo. E' il prossimo guadagno grosso
+  sulla forza di gioco.
+- La valutazione pesa materiale e posizione dei pezzi, ma non struttura
+  pedonale, sicurezza del re o colonne aperte.
+- `sw.js` non ha versionamento automatico: dopo una modifica ai file va
+  alzato `CACHE_VERSION` a mano.
 - L'abbandono di una partita online non viene notificato all'avversario in
   tempo reale se chi abbandona chiude il browser di colpo.
+- La ripetizione confronta la FEN senza contatori. E' il criterio usato da
+  tutti i motori, ma considera diverse due posizioni identiche in cui la
+  presa en passant e' segnata in una sola: capita di rado e sbaglia
+  dichiarando patta un po' piu' tardi, mai prima.

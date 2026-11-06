@@ -32,9 +32,15 @@ npx serve .
 npm test
 ```
 
-Prova il motore scacchistico fuori dal browser: arrocco, presa en passant,
-promozione, scacco matto, stallo, materiale insufficiente, pezzi inchiodati,
-annullamento della mossa e lettura/scrittura FEN.
+27 prove che girano fuori dal browser, senza dipendenze.
+
+Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
+materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
+pezzi inchiodati, annullamento della mossa, lettura e scrittura FEN.
+
+Il gioco dell'AI: trova il matto in una mossa, prende i pezzi lasciati in
+presa, non regala la propria donna, non fa scambi in perdita e rispetta il
+tetto di tempo.
 
 ---
 
@@ -44,6 +50,7 @@ annullamento della mossa e lettura/scrittura FEN.
 .
 ├── index.html                  Solo markup: nessun CSS e nessun JavaScript inline
 ├── manifest.webmanifest        Installazione come applicazione (PWA)
+├── sw.js                       Service worker: la pagina funziona senza rete
 ├── package.json                Script di avvio e di test
 ├── firebase.json               Hosting e percorso delle regole Firestore
 ├── assets/icons/               Icone dell'applicazione
@@ -66,7 +73,9 @@ annullamento della mossa e lettura/scrittura FEN.
 │   │   └── challengers.js      Sfidanti internazionali (avversari AI)
 │   ├── engine/
 │   │   ├── chess-engine.js     Motore scacchistico, regole FIDE complete
-│   │   └── ai.js               Minimax con potatura alfa-beta
+│   │   ├── search.js           Ricerca della mossa (puro, testabile)
+│   │   ├── ai.worker.js        La ricerca in un thread separato
+│   │   └── ai.js               Ponte fra partita e ricerca
 │   ├── ui/
 │   │   ├── board.js            Costruzione e disegno della scacchiera
 │   │   ├── input.js            Click, trascinamento, tocco, promozione
@@ -74,7 +83,9 @@ annullamento della mossa e lettura/scrittura FEN.
 │   │   └── gameover.js         Fine partita e video del canale
 │   ├── game/modes.js           Avvio delle modalita' di gioco
 │   └── online/firestore.js     Multiplayer in tempo reale
-└── tests/engine.test.mjs       Test del motore
+└── tests/
+    ├── engine.test.mjs         Test delle regole
+    └── search.test.mjs         Test del gioco dell'AI
 ```
 
 Regola del progetto: `index.html` contiene **solo** markup. Ogni stile sta nel
@@ -100,6 +111,43 @@ Gli sfidanti internazionali (Lukas Meyer, Sofia Rojas, Kenji Takahashi,
 Claire Dubois) **non sono persone reali**: sono l'AI locale con un nome e un
 punteggio. Nell'elenco sono contrassegnati "AI". Il contatore della lobby
 conta solo le persone vere in attesa.
+
+---
+
+## L'avversario artificiale
+
+La ricerca sta in [`src/engine/search.js`](src/engine/search.js): minimax con
+potatura alfa-beta, ordinamento delle mosse MVV-LVA, ricerca di quiescenza
+sulle catture e approfondimento progressivo con tetto di tempo.
+
+| Livello | Profondita' massima | Tempo per mossa |
+|---|---|---|
+| 1 — Principiante | 1 | 0,15 s, con errori voluti |
+| 2 — Club | 4 | 0,9 s |
+| 3 — Maestro | 6 | 2,2 s |
+
+La profondita' effettiva dipende da quanto riesce a scendere nel tempo
+concesso: la ricerca tiene sempre la mossa migliore dell'ultimo livello
+completato.
+
+Il calcolo gira in un Web Worker ([`ai.worker.js`](src/engine/ai.worker.js)),
+quindi la pagina non si blocca mentre l'AI pensa: orologi, animazioni e
+bottoni continuano a rispondere. Se il browser non concede i worker, la
+ricerca passa nel thread principale con un tetto di tempo piu' basso.
+
+---
+
+## Funzionamento senza rete
+
+[`sw.js`](sw.js) tiene in cache la pagina e i moduli: dopo la prima visita si
+gioca contro l'AI e in due anche senza connessione, e l'applicazione si puo'
+installare sul telefono.
+
+**Dopo ogni modifica ai file, alzare `CACHE_VERSION` in `sw.js`**, altrimenti
+chi ha gia' visitato il sito continua a vedere la versione vecchia.
+
+Il service worker funziona solo su HTTPS o su localhost. Aprendo i file con
+un doppio click non si attiva.
 
 ---
 

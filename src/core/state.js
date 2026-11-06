@@ -45,6 +45,8 @@ export const state = {
     boardOrientation: 'w',
     /** Livello dell'AI: 1 = facile, 2 = club, 3 = difficile */
     aiDifficulty: 2,
+    /** Vero mentre l'AI sta cercando la mossa: impedisce ricerche sovrapposte. */
+    aiThinking: false,
     matchEnded: false,
 
     // --- Interazione con la scacchiera ---
