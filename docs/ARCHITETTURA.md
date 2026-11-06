@@ -163,6 +163,23 @@ dei nodi, a parita' di punteggio. Che il punteggio non cambi va verificato a
 ogni modifica: un ordinamento che scarta mosse invece di riordinarle
 restituisce risultati diversi, e lo fa in silenzio.
 
+**Nodi risparmiati non vuol dire partite vinte.** L'ordinamento e' stato
+misurato anche in partite, non solo in nodi: 400 partite contro la versione
+precedente, 250 ms per mossa, aperture sorteggiate e giocate due volte a
+colori invertiti perche' il vantaggio dell'apertura si annulli. Risultato
+202,5 su 400, cioe' il 50,6%: pari, con un intervallo al 95% che va da -26 a
++35 punti Elo. Il risparmio di nodi e' reale e verificato, ma a 250 ms non
+arriva a una profondita' intera in piu', e sotto quella soglia non si vede
+sul risultato: serve a tempi di riflessione piu' lunghi. Due avvertenze per
+chi misurera' la prossima volta. Le aperture sorteggiate fra mosse qualunque
+pesano piu' del motore: i quattro blocchi da 100 partite sono usciti al 38%,
+51,5%, 54,5% e 58,5%, che e' piu' di quanto il caso spieghi (chi quadro
+13,2 su 3 gradi di liberta'). E un guadagno da 30 punti Elo chiede qualche
+centinaio di partite per uscire dal rumore, un guadagno da 10 punti alcune
+migliaia. Un cambiamento che tocca solo l'efficienza si giudica sui nodi a
+profondita' fissa; le partite servono per i cambiamenti che toccano la
+valutazione.
+
 **Tempo di riflessione.** Il tetto del livello e' un massimo, non un
 diritto. `engine/ai.js` guarda l'orologio dell'AI, spalma il tempo rimasto
 su una ventina di mosse, aggiunge quasi tutto l'incremento e non tocca mai
