@@ -99,14 +99,26 @@ export function getSquareFromClientCoords(clientX, clientY) {
 }
 
 export function renderBoard() {
-    const boardState = chess.board();
+    /*
+     * Mentre si rivede una mossa passata la scacchiera legge il motore
+     * della revisione. La partita vera continua per conto suo: gli
+     * orologi scorrono e l'AI puo' muovere.
+     */
+    const review = state.review;
+    const source = review ? review.game : chess;
+
+    const boardState = source.board();
     const isFlipped = state.boardOrientation === 'b';
     const displayRanks = isFlipped ? [...RANKS].reverse() : RANKS;
     const displayFiles = isFlipped ? [...FILES].reverse() : FILES;
 
-    const inCheck = chess.in_check();
-    const turnColor = chess.turn();
-    const humanCanMove = canHumanControlCurrentTurn();
+    const inCheck = source.in_check();
+    const turnColor = source.turn();
+    const humanCanMove = !review && canHumanControlCurrentTurn();
+    const selectedSquare = review ? null : state.selectedSquare;
+    const legalMoves = review ? [] : state.legalMovesForSelected;
+    const lastFrom = review ? review.from : state.lastMoveSquares.from;
+    const lastTo = review ? review.to : state.lastMoveSquares.to;
 
     for (let vRow = 0; vRow < 8; vRow++) {
         for (let vCol = 0; vCol < 8; vCol++) {
@@ -127,9 +139,9 @@ export function renderBoard() {
             // Costruisci le classi senza mai distruggere il nodo DOM
             const classList = ['square', isLight ? 'light' : 'dark'];
 
-            if (state.selectedSquare === squareName) {
+            if (selectedSquare === squareName) {
                 classList.push('selected');
-            } else if (state.lastMoveSquares.from === squareName || state.lastMoveSquares.to === squareName) {
+            } else if (lastFrom === squareName || lastTo === squareName) {
                 classList.push('last-move');
             }
 
@@ -149,7 +161,7 @@ export function renderBoard() {
                 classList.push('drag-hover');
             }
 
-            const legalMove = state.legalMovesForSelected.find(m => m.to === squareName);
+            const legalMove = legalMoves.find(m => m.to === squareName);
             if (legalMove) {
                 if (piece || legalMove.flags === 'e') {
                     classList.push('valid-capture');
@@ -164,7 +176,7 @@ export function renderBoard() {
             sqDiv.className = classList.join(' ');
 
             sqDiv.setAttribute('aria-label', describeSquare(squareName, piece, Boolean(legalMove)));
-            sqDiv.setAttribute('aria-selected', state.selectedSquare === squareName ? 'true' : 'false');
+            sqDiv.setAttribute('aria-selected', selectedSquare === squareName ? 'true' : 'false');
 
             // Aggiorna coordinate solo sui bordi
             const rankSpan = sqDiv.querySelector('.coord-rank');

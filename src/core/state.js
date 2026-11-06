@@ -54,6 +54,12 @@ export const state = {
     legalMovesForSelected: [],
     lastMoveSquares: { from: null, to: null },
     pendingPromotionMove: null,
+    /**
+     * Revisione di una mossa passata: { ply, game, from, to }.
+     * null quando si guarda la partita vera. Il motore della revisione
+     * e' separato: la partita non si tocca mai.
+     */
+    review: null,
 
     // --- Orologi ---
     whiteTimeSeconds: PLAYER_CLOCK_SECONDS,

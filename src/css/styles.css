@@ -751,12 +751,52 @@ select.zu-field { cursor: pointer; appearance: auto; }
 #moveHistoryTable thead th:first-child { width: 44px; }
 #moveHistoryBody tr { border-bottom: 1px solid var(--rule); }
 #moveHistoryBody tr:last-child { border-bottom: 0; }
-/* Il JS scrive text-neutral-400 sul numero di mossa: 2.54:1, sotto la soglia.
-   Qui torna leggibile senza toccare il modulo. */
-#moveHistoryBody td:first-child { color: var(--ink-2) !important; width: 44px; }
-#moveHistoryBody td { padding: 7px 8px; font-size: 13px; }
-#moveHistoryBody td:nth-child(2) { color: var(--ink) !important; font-weight: 500; }
-#moveHistoryBody td:nth-child(3) { color: var(--ink-2) !important; font-weight: 500; }
+
+/* Il numero di mossa non si clicca: resta testo, piu' chiaro delle mosse. */
+.zu-move-number {
+    width: 44px;
+    padding: 7px 8px;
+    font-size: 13px;
+    color: var(--ink-2);
+}
+.zu-move-cell { padding: 3px 4px; }
+
+/* Ogni mossa e' un bottone: si clicca per rivedere quella posizione e si
+   raggiunge con Tab. Deve pero' leggersi come il testo di un foglio di
+   notazione, non come una fila di bottoni. */
+.zu-move {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+}
+.zu-move[data-side="b"] { color: var(--ink-2); }
+.zu-move:hover { background: var(--paper-2); border-color: var(--rule-strong); }
+.zu-move:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 1px; }
+
+/* L'ultima mossa giocata: dove si trova la partita adesso. */
+.zu-move.is-last {
+    background: rgba(197, 166, 103, 0.20);
+    border-color: var(--accent-line);
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* La mossa che si sta rivedendo: piena, perche' comanda la scacchiera. */
+.zu-move.is-reviewing {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+    font-weight: 600;
+}
 
 #moveHistoryEmpty { color: var(--ink-2); }
 

@@ -10,6 +10,7 @@ import { PLAYER_CLOCK_SECONDS } from '../config/app.config.js';
 import { chess, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { triggerEndOfGame } from './gameover.js';
+import { enterReview } from './review.js';
 
 /**
  * Scrive un testo solo se e' davvero cambiato.
@@ -23,6 +24,37 @@ import { triggerEndOfGame } from './gameover.js';
  */
 function setText(el, text) {
     if (el && el.textContent !== text) el.textContent = text;
+}
+
+/**
+ * Un clic sulla notazione riporta la scacchiera a quella mossa.
+ * L'ascoltatore sta sul corpo della tabella e non sulle singole righe:
+ * le righe si rifanno a ogni mossa, il corpo no.
+ */
+function bindMoveHistoryClicks(tbody) {
+    if (!tbody || tbody.dataset.bound === '1') return;
+    tbody.dataset.bound = '1';
+    tbody.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-ply]');
+        if (!button) return;
+        enterReview(Number(button.dataset.ply));
+    });
+}
+
+/** Una casella della notazione: la mossa e' un bottone, quindi raggiungibile da tastiera. */
+function moveCellHtml(san, ply, side, lastPly, reviewPly) {
+    if (!san) return '<td class="zu-move-cell"></td>';
+
+    const classes = ['zu-move'];
+    if (ply === lastPly) classes.push('is-last');
+    if (ply === reviewPly) classes.push('is-reviewing');
+
+    const label = side === 'w' ? 'Bianco' : 'Nero';
+    const numero = Math.ceil(ply / 2);
+
+    return `<td class="zu-move-cell"><button type="button" class="${classes.join(' ')}" `
+        + `data-ply="${ply}" data-side="${side}" `
+        + `aria-label="Mossa ${numero} del ${label}: ${san}. Rivedi questa posizione">${san}</button></td>`;
 }
 
 export function updateStatusAndHistoryUI() {
@@ -50,7 +82,11 @@ export function updateStatusAndHistoryUI() {
             headline.className = 'font-serif text-2xl font-semibold text-anthracite-900';
         }
 
-        if (humanTurn) {
+        if (state.review) {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-bronze-500 shrink-0';
+            setText(banner, `Stai rivedendo la mossa ${Math.ceil(state.review.ply / 2)}`
+                + ' — premi Esc o "Torna alla partita" per continuare');
+        } else if (humanTurn) {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
             // Il titolo qui sopra dice gia' di chi e' il turno: qui solo l'istruzione
             setText(banner, state.selectedSquare
@@ -83,23 +119,31 @@ export function updateStatusAndHistoryUI() {
         emptyState.classList.add('hidden');
         table.classList.remove('hidden');
         tbody.innerHTML = '';
+        bindMoveHistoryClicks(tbody);
+
+        const lastPly = history.length;
+        const reviewPly = state.review ? state.review.ply : null;
 
         for (let i = 0; i < history.length; i += 2) {
             const moveNum = Math.floor(i / 2) + 1;
-            const whiteMove = history[i] || '';
-            const blackMove = history[i + 1] || '';
 
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-ivory-100/70 transition';
-            tr.innerHTML = `
-                <td class="py-1.5 px-2 text-neutral-400 w-12">${moveNum}.</td>
-                <td class="py-1.5 px-2 font-medium text-anthracite-900">${whiteMove}</td>
-                <td class="py-1.5 px-2 font-medium text-neutral-700">${blackMove}</td>
-            `;
+            tr.className = 'zu-move-row';
+            tr.innerHTML = `<td class="zu-move-number">${moveNum}.</td>`
+                + moveCellHtml(history[i], i + 1, 'w', lastPly, reviewPly)
+                + moveCellHtml(history[i + 1], i + 2, 'b', lastPly, reviewPly);
             tbody.appendChild(tr);
         }
-        container.scrollTop = container.scrollHeight;
+
+        /*
+         * Durante la revisione la lista non scorre da sola: si resta
+         * dove si sta guardando.
+         */
+        if (!state.review) container.scrollTop = container.scrollHeight;
     }
+
+    const exitReviewBtn = document.getElementById('exitReviewBtn');
+    if (exitReviewBtn) exitReviewBtn.classList.toggle('hidden', !state.review);
 
     // L'orologio in corsa cambia a ogni mossa, non solo allo scoccare del secondo
     renderTimersUI();

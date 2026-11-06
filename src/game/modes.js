@@ -13,12 +13,14 @@ import { makeAiMove } from '../engine/ai.js';
 import { updatePlayerCardsUI, startMatchTimers, renderTimersUI } from '../ui/panels.js';
 import { cleanupActiveOnlineMatch } from '../online/firestore.js';
 import { readSavedMatch, replayMoves, clearSavedMatch } from '../core/persistence.js';
+import { exitReview } from '../ui/review.js';
 
 export function startNewAiGame() {
     cleanupActiveOnlineMatch();
     clearSavedMatch();
     state.gameMode = 'ai';
     state.matchEnded = false;
+    exitReview();
     chess.reset();
     state.selectedSquare = null;
     state.legalMovesForSelected = [];
@@ -59,6 +61,7 @@ export function startNewLocalGame() {
     clearSavedMatch();
     state.gameMode = 'local';
     state.matchEnded = false;
+    exitReview();
     chess.reset();
     state.selectedSquare = null;
     state.legalMovesForSelected = [];
@@ -79,6 +82,7 @@ export function startWorldChallengerMatch(challengerObj) {
     const chosen = challengerObj || WORLD_CHALLENGERS[Math.floor(Math.random() * WORLD_CHALLENGERS.length)];
     state.gameMode = 'world-challenger';
     state.matchEnded = false;
+    exitReview();
     chess.reset();
     state.selectedSquare = null;
     state.legalMovesForSelected = [];

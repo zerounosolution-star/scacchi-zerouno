@@ -16,6 +16,7 @@
 import { squareElementsMap, dragState, state } from '../core/state.js';
 import { handlePointerDownOnSquare } from './input.js';
 import { renderBoard } from './board.js';
+import { exitReview } from './review.js';
 
 /** Casella che ha il fuoco della tastiera, per esempio 'e2'. */
 let focusedSquare = null;
@@ -102,6 +103,12 @@ function handleKey(event) {
             activateSquare(current);
             return true;
         case 'Escape':
+            // Prima si esce dalla revisione, poi si annulla la selezione
+            if (state.review) {
+                exitReview();
+                focusSquare(current);
+                return true;
+            }
             state.selectedSquare = null;
             state.legalMovesForSelected = [];
             renderBoard();

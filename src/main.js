@@ -11,6 +11,7 @@ import { saveMatch, readSavedMatch, clearSavedMatch } from './core/persistence.j
 import { showToast, copyTextToClipboard } from './core/utils.js';
 import { initPersistentBoardDOM, renderBoard } from './ui/board.js';
 import { updatePlayerCardsUI, renderTimersUI } from './ui/panels.js';
+import { setupReviewControls, exitReview } from './ui/review.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
@@ -92,6 +93,8 @@ export function setupEventListeners() {
         state.matchEnded = false;
         state.selectedSquare = null;
         state.legalMovesForSelected = [];
+        // La mossa che si stava rivedendo potrebbe non esistere piu'
+        exitReview();
         const hist = chess.history({ verbose: true });
         const last = hist[hist.length - 1];
         state.lastMoveSquares = last ? { from: last.from, to: last.to } : { from: null, to: null };
@@ -247,6 +250,8 @@ function registerServiceWorker() {
 window.onload = async function () {
     initPersistentBoardDOM();
     setupEventListeners();
+
+    setupReviewControls();
 
     // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
     if (!resumeSavedMatch()) {

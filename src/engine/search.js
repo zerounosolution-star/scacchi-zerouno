@@ -158,6 +158,117 @@ function storeTT(ctx, key, depth, flag, score, move) {
     });
 }
 
+/*
+ * TERMINI POSIZIONALI OLTRE AI PEZZI
+ *
+ * Le tabelle PST dicono dove sta bene un pezzo da solo. Non dicono
+ * niente su come i pezzi stanno insieme: un pedone isolato, una torre su
+ * colonna aperta, il re scoperto. Sono i valori che un giocatore di club
+ * guarda per primi.
+ *
+ * I pesi sono in centesimi di pedone e volutamente prudenti: un termine
+ * posizionale troppo pesante fa giocare l'AI per la forma invece che per
+ * la sostanza.
+ */
+const DOUBLED_PAWN = -12;      // per ogni pedone in piu' sulla stessa colonna
+const ISOLATED_PAWN = -14;     // nessun pedone amico sulle colonne vicine
+const ROOK_OPEN_FILE = 18;     // colonna senza pedoni
+const ROOK_SEMI_OPEN_FILE = 9; // colonna senza pedoni propri
+const BISHOP_PAIR = 32;        // i due alfieri che si coprono i colori
+const KING_SHIELD_MISSING = -14; // colonna sguarnita davanti al re
+
+/** Pedone passato: vale secondo quanto e' avanzato (0 = casa di partenza). */
+const PASSED_PAWN = [0, 12, 22, 40, 70, 110];
+
+/*
+ * Spazio di lavoro riusato a ogni valutazione.
+ *
+ * La valutazione gira a ogni foglia della ricerca: allocare sei array
+ * per chiamata costerebbe piu' del calcolo. Il modulo non e' rientrante
+ * e gira in un thread solo, quindi si possono riusare.
+ */
+const pawnCount = { w: new Int8Array(8), b: new Int8Array(8) };
+const whitePawnMaxRow = new Int8Array(8);  // pedone bianco piu' arretrato
+const blackPawnMinRow = new Int8Array(8);  // pedone nero piu' arretrato
+
+/**
+ * Riempie il quadro dei pedoni: quanti per colonna e il piu' avanzato.
+ * Serve per doppiati, isolati, passati, colonne aperte e riparo del re.
+ */
+function scanPawns(board) {
+    for (let f = 0; f < 8; f++) {
+        pawnCount.w[f] = 0;
+        pawnCount.b[f] = 0;
+        whitePawnMaxRow[f] = -1;
+        blackPawnMinRow[f] = 8;
+    }
+
+    for (let r = 0; r < 8; r++) {
+        const row = board[r];
+        for (let c = 0; c < 8; c++) {
+            const piece = row[c];
+            if (!piece || piece.type !== 'p') continue;
+            if (piece.color === 'w') {
+                pawnCount.w[c]++;
+                if (r > whitePawnMaxRow[c]) whitePawnMaxRow[c] = r;
+            } else {
+                pawnCount.b[c]++;
+                if (r < blackPawnMinRow[c]) blackPawnMinRow[c] = r;
+            }
+        }
+    }
+}
+
+/**
+ * Un pedone e' passato quando nessun pedone avversario puo' piu'
+ * fermarlo: ne' sulla sua colonna ne' sulle due vicine.
+ */
+function isPassedPawn(color, r, c) {
+    const from = c > 0 ? c - 1 : 0;
+    const to = c < 7 ? c + 1 : 7;
+
+    if (color === 'w') {
+        // Un pedone nero davanti (riga minore) lo ferma
+        for (let f = from; f <= to; f++) {
+            if (blackPawnMinRow[f] < r) return false;
+        }
+        return true;
+    }
+
+    for (let f = from; f <= to; f++) {
+        if (whitePawnMaxRow[f] > r) return false;
+    }
+    return true;
+}
+
+/**
+ * Riparo del re: quante delle tre colonne intorno al re hanno ancora un
+ * pedone amico subito davanti. Conta solo a medio gioco: nel finale il
+ * re deve uscire, non nascondersi.
+ */
+function kingShieldPenalty(board, color, r, c) {
+    const dir = color === 'w' ? -1 : 1;
+    let missing = 0;
+
+    for (let f = c - 1; f <= c + 1; f++) {
+        if (f < 0 || f > 7) continue;
+
+        let found = false;
+        for (let step = 1; step <= 2; step++) {
+            const rr = r + dir * step;
+            if (rr < 0 || rr > 7) break;
+            const piece = board[rr][f];
+            if (piece && piece.type === 'p' && piece.color === color) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) missing++;
+    }
+
+    return missing * KING_SHIELD_MISSING;
+}
+
 /**
  * Valuta la posizione dal punto di vista del Bianco.
  * Positivo: sta meglio il Bianco. Negativo: sta meglio il Nero.
@@ -185,23 +296,60 @@ export function evaluatePosition(game, ply = 0) {
     }
     const isEndgame = heavyMaterial <= 1300;
 
+    scanPawns(board);
+
     let score = 0;
+    let whiteBishops = 0;
+    let blackBishops = 0;
+
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const piece = board[r][c];
             if (!piece) continue;
 
+            const isWhite = piece.color === 'w';
             const table = piece.type === 'k'
                 ? (isEndgame ? PST.kEnd : PST.kMiddle)
                 : PST[piece.type];
 
             // Il Nero legge la stessa tabella specchiata in verticale
-            const row = piece.color === 'w' ? r : 7 - r;
-            const value = PIECE_VALUES[piece.type] + table[row][c];
+            const row = isWhite ? r : 7 - r;
+            let value = PIECE_VALUES[piece.type] + table[row][c];
 
-            score += piece.color === 'w' ? value : -value;
+            if (piece.type === 'p') {
+                const own = isWhite ? pawnCount.w : pawnCount.b;
+
+                if (own[c] > 1) value += DOUBLED_PAWN;
+
+                const left = c > 0 ? own[c - 1] : 0;
+                const right = c < 7 ? own[c + 1] : 0;
+                if (left === 0 && right === 0) value += ISOLATED_PAWN;
+
+                if (isPassedPawn(piece.color, r, c)) {
+                    // Quante traverse ha gia' percorso, dalla sua casa di partenza
+                    const advance = isWhite ? 6 - r : r - 1;
+                    if (advance > 0 && advance < PASSED_PAWN.length) value += PASSED_PAWN[advance];
+                }
+            } else if (piece.type === 'r') {
+                const ownPawns = isWhite ? pawnCount.w[c] : pawnCount.b[c];
+                const enemyPawns = isWhite ? pawnCount.b[c] : pawnCount.w[c];
+                if (ownPawns === 0) {
+                    value += enemyPawns === 0 ? ROOK_OPEN_FILE : ROOK_SEMI_OPEN_FILE;
+                }
+            } else if (piece.type === 'b') {
+                if (isWhite) whiteBishops++;
+                else blackBishops++;
+            } else if (piece.type === 'k' && !isEndgame) {
+                value += kingShieldPenalty(board, piece.color, r, c);
+            }
+
+            score += isWhite ? value : -value;
         }
     }
+
+    if (whiteBishops >= 2) score += BISHOP_PAIR;
+    if (blackBishops >= 2) score -= BISHOP_PAIR;
+
     return score;
 }
 

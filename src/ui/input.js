@@ -144,6 +144,11 @@ export function setupDesktopMouseAndTouchHandlers() {
 }
 
 export function handlePointerDownOnSquare(squareName, clientX, clientY) {
+    if (state.review) {
+        showToast('Stai rivedendo una mossa precedente. Torna alla partita per muovere.');
+        return;
+    }
+
     if (state.matchEnded) {
         showToast("La partita è conclusa. Clicca 'Nuova Partita' per giocare ancora.");
         return;
