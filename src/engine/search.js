@@ -111,12 +111,12 @@ const PST = {
  * @returns {number}
  */
 export function evaluatePosition(game, ply = 0) {
-    if (game.in_checkmate()) {
-        // Chi ha il tratto e' sotto matto: ha perso.
-        return game.turn() === 'w' ? -(MATE_SCORE - ply) : (MATE_SCORE - ply);
-    }
-    if (game.in_draw()) return 0;
-
+    /*
+     * Qui non si controlla il matto: in_checkmate() rigenera tutte le
+     * mosse legali, e questa funzione viene chiamata a ogni foglia
+     * della ricerca. Matto e stallo li riconosce minimax, che la lista
+     * delle mosse ce l'ha gia' in mano.
+     */
     const board = game.board();
 
     // Finale: pochi pezzi pesanti in giro, il re va al centro.
@@ -150,6 +150,22 @@ export function evaluatePosition(game, ply = 0) {
 }
 
 /**
+ * Patta riconoscibile senza generare le mosse: materiale insufficiente,
+ * regola delle 50 mosse, ripetizione.
+ *
+ * Lo stallo non e' qui: per riconoscerlo serve la lista delle mosse,
+ * che chi chiama genera comunque.
+ *
+ * @param {ZeroUnoChessEngine} game
+ * @returns {boolean}
+ */
+function isDrawByRule(game) {
+    return game.insufficient_material()
+        || game.halfMoves >= 100
+        || game.in_threefold_repetition();
+}
+
+/**
  * Ordina le mosse per far scattare prima la potatura.
  * MVV-LVA: cattura il pezzo piu' prezioso con il pezzo meno prezioso.
  *
@@ -178,7 +194,7 @@ function quiescence(game, alpha, beta, isMaximizing, pliesLeft, ply, ctx) {
     ctx.nodes++;
 
     const standPat = evaluatePosition(game, ply);
-    if (pliesLeft <= 0 || game.game_over()) return standPat;
+    if (pliesLeft <= 0) return standPat;
 
     if (ctx.deadline && (ctx.nodes & 255) === 0 && Date.now() > ctx.deadline) {
         ctx.timedOut = true;
@@ -225,7 +241,9 @@ function quiescence(game, alpha, beta, isMaximizing, pliesLeft, ply, ctx) {
 export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
     ctx.nodes++;
 
-    if (game.game_over()) return evaluatePosition(game, ctx.ply);
+    // Patte che non dipendono dalle mosse disponibili: costano poco
+    if (isDrawByRule(game)) return 0;
+
     if (depth === 0) {
         return quiescence(game, alpha, beta, isMaximizing, ctx.quiescencePlies, ctx.ply, ctx);
     }
@@ -237,6 +255,17 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
     }
 
     const moves = orderMoves(game.moves({ verbose: true }));
+
+    /*
+     * Niente mosse legali: o e' matto, o e' stallo. Si riconosce qui,
+     * dove la lista delle mosse e' gia' pronta, invece di chiedere
+     * in_checkmate() e far rigenerare tutto da capo.
+     */
+    if (moves.length === 0) {
+        if (!game.in_check()) return 0;
+        return game.turn() === 'w' ? -(MATE_SCORE - ctx.ply) : (MATE_SCORE - ctx.ply);
+    }
+
     let best = isMaximizing ? -Infinity : Infinity;
 
     for (const m of moves) {
