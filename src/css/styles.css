@@ -324,14 +324,28 @@ select.zu-field { cursor: pointer; appearance: auto; }
     line-height: 1.6;
 }
 
-/* Linguette delle modalita'. Il JavaScript riscrive la stringa di classi a
-   ogni click: qui si fissa solo cio' che quella stringa non porta (altezza di
-   tocco, cursore), senza combattere le utility che imposta. */
+/* Linguette delle modalita'. Quale sia scelta lo dice aria-pressed, che e'
+   anche l'informazione che legge uno screen reader: il JavaScript cambia
+   l'attributo e il disegno sta qui. */
 .mode-tab-btn {
     min-height: var(--tap);
     cursor: pointer;
-    border-radius: var(--r-md);
-    font-size: 13px;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--ink-2);
+    background: transparent;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+.mode-tab-btn:hover { color: var(--ink); }
+.mode-tab-btn[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
 }
 
 /* ============================================================================
@@ -372,10 +386,30 @@ select.zu-field { cursor: pointer; appearance: auto; }
     font-size: 17px;
     box-shadow: inset 0 0 0 1px rgba(197, 166, 103, 0.45);
 }
-/* Il JS assegna all'avatar del Nero lo stesso antracite del tavolo: qui
-   scende di un gradino, altrimenti sparisce nella fascia. */
-#topPlayerAvatar.bg-anthracite-900,
-#bottomPlayerAvatar.bg-anthracite-900 { background-color: #0B0A09; color: var(--ink-on-dark); }
+#topPlayerAvatar,
+#bottomPlayerAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
+}
+/* Il pezzo chiaro e quello scuro, come sulla scacchiera. L'avatar del Nero
+   scende di un gradino sotto l'antracite del tavolo, altrimenti ci sparisce
+   dentro. */
+#topPlayerAvatar[data-color="w"],
+#bottomPlayerAvatar[data-color="w"] {
+    background-color: #E5DCCB;
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+}
+#topPlayerAvatar[data-color="b"],
+#bottomPlayerAvatar[data-color="b"] {
+    background-color: #0B0A09;
+    color: var(--ink-on-dark);
+    border: 0;
+}
 
 #topPlayerName,
 #bottomPlayerName { font-size: 14px; font-weight: 500; color: var(--ink-on-dark); }
@@ -465,9 +499,8 @@ select.zu-field { cursor: pointer; appearance: auto; }
     outline-offset: -3px;
 }
 
-/* Titolo di stato: il JavaScript riscrive l'intera stringa di classi e usa
-   colori pensati per il fondo chiaro. Qui ogni token viene rimappato sulla
-   superficie scura, conservando il significato (normale / scacco / finita). */
+/* Titolo di stato: il JavaScript dice solo in che stato e' la partita
+   (turno / scacco / finita) e il colore lo decide il foglio di stile. */
 #gameStatusHeadline {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 26px;
@@ -476,11 +509,28 @@ select.zu-field { cursor: pointer; appearance: auto; }
     letter-spacing: -0.01em;
     margin-top: 2px;
 }
-#gameStatusHeadline.text-anthracite-900 { color: var(--ink-on-dark); }
-#gameStatusHeadline.text-rose-700 { color: #FF9D93; }
-#gameStatusHeadline.text-bronze-600 { color: var(--accent); }
+#gameStatusHeadline { color: var(--ink-on-dark); }
+#gameStatusHeadline[data-state="check"] { color: #FF9D93; }
+#gameStatusHeadline[data-state="over"] { color: var(--accent); }
 
-#turnIndicatorDot { width: 9px; height: 9px; flex: none; }
+/* Il pallino accanto al titolo: verde quando tocca a te, ambra pulsante
+   mentre aspetti, bronzo a partita finita o in revisione. */
+#turnIndicatorDot {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 9999px;
+    background: var(--accent);
+}
+#turnIndicatorDot[data-state="you"] { background: #10B981; }
+#turnIndicatorDot[data-state="waiting"] {
+    background: #F59E0B;
+    animation: zu-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes zu-pulse {
+    50% { opacity: 0.5; }
+}
 
 #selectedSquareIndicator {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -712,7 +762,14 @@ select.zu-field { cursor: pointer; appearance: auto; }
     transition: border-color 0.16s ease, background-color 0.16s ease;
 }
 #promotionChoices button:hover { background: var(--paper-2); border-color: var(--accent-line); }
-#promotionChoices button span { font-size: 11px; font-weight: 500; color: var(--ink-2); }
+.zu-promo-piece {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+.zu-promo-label { font-size: 11px; font-weight: 500; color: var(--ink-2); }
 
 /* ============================================================================
    6. IL TACCUINO (colonna destra)
@@ -814,20 +871,76 @@ select.zu-field { cursor: pointer; appearance: auto; }
 /* Senza piu' la scatola bianca attorno, le righe della lobby hanno bisogno di
    un fondo proprio per leggersi come elenco: il bordo bronzo continua a
    distinguere le stanze di persone vere dagli sfidanti AI. */
-#openRoomsList > div {
+.zu-lobby-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     background: var(--paper-2);
     min-height: 44px;
-    border-radius: var(--r-md) !important;
-    padding: 6px 8px 6px 12px !important;
-    font-size: 13px !important;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 6px 8px 6px 12px;
+    font-size: 13px;
 }
-#openRoomsList > div button {
+.zu-lobby-row[data-kind="human"] { border-color: var(--accent-line); }
+
+.zu-lobby-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+}
+.zu-lobby-live {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 9999px;
+    background: #10B981;
+}
+.zu-lobby-name {
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.zu-lobby-meta {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+.zu-lobby-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+}
+
+.zu-lobby-btn {
+    flex: none;
     min-height: 32px;
-    padding: 0 12px !important;
-    border-radius: var(--r-sm) !important;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
 }
-#openRoomsList .text-neutral-500 { color: var(--ink-2) !important; }
+.zu-lobby-btn:hover { background: var(--accent-ink); }
+.zu-lobby-btn--quiet {
+    background: #E5DCCB;
+    color: var(--ink);
+    border-color: var(--rule-strong);
+}
+.zu-lobby-btn--quiet:hover { background: var(--ink); color: var(--paper); }
 
 #openRoomsCountBadge {
     font-family: 'Inter', sans-serif;
@@ -859,11 +972,40 @@ select.zu-field { cursor: pointer; appearance: auto; }
    8. NOTIFICHE
    ========================================================================= */
 
-#toastContainer > div {
-    border-radius: var(--r-md) !important;
-    font-size: 13px !important;
-    padding: 10px 14px !important;
+.zu-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--table);
+    color: var(--ink-on-dark);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 18px 32px -18px rgba(18, 17, 15, 0.6);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
+.zu-toast[data-tone="gold"] { border-color: var(--accent); }
+.zu-toast-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 9999px;
+    background: var(--accent);
+}
+
+/* Pallino dello stato della rete, nell'intestazione. */
+.zu-net-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 9999px;
+    background: var(--accent);
+}
+.zu-net-dot[data-mode="online"] { background: #10B981; }
+.zu-net-dot[data-mode="errore"] { background: #EF4444; }
 
 /* ============================================================================
    9. BARRE DI SCORRIMENTO

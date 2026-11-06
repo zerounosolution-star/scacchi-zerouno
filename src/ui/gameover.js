@@ -73,7 +73,7 @@ export function triggerEndOfGame(outcomeTitle, outcomeSubtitle = 'Partita Conclu
 
     const headline = document.getElementById('gameStatusHeadline');
     headline.textContent = outcomeTitle;
-    headline.className = 'font-serif text-2xl font-semibold text-bronze-600';
+    headline.dataset.state = 'over';
 
     document.getElementById('modalOutcomeTitle').textContent = outcomeTitle;
     document.getElementById('modalOutcomeSubtitle').textContent = outcomeSubtitle;

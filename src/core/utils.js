@@ -10,9 +10,9 @@ import { chess, state } from './state.js';
 export function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
-    const borderClass = type === 'gold' ? 'border-bronze-400' : 'border-ivory-300';
-    toast.className = `pointer-events-auto bg-anthracite-900 text-ivory-50 border ${borderClass} px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 transition-all duration-300`;
-    toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-bronze-400 shrink-0"></span><span>${message}</span>`;
+    toast.className = 'zu-toast';
+    toast.dataset.tone = type;
+    toast.innerHTML = `<span class="zu-toast-dot"></span><span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';

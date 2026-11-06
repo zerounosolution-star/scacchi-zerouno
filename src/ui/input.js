@@ -218,10 +218,10 @@ export function openPromotionModal(fromSq, toSq, color) {
         const svgKey = `${color}${p.code.toUpperCase()}`;
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'flex flex-col items-center justify-center p-2 rounded-xl bg-white hover:bg-ivory-200 border border-ivory-200 hover:border-bronze-500 transition';
+        btn.className = 'zu-promo-btn';
         btn.innerHTML = `
-            <div class="w-12 h-12 flex items-center justify-center">${PIECE_SVGS[svgKey]}</div>
-            <span class="text-[11px] font-medium text-anthracite-800 mt-1">${p.name}</span>
+            <span class="zu-promo-piece">${PIECE_SVGS[svgKey]}</span>
+            <span class="zu-promo-label">${p.name}</span>
         `;
         btn.addEventListener('click', () => {
             overlay.classList.add('hidden');

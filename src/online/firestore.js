@@ -33,12 +33,8 @@ function setNetworkStatus(mode, label) {
     const netText = document.getElementById('networkText');
     if (!netDot || !netText) return;
 
-    const colorByMode = {
-        online: 'bg-emerald-500',
-        locale: 'bg-bronze-400',
-        errore: 'bg-red-500'
-    };
-    netDot.className = `w-2 h-2 rounded-full ${colorByMode[mode] || 'bg-bronze-400'}`;
+    netDot.className = 'zu-net-dot';
+    netDot.dataset.mode = mode;
     netText.textContent = label;
 }
 
@@ -138,14 +134,15 @@ export function renderGlobalLobbyUI() {
     state.availableWaitingRooms.forEach((room) => {
         const isOwnRoom = state.currentUser && room.whiteUid === state.currentUser.uid;
         const row = document.createElement('div');
-        row.className = 'flex items-center justify-between bg-ivory-50 border border-bronze-400/50 rounded-lg px-3 py-1.5 text-xs';
+        row.className = 'zu-lobby-row';
+        row.dataset.kind = 'human';
         row.innerHTML = `
-            <div class="truncate pr-2">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
-                <span class="font-medium text-anthracite-900">${room.whiteName || 'Scacchista'}</span>
-                <span class="font-mono text-[10px] text-neutral-500 ml-1.5">Stanza #${room.id}</span>
-            </div>
-            <button type="button" class="px-2.5 py-1 rounded bg-anthracite-900 hover:bg-bronze-600 text-ivory-50 text-[11px] font-medium transition shrink-0 cursor-pointer">
+            <span class="zu-lobby-main">
+                <span class="zu-lobby-live"></span>
+                <span class="zu-lobby-name">${room.whiteName || 'Scacchista'}</span>
+                <span class="zu-lobby-meta">Stanza #${room.id}</span>
+            </span>
+            <button type="button" class="zu-lobby-btn">
                 ${isOwnRoom ? 'In attesa...' : 'Entra Ora'}
             </button>
         `;
@@ -158,15 +155,16 @@ export function renderGlobalLobbyUI() {
     // 2. Sfidanti internazionali: avversari AI, sempre pronti a giocare
     WORLD_CHALLENGERS.forEach((challenger) => {
         const row = document.createElement('div');
-        row.className = 'flex items-center justify-between bg-ivory-50/80 border border-ivory-200 rounded-lg px-3 py-1.5 text-xs';
+        row.className = 'zu-lobby-row';
+        row.dataset.kind = 'ai';
         row.innerHTML = `
-            <div class="truncate pr-2">
-                <span class="font-medium text-anthracite-900">${challenger.name}</span>
-                <span class="text-[10px] uppercase tracking-wider text-bronze-600 ml-1">AI</span>
-                <span class="text-[11px] text-neutral-500 ml-1">${challenger.country}</span>
-                <span class="font-mono text-[10px] text-bronze-600 ml-1">(${challenger.elo})</span>
-            </div>
-            <button type="button" class="px-2.5 py-1 rounded bg-ivory-200 hover:bg-anthracite-900 hover:text-ivory-50 text-anthracite-900 text-[11px] font-medium transition shrink-0 cursor-pointer">
+            <span class="zu-lobby-main">
+                <span class="zu-lobby-name">${challenger.name}</span>
+                <span class="zu-lobby-tag">AI</span>
+                <span class="zu-lobby-meta">${challenger.country}</span>
+                <span class="zu-lobby-meta">(${challenger.elo})</span>
+            </span>
+            <button type="button" class="zu-lobby-btn zu-lobby-btn--quiet">
                 Sfida Ora
             </button>
         `;

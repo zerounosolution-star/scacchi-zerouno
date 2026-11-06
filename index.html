@@ -70,7 +70,7 @@
 
                 <!-- Stato della rete -->
                 <div id="networkStatusBadge" class="zu-pill zu-pill--paper">
-                    <span id="networkDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span id="networkDot" class="zu-net-dot" data-mode="locale"></span>
                     <span id="networkText" class="hidden sm:inline">Pronto a Giocare</span>
                 </div>
 
@@ -120,7 +120,7 @@
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div class="min-w-0">
                             <span class="zu-eyebrow">Partita in corso</span>
-                            <h2 id="gameStatusHeadline" class="font-serif text-2xl font-semibold text-anthracite-900" aria-live="polite">
+                            <h2 id="gameStatusHeadline" data-state="turn" aria-live="polite">
                                 Turno del Bianco
                             </h2>
                         </div>
@@ -134,7 +134,7 @@
                     <!-- Giocatore in alto -->
                     <div class="zu-seat mb-2.5">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div id="topPlayerAvatar" class="bg-anthracite-900 text-ivory-50 flex items-center justify-center font-serif font-semibold shrink-0" aria-hidden="true">
+                            <div id="topPlayerAvatar" data-color="b" aria-hidden="true">
                                 N
                             </div>
                             <div class="min-w-0">
@@ -190,7 +190,7 @@
                     <!-- Giocatore in basso -->
                     <div class="zu-seat mt-2.5">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div id="bottomPlayerAvatar" class="bg-ivory-200 text-anthracite-900 flex items-center justify-center font-serif font-semibold shrink-0" aria-hidden="true">
+                            <div id="bottomPlayerAvatar" data-color="w" aria-hidden="true">
                                 B
                             </div>
                             <div class="min-w-0">
@@ -247,7 +247,7 @@
                         <!-- Riga di stato: istruzione e casella selezionata -->
                         <div class="flex items-center justify-between gap-3 mt-3">
                             <div class="flex items-center gap-2 min-w-0">
-                                <span id="turnIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                <span id="turnIndicatorDot" data-state="you"></span>
                                 <span id="mouseInstructionBanner" class="sm:truncate">
                                     Tocca a te (Bianco) &mdash; Clicca o trascina un pezzo con il mouse
                                 </span>
@@ -275,13 +275,13 @@
 
                     <!-- Linguette delle modalita' -->
                     <div class="grid grid-cols-3 gap-1.5 bg-ivory-100 p-1 rounded-xl border border-ivory-200 mb-4" role="tablist">
-                        <button type="button" data-mode-tab="ai" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center bg-anthracite-900 text-ivory-50 shadow-xs cursor-pointer">
+                        <button type="button" data-mode-tab="ai" class="mode-tab-btn" aria-pressed="true">
                             Contro AI
                         </button>
-                        <button type="button" data-mode-tab="local" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900 cursor-pointer">
+                        <button type="button" data-mode-tab="local" class="mode-tab-btn" aria-pressed="false">
                             2 Giocatori
                         </button>
-                        <button type="button" data-mode-tab="online" class="mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900 cursor-pointer">
+                        <button type="button" data-mode-tab="online" class="mode-tab-btn" aria-pressed="false">
                             Mondiale Online
                         </button>
                     </div>

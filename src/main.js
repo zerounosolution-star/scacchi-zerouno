@@ -43,10 +43,10 @@ export function setupEventListeners() {
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.dataset.modeTab;
-            tabButtons.forEach(b => {
-                b.className = 'mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center text-neutral-600 hover:text-anthracite-900';
-            });
-            btn.className = 'mode-tab-btn text-xs font-medium py-2 px-2 rounded-lg transition text-center bg-anthracite-900 text-ivory-50 shadow-xs';
+            // Quale modalita' e' scelta lo dice un attributo, non una
+            // stringa di classi: il disegno sta nel foglio di stile.
+            tabButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+            btn.setAttribute('aria-pressed', 'true');
 
             Object.keys(panels).forEach(k => {
                 panels[k].classList.toggle('hidden', k !== target);

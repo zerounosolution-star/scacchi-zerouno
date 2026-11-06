@@ -76,28 +76,28 @@ export function updateStatusAndHistoryUI() {
     if (!state.matchEnded) {
         if (chess.in_check()) {
             setText(headline, `Scacco al Re! Turno del ${turnLabel}`);
-            headline.className = 'font-serif text-2xl font-semibold text-rose-700';
+            headline.dataset.state = 'check';
         } else {
             setText(headline, `Turno del ${turnLabel}`);
-            headline.className = 'font-serif text-2xl font-semibold text-anthracite-900';
+            headline.dataset.state = 'turn';
         }
 
         if (state.review) {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-bronze-500 shrink-0';
+            dot.dataset.state = 'review';
             setText(banner, `Stai rivedendo la mossa ${Math.ceil(state.review.ply / 2)}`
                 + ' — premi Esc o "Torna alla partita" per continuare');
         } else if (humanTurn) {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
+            dot.dataset.state = 'you';
             // Il titolo qui sopra dice gia' di chi e' il turno: qui solo l'istruzione
             setText(banner, state.selectedSquare
                 ? `Casa ${state.selectedSquare.toUpperCase()} selezionata — Clicca sulla casella evidenziata per muovere`
                 : 'Clicca o trascina un pezzo, oppure usa le frecce e Invio');
         } else {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0';
+            dot.dataset.state = 'waiting';
             setText(banner, `L'avversario (${turnLabel}) sta pensando la mossa...`);
         }
     } else {
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-bronze-500 shrink-0';
+        dot.dataset.state = 'over';
         setText(banner, 'Partita conclusa — Guarda il video ZeroUno o avvia una Nuova Partita');
     }
 
@@ -219,22 +219,22 @@ export function updatePlayerCardsUI(whiteName, blackName) {
         bottomName.textContent = whiteName;
         bottomBadge.textContent = 'Bianco';
         bottomAvatar.textContent = 'B';
-        bottomAvatar.className = 'w-9 h-9 rounded-lg bg-ivory-200 text-anthracite-900 border border-ivory-300 flex items-center justify-center font-serif font-semibold text-base shrink-0';
+        bottomAvatar.dataset.color = 'w';
 
         topName.textContent = blackName;
         topBadge.textContent = 'Nero';
         topAvatar.textContent = 'N';
-        topAvatar.className = 'w-9 h-9 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center font-serif font-semibold text-base shrink-0';
+        topAvatar.dataset.color = 'b';
     } else {
         bottomName.textContent = blackName;
         bottomBadge.textContent = 'Nero';
         bottomAvatar.textContent = 'N';
-        bottomAvatar.className = 'w-9 h-9 rounded-lg bg-anthracite-900 text-ivory-50 flex items-center justify-center font-serif font-semibold text-base shrink-0';
+        bottomAvatar.dataset.color = 'b';
 
         topName.textContent = whiteName;
         topBadge.textContent = 'Bianco';
         topAvatar.textContent = 'B';
-        topAvatar.className = 'w-9 h-9 rounded-lg bg-ivory-200 text-anthracite-900 border border-ivory-300 flex items-center justify-center font-serif font-semibold text-base shrink-0';
+        topAvatar.dataset.color = 'w';
     }
 }
 
