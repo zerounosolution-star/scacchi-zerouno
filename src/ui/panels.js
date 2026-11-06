@@ -11,6 +11,20 @@ import { chess, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { triggerEndOfGame } from './gameover.js';
 
+/**
+ * Scrive un testo solo se e' davvero cambiato.
+ *
+ * #gameStatusHeadline e' una regione aria-live: riscriverlo identico a
+ * ogni ridisegno (anche a ogni casella sorvolata durante un
+ * trascinamento) farebbe ripetere l'annuncio al lettore di schermo.
+ *
+ * @param {HTMLElement|null} el
+ * @param {string} text
+ */
+function setText(el, text) {
+    if (el && el.textContent !== text) el.textContent = text;
+}
+
 export function updateStatusAndHistoryUI() {
     const headline = document.getElementById('gameStatusHeadline');
     const banner = document.getElementById('mouseInstructionBanner');
@@ -29,25 +43,26 @@ export function updateStatusAndHistoryUI() {
 
     if (!state.matchEnded) {
         if (chess.in_check()) {
-            headline.textContent = `Scacco al Re! Turno del ${turnLabel}`;
+            setText(headline, `Scacco al Re! Turno del ${turnLabel}`);
             headline.className = 'font-serif text-2xl font-semibold text-rose-700';
         } else {
-            headline.textContent = `Turno del ${turnLabel}`;
+            setText(headline, `Turno del ${turnLabel}`);
             headline.className = 'font-serif text-2xl font-semibold text-anthracite-900';
         }
 
         if (humanTurn) {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
-            banner.textContent = state.selectedSquare
+            // Il titolo qui sopra dice gia' di chi e' il turno: qui solo l'istruzione
+            setText(banner, state.selectedSquare
                 ? `Casa ${state.selectedSquare.toUpperCase()} selezionata — Clicca sulla casella evidenziata per muovere`
-                : `Tocca a te (${turnLabel}) — Clicca o trascina un pezzo con il mouse`;
+                : 'Clicca o trascina un pezzo, oppure usa le frecce e Invio');
         } else {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0';
-            banner.textContent = `L'avversario (${turnLabel}) sta pensando la mossa...`;
+            setText(banner, `L'avversario (${turnLabel}) sta pensando la mossa...`);
         }
     } else {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-bronze-500 shrink-0';
-        banner.textContent = 'Partita conclusa — Guarda il video ZeroUno o avvia una Nuova Partita';
+        setText(banner, 'Partita conclusa — Guarda il video ZeroUno o avvia una Nuova Partita');
     }
 
     // Cronologia mosse in notazione algebrica
@@ -85,6 +100,9 @@ export function updateStatusAndHistoryUI() {
         }
         container.scrollTop = container.scrollHeight;
     }
+
+    // L'orologio in corsa cambia a ogni mossa, non solo allo scoccare del secondo
+    renderTimersUI();
 }
 
 export function updateCapturedMaterialUI() {
@@ -207,11 +225,32 @@ export function startMatchTimers() {
     }, 1000);
 }
 
+/** Sotto questa soglia l'orologio segnala che il tempo sta finendo. */
+const LOW_TIME_SECONDS = 30;
+
 export function renderTimersUI() {
     const bottomIsWhite = state.boardOrientation === 'w';
     const bottomTimerEl = document.getElementById('bottomTimerBox');
     const topTimerEl = document.getElementById('topTimerBox');
+    if (!bottomTimerEl || !topTimerEl) return;
 
-    bottomTimerEl.textContent = formatSeconds(bottomIsWhite ? state.whiteTimeSeconds : state.blackTimeSeconds);
-    topTimerEl.textContent = formatSeconds(bottomIsWhite ? state.blackTimeSeconds : state.whiteTimeSeconds);
+    const bottomSeconds = bottomIsWhite ? state.whiteTimeSeconds : state.blackTimeSeconds;
+    const topSeconds = bottomIsWhite ? state.blackTimeSeconds : state.whiteTimeSeconds;
+
+    bottomTimerEl.textContent = formatSeconds(bottomSeconds);
+    topTimerEl.textContent = formatSeconds(topSeconds);
+
+    /*
+     * Quale dei due orologi sta scorrendo: senza questo i due riquadri
+     * sono identici ed e' l'unico dato della partita che non si legge a
+     * colpo d'occhio. Il disegno dei due stati sta in styles.css.
+     */
+    const bottomColor = bottomIsWhite ? 'w' : 'b';
+    const bottomIsRunning = !state.matchEnded && chess.turn() === bottomColor;
+
+    bottomTimerEl.dataset.active = bottomIsRunning ? '1' : '';
+    topTimerEl.dataset.active = (!state.matchEnded && !bottomIsRunning) ? '1' : '';
+
+    bottomTimerEl.dataset.low = bottomSeconds <= LOW_TIME_SECONDS ? '1' : '';
+    topTimerEl.dataset.low = topSeconds <= LOW_TIME_SECONDS ? '1' : '';
 }
