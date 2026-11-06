@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { chooseMove, evaluatePosition, LEVELS } from '../src/engine/search.js';
+import { chooseMove, evaluatePosition, minimax, LEVELS } from '../src/engine/search.js';
 import { ZeroUnoChessEngine } from '../src/engine/chess-engine.js';
 
 /** Vero se la mossa proposta e' davvero legale nella posizione. */
@@ -87,4 +87,49 @@ test('i tre livelli sono configurati in ordine crescente di forza', () => {
     assert.ok(LEVELS[1].maxDepth < LEVELS[2].maxDepth);
     assert.ok(LEVELS[2].maxDepth < LEVELS[3].maxDepth);
     assert.ok(LEVELS[2].timeBudgetMs < LEVELS[3].timeBudgetMs);
+});
+
+test('tavola di trasposizione: riusarla non cambia il punteggio', () => {
+    /*
+     * Una tavola che restituisce un limite al posto di un punteggio
+     * esatto fa giocare mosse qualunque con il punteggio di un'altra.
+     * Qui la stessa ricerca gira due volte: la seconda trova la tavola
+     * piena di posizioni gia' viste e deve rispondere identico.
+     */
+    const posizioni = [
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',
+        '8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1'
+    ];
+
+    for (const fen of posizioni) {
+        const tavola = new Map();
+        const punteggi = [];
+
+        for (let giro = 0; giro < 2; giro++) {
+            const game = new ZeroUnoChessEngine();
+            game.load(fen);
+            const ctx = { quiescencePlies: 2, ply: 0, nodes: 0, timedOut: false, tt: tavola };
+            punteggi.push(minimax(game, 3, -Infinity, Infinity, game.turn() === 'w', ctx));
+        }
+
+        assert.equal(punteggi[0], punteggi[1], `la tavola cambia il punteggio in ${fen}`);
+        assert.ok(tavola.size > 0, 'la tavola e\' rimasta vuota');
+    }
+});
+
+test('tavola di trasposizione: la distanza di matto non si sposta', () => {
+    // Matto in 2: il punteggio deve restare quello anche riusando la tavola
+    const fen = 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4';
+    const tavola = new Map();
+    let punteggio = null;
+
+    for (let profondita = 2; profondita <= 4; profondita++) {
+        const game = new ZeroUnoChessEngine();
+        game.load(fen);
+        const ctx = { quiescencePlies: 2, ply: 0, nodes: 0, timedOut: false, tt: tavola };
+        const valore = minimax(game, profondita, -Infinity, Infinity, true, ctx);
+        if (punteggio === null) punteggio = valore;
+        assert.equal(valore, punteggio, `profondita ${profondita}: la distanza di matto e' cambiata`);
+    }
 });

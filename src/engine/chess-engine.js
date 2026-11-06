@@ -31,6 +31,52 @@ const KNIGHT_JUMPS = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2,
 const ORTHO_DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const DIAG_DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
+/*
+ * IMPRONTA ZOBRIST
+ *
+ * Ogni posizione ha un numero che la identifica. Serve due volte: per la
+ * regola della ripetizione e per la tavola di trasposizione della ricerca.
+ *
+ * Prima questa impronta era la FEN, costruita come stringa a ogni mossa e
+ * a ogni annullamento. Dentro la ricerca sono due stringhe per nodo, ed
+ * era la spesa piu' alta del motore.
+ *
+ * I numeri nascono da un generatore con seme fisso, quindi sono identici
+ * in ogni sessione e in ogni thread: due motori diversi danno la stessa
+ * impronta alla stessa posizione, e il conteggio delle ripetizioni si
+ * puo' passare al Web Worker.
+ */
+const ZOBRIST_PIECE_INDEX = { p: 0, n: 1, b: 2, r: 3, q: 4, k: 5 };
+const ZOBRIST_TURN = 12 * 64;
+const ZOBRIST_CASTLING = ZOBRIST_TURN + 1;
+const ZOBRIST_EP = ZOBRIST_CASTLING + 4;
+const ZOBRIST_SLOTS = ZOBRIST_EP + 8;
+
+/**
+ * Due numeri casuali a 32 bit per casella: insieme formano una chiave a
+ * 53 bit, il piu' grande intero che un numero JavaScript rappresenta
+ * senza perdere cifre.
+ */
+const ZOBRIST = (() => {
+    let seed = 0x9E3779B9 >>> 0;
+    const next = () => {
+        // xorshift32: sequenza fissa, nessuna dipendenza da Math.random
+        seed ^= (seed << 13) >>> 0;
+        seed >>>= 0;
+        seed ^= seed >>> 17;
+        seed ^= (seed << 5) >>> 0;
+        seed >>>= 0;
+        return seed;
+    };
+    const hi = new Int32Array(ZOBRIST_SLOTS);
+    const lo = new Int32Array(ZOBRIST_SLOTS);
+    for (let i = 0; i < ZOBRIST_SLOTS; i++) {
+        hi[i] = next() | 0;
+        lo[i] = next() | 0;
+    }
+    return { hi, lo };
+})();
+
 export function inBounds(r, c) {
     return r >= 0 && r < 8 && c >= 0 && c < 8;
 }
@@ -58,6 +104,7 @@ export class ZeroUnoChessEngine {
 
         // Conta quante volte ogni posizione si e' ripetuta nella partita.
         this.positionCounts = new Map();
+        this.refreshPositionKey();
         this.recordPosition();
     }
 
@@ -71,7 +118,52 @@ export class ZeroUnoChessEngine {
      * @returns {string}
      */
     positionKey() {
-        return this.fen().split(' ').slice(0, 4).join(' ');
+        return this.positionHash;
+    }
+
+    /**
+     * Ricalcola l'impronta della posizione corrente.
+     *
+     * Va chiamata dopo ogni cambiamento della scacchiera: reset, load,
+     * move, undo. Il valore si tiene da parte perche' la ricerca lo
+     * chiede a ogni nodo.
+     */
+    refreshPositionKey() {
+        const grid = this.boardGrid;
+        let hi = 0;
+        let lo = 0;
+
+        for (let r = 0; r < 8; r++) {
+            const row = grid[r];
+            for (let c = 0; c < 8; c++) {
+                const piece = row[c];
+                if (!piece) continue;
+                const slot = ((piece.color === 'w' ? 0 : 6) + ZOBRIST_PIECE_INDEX[piece.type]) * 64 + r * 8 + c;
+                hi ^= ZOBRIST.hi[slot];
+                lo ^= ZOBRIST.lo[slot];
+            }
+        }
+
+        if (this.activeTurn === 'w') {
+            hi ^= ZOBRIST.hi[ZOBRIST_TURN];
+            lo ^= ZOBRIST.lo[ZOBRIST_TURN];
+        }
+        if (this.castling.wK) { hi ^= ZOBRIST.hi[ZOBRIST_CASTLING]; lo ^= ZOBRIST.lo[ZOBRIST_CASTLING]; }
+        if (this.castling.wQ) { hi ^= ZOBRIST.hi[ZOBRIST_CASTLING + 1]; lo ^= ZOBRIST.lo[ZOBRIST_CASTLING + 1]; }
+        if (this.castling.bK) { hi ^= ZOBRIST.hi[ZOBRIST_CASTLING + 2]; lo ^= ZOBRIST.lo[ZOBRIST_CASTLING + 2]; }
+        if (this.castling.bQ) { hi ^= ZOBRIST.hi[ZOBRIST_CASTLING + 3]; lo ^= ZOBRIST.lo[ZOBRIST_CASTLING + 3]; }
+
+        if (this.enPassantSq) {
+            const file = this.enPassantSq.charCodeAt(0) - 97;
+            if (file >= 0 && file < 8) {
+                hi ^= ZOBRIST.hi[ZOBRIST_EP + file];
+                lo ^= ZOBRIST.lo[ZOBRIST_EP + file];
+            }
+        }
+
+        // 21 bit alti + 32 bassi = 53 bit: resta un intero esatto
+        this.positionHash = (hi & 0x1FFFFF) * 4294967296 + (lo >>> 0);
+        return this.positionHash;
     }
 
     /** Registra la posizione corrente nel conteggio delle ripetizioni. */
@@ -104,7 +196,7 @@ export class ZeroUnoChessEngine {
     seedPositionCounts(entries) {
         if (!Array.isArray(entries)) return;
         for (const [key, count] of entries) {
-            if (typeof key !== 'string' || !Number.isFinite(count)) continue;
+            if (!Number.isFinite(key) || !Number.isFinite(count)) continue;
             this.positionCounts.set(key, Math.max(this.positionCounts.get(key) || 0, count));
         }
     }
@@ -539,14 +631,33 @@ export class ZeroUnoChessEngine {
         return legalMoves;
     }
 
-    move(moveInput) {
+    /**
+     * Esegue una mossa.
+     *
+     * @param {object} moveInput      { from, to, promotion }.
+     * @param {object} [options]      fast: il chiamante garantisce che
+     *                                moveInput e' uscito da moves() su
+     *                                questa stessa posizione. Allora si
+     *                                salta il controllo di legalita', la
+     *                                notazione algebrica e il simbolo di
+     *                                scacco: dentro la ricerca sono tre
+     *                                lavori inutili ripetuti a ogni nodo.
+     * @returns {object|null}
+     */
+    move(moveInput, options = {}) {
+        const fast = options.fast === true;
         const fromSq = moveInput.from;
         const toSq = moveInput.to;
         const promotionType = moveInput.promotion || 'q';
 
-        const legalForSquare = this.moves({ square: fromSq, verbose: true });
-        const matched = legalForSquare.find(m => m.to === toSq);
-        if (!matched) return null;
+        let matched;
+        if (fast) {
+            matched = moveInput;
+        } else {
+            const legalForSquare = this.moves({ square: fromSq, verbose: true });
+            matched = legalForSquare.find(m => m.to === toSq);
+            if (!matched) return null;
+        }
 
         // Salva stato precedente per undo(): solo le caselle toccate,
         // non una copia dell'intera scacchiera.
@@ -567,7 +678,9 @@ export class ZeroUnoChessEngine {
 
         // Costruisci notazione algebrica (SAN)
         let san = '';
-        if (matched.flags === 'k') {
+        if (fast) {
+            // la ricerca non legge la notazione
+        } else if (matched.flags === 'k') {
             san = 'O-O';
         } else if (matched.flags === 'q') {
             san = 'O-O-O';
@@ -639,8 +752,9 @@ export class ZeroUnoChessEngine {
         }
         this.activeTurn = this.activeTurn === 'w' ? 'b' : 'w';
 
-        // Aggiungi simbolo di scacco (+) o scacco matto (#)
-        if (this.in_check()) {
+        // Aggiungi simbolo di scacco (+) o scacco matto (#).
+        // Costa una generazione completa delle mosse: solo fuori dalla ricerca.
+        if (!fast && this.in_check()) {
             san += this.moves().length === 0 ? '#' : '+';
         }
 
@@ -652,6 +766,7 @@ export class ZeroUnoChessEngine {
         };
 
         this.moveStack.push(executedMove);
+        this.refreshPositionKey();
         this.recordPosition();
         return executedMove;
     }
@@ -676,6 +791,7 @@ export class ZeroUnoChessEngine {
         this.enPassantSq = snap.enPassantSq;
         this.halfMoves = snap.halfMoves;
         this.fullMoves = snap.fullMoves;
+        this.refreshPositionKey();
         return last;
     }
 
@@ -812,6 +928,7 @@ export class ZeroUnoChessEngine {
             // mosse precedenti non le appartiene piu'.
             this.moveStack = [];
             this.positionCounts = new Map();
+            this.refreshPositionKey();
             this.recordPosition();
             return true;
         } catch (e) {

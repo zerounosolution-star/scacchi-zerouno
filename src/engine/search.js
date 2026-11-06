@@ -14,6 +14,9 @@
  * - approfondimento progressivo con tetto di tempo: la ricerca scende di
  *   un livello alla volta e si ferma quando il tempo e' finito, tenendo
  *   la mossa migliore trovata fino a quel momento
+ * - tavola di trasposizione: la stessa posizione raggiunta per strade
+ *   diverse non si ricalcola, e la mossa che era risultata migliore si
+ *   riprova per prima
  */
 
 import { ZeroUnoChessEngine } from './chess-engine.js';
@@ -102,6 +105,59 @@ const PST = {
     ]
 };
 
+/*
+ * TAVOLA DI TRASPOSIZIONE
+ *
+ * La stessa posizione si raggiunge per ordini di mosse diversi. Senza
+ * memoria, la ricerca la ricalcola ogni volta da capo.
+ *
+ * Di ogni posizione si tiene: a che profondita' era stata cercata, il
+ * punteggio, che genere di punteggio e' (esatto o solo un limite) e la
+ * mossa che era risultata migliore.
+ */
+const TT_EXACT = 0;
+const TT_LOWER = 1;  // il punteggio vero e' almeno questo
+const TT_UPPER = 2;  // il punteggio vero e' al massimo questo
+
+/** Oltre questo numero di posizioni in memoria la tavola riparte da zero. */
+const TT_MAX_ENTRIES = 300000;
+
+/** La ricerca muove sempre mosse gia' verificate: salta i controlli. */
+const FAST_MOVE = { fast: true };
+
+/*
+ * I punteggi di matto contengono la distanza dalla radice. La stessa
+ * posizione, raggiunta a profondita' diversa, ha distanze diverse:
+ * in tavola il punteggio si salva contato dal nodo, non dalla radice.
+ */
+function scoreToTT(score, ply) {
+    if (score >= MATE_SCORE - 1000) return score + ply;
+    if (score <= -(MATE_SCORE - 1000)) return score - ply;
+    return score;
+}
+
+function scoreFromTT(score, ply) {
+    if (score >= MATE_SCORE - 1000) return score - ply;
+    if (score <= -(MATE_SCORE - 1000)) return score + ply;
+    return score;
+}
+
+/** Salva una posizione, senza scalzare un risultato piu' profondo. */
+function storeTT(ctx, key, depth, flag, score, move) {
+    const tt = ctx.tt;
+    const previous = tt.get(key);
+
+    if (previous && previous.depth > depth) return;
+    if (!previous && tt.size >= TT_MAX_ENTRIES) tt.clear();
+
+    tt.set(key, {
+        depth,
+        flag,
+        score: scoreToTT(score, ctx.ply),
+        move: move ? { from: move.from, to: move.to } : (previous ? previous.move : null)
+    });
+}
+
 /**
  * Valuta la posizione dal punto di vista del Bianco.
  * Positivo: sta meglio il Bianco. Negativo: sta meglio il Nero.
@@ -172,11 +228,13 @@ function isDrawByRule(game) {
  * @param {Array<object>} moves
  * @returns {Array<object>}
  */
-function orderMoves(moves) {
+function orderMoves(moves, ttMove = null) {
     return moves
         .map((m) => {
             let priority = 0;
-            if (m.captured) {
+            // La mossa che la tavola ricorda come migliore si prova per prima
+            if (ttMove && m.from === ttMove.from && m.to === ttMove.to) priority = 1000000;
+            else if (m.captured) {
                 priority = 10000 + (PIECE_VALUES[m.captured] || 0) - (PIECE_VALUES[m.piece] || 0);
             }
             if (m.flags && m.flags.includes('p')) priority += 9000;
@@ -212,7 +270,7 @@ function quiescence(game, alpha, beta, isMaximizing, pliesLeft, ply, ctx) {
     const captures = orderMoves(game.moves({ verbose: true }).filter((m) => m.captured));
 
     for (const m of captures) {
-        game.move(m);
+        game.move(m, FAST_MOVE);
         const value = quiescence(game, alpha, beta, !isMaximizing, pliesLeft - 1, ply + 1, ctx);
         game.undo();
 
@@ -241,8 +299,29 @@ function quiescence(game, alpha, beta, isMaximizing, pliesLeft, ply, ctx) {
 export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
     ctx.nodes++;
 
-    // Patte che non dipendono dalle mosse disponibili: costano poco
+    /*
+     * Patte che non dipendono dalle mosse disponibili: costano poco.
+     * Vanno controllate prima della tavola, perche' la patta per
+     * ripetizione dipende dalla partita giocata, non dalla sola
+     * posizione.
+     */
     if (isDrawByRule(game)) return 0;
+
+    const alphaOriginal = alpha;
+    const betaOriginal = beta;
+    const key = game.positionKey();
+    let ttMove = null;
+
+    const entry = ctx.tt.get(key);
+    if (entry) {
+        ttMove = entry.move;
+        if (entry.depth >= depth) {
+            const score = scoreFromTT(entry.score, ctx.ply);
+            if (entry.flag === TT_EXACT) return score;
+            if (entry.flag === TT_LOWER && score >= beta) return score;
+            if (entry.flag === TT_UPPER && score <= alpha) return score;
+        }
+    }
 
     if (depth === 0) {
         return quiescence(game, alpha, beta, isMaximizing, ctx.quiescencePlies, ctx.ply, ctx);
@@ -254,7 +333,7 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
         return evaluatePosition(game, ctx.ply);
     }
 
-    const moves = orderMoves(game.moves({ verbose: true }));
+    const moves = orderMoves(game.moves({ verbose: true }), ttMove);
 
     /*
      * Niente mosse legali: o e' matto, o e' stallo. Si riconosce qui,
@@ -267,23 +346,35 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
     }
 
     let best = isMaximizing ? -Infinity : Infinity;
+    let bestMoveHere = null;
 
     for (const m of moves) {
-        game.move(m);
+        game.move(m, FAST_MOVE);
         ctx.ply++;
         const value = minimax(game, depth - 1, alpha, beta, !isMaximizing, ctx);
         ctx.ply--;
         game.undo();
 
         if (isMaximizing) {
-            if (value > best) best = value;
+            if (value > best) { best = value; bestMoveHere = m; }
             if (value > alpha) alpha = value;
         } else {
-            if (value < best) best = value;
+            if (value < best) { best = value; bestMoveHere = m; }
             if (value < beta) beta = value;
         }
         if (beta <= alpha) break;
         if (ctx.timedOut) break;
+    }
+
+    /*
+     * Un giro interrotto dal tempo non si salva: il punteggio non e'
+     * stato cercato fino in fondo e inquinerebbe le ricerche successive.
+     */
+    if (!ctx.timedOut) {
+        let flag = TT_EXACT;
+        if (best <= alphaOriginal) flag = TT_UPPER;
+        else if (best >= betaOriginal) flag = TT_LOWER;
+        storeTT(ctx, key, depth, flag, best, bestMoveHere);
     }
 
     return best;
@@ -340,6 +431,12 @@ export function chooseMove(fen, level = 2, options = {}) {
 
     let bestMove = legalMoves[0];
     let bestScore = isMaximizing ? -Infinity : Infinity;
+
+    /*
+     * La tavola vive per tutta la scelta della mossa: il giro a
+     * profondita' 4 riusa quello che ha imparato il giro a profondita' 3.
+     */
+    const tt = new Map();
     let reachedDepth = 0;
     let totalNodes = 0;
 
@@ -350,7 +447,8 @@ export function chooseMove(fen, level = 2, options = {}) {
             quiescencePlies: settings.quiescencePlies,
             ply: 0,
             nodes: 0,
-            timedOut: false
+            timedOut: false,
+            tt
         };
 
         let roundBest = null;
@@ -371,7 +469,7 @@ export function chooseMove(fen, level = 2, options = {}) {
          * punteggio del matto trovato da un'altra.
          */
         for (const m of ordered) {
-            game.move(m);
+            game.move(m, FAST_MOVE);
             ctx.ply++;
             const score = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizing, ctx);
             ctx.ply--;

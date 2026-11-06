@@ -209,3 +209,63 @@ test('FEN: caricamento e rilettura danno la stessa stringa', () => {
         assert.equal(g.fen(), fen);
     }
 });
+
+test('impronta della posizione: stessa posizione, stessa impronta', () => {
+    const a = new ZeroUnoChessEngine();
+    const b = new ZeroUnoChessEngine();
+    play(a, 'e2e4', 'e7e5', 'g1f3');
+    b.load(a.fen());
+
+    assert.equal(typeof a.positionKey(), 'number');
+    assert.ok(Number.isFinite(a.positionKey()));
+    assert.equal(a.positionKey(), b.positionKey(), 'due motori devono concordare');
+});
+
+test('impronta della posizione: il turno fa parte della posizione', () => {
+    const bianco = new ZeroUnoChessEngine();
+    bianco.load('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    const nero = new ZeroUnoChessEngine();
+    nero.load('4k3/8/8/8/8/8/8/4K3 b - - 0 1');
+    assert.notEqual(bianco.positionKey(), nero.positionKey());
+});
+
+test('mossa veloce: porta alla stessa posizione della mossa normale', () => {
+    /*
+     * La ricerca usa move(m, { fast: true }), che salta controllo di
+     * legalita', notazione e simbolo di scacco. Il risultato sulla
+     * scacchiera deve restare identico, altrimenti l'AI ragiona su una
+     * posizione che non esiste.
+     */
+    const partite = [
+        ['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1c4', 'f8c5', 'e1g1'],
+        ['e2e4', 'd7d5', 'e4d5', 'd8d5', 'b1c3', 'd5a5'],
+        ['e2e4', 'a7a6', 'e4e5', 'd7d5', 'e5d6']
+    ];
+
+    for (const mosse of partite) {
+        const normale = new ZeroUnoChessEngine();
+        const veloce = new ZeroUnoChessEngine();
+
+        for (const m of mosse) {
+            const from = m.slice(0, 2);
+            const to = m.slice(2, 4);
+
+            normale.move({ from, to });
+
+            // La mossa veloce vuole l'oggetto uscito da moves()
+            const legale = veloce.moves({ verbose: true }).find((x) => x.from === from && x.to === to);
+            assert.ok(legale, `mossa non trovata: ${m}`);
+            veloce.move(legale, { fast: true });
+
+            assert.equal(veloce.fen(), normale.fen(), `posizioni diverse dopo ${m}`);
+            assert.equal(veloce.positionKey(), normale.positionKey(), `impronte diverse dopo ${m}`);
+        }
+
+        // E tornano indietro allo stesso modo
+        while (normale.history().length > 0) {
+            normale.undo();
+            veloce.undo();
+            assert.equal(veloce.fen(), normale.fen(), 'posizioni diverse dopo undo');
+        }
+    }
+});
