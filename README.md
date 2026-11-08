@@ -232,6 +232,16 @@ mossa che era risultata migliore si riprova per prima. Si ricordano anche le
 mosse tranquille che hanno gia' fatto saltare altri rami: a profondita' 5
 fanno risparmiare dal 30% al 60% dei nodi.
 
+Due tagli fanno il grosso del lavoro. Alla radice solo la prima mossa si
+cerca per intero: le altre passano da una finestra di sondaggio che sa solo
+dire peggiore, pari o forse migliore, e si ricercano per intero solo nel
+terzo caso. E nei nodi interni c'e' il tratto nullo: se persino passando la
+mossa il vantaggio resta, il ramo si chiude senza guardarlo. Insieme
+tagliano oltre il 90% dei nodi a parita' di profondita', cioe' una o due
+profondita' in piu' nello stesso tempo. In torneo, a parita' di tempo per
+mossa, il primo taglio ha fatto 339 punti su 400 contro la versione senza,
+e il secondo ha aggiunto altri 47 punti Elo misurati.
+
 L'AI guarda il proprio orologio: con pochi secondi rimasti muove in fretta
 invece di pensare come se avesse tutto il tempo del mondo.
 
@@ -241,6 +251,11 @@ contava materiale e posizione dei pezzi, si sono aggiunti pedoni doppiati,
 isolati, collegati e passati, torri su colonna aperta, coppia degli alfieri e
 riparo di pedoni davanti al re.
 
+I pedoni passati poi sanno chi li scorta e chi li rincorre: il proprio re
+vicino li accompagna, la torre rende di piu' da dietro, e quando il re
+avversario e' fuori dal quadrato il pedone corre da solo e la valutazione
+lo sa prima ancora che la ricerca veda la promozione.
+
 Fra medio gioco e finale la valutazione passa per gradi, non di colpo: il re
 smette di cercare il riparo e comincia ad andare al centro mentre i pezzi
 pesanti lasciano la scacchiera. E quando l'avversario resta col re nudo,
@@ -249,9 +264,10 @@ qualche partita arrivava a buttare via la torre perche' ormai ogni mossa
 valeva zero. Ora da' matto in 12 casi su 16 invece di 10, e ci arriva in un
 quarto di mosse in meno.
 
-In un torneo di 20 partite con lo stesso tempo per mossa, questa versione ha
-fatto 16 punti su 20 (15 vittorie, 3 sconfitte, 2 patte) contro quella di
-prima.
+Ogni passo e' misurato in torneo contro la versione precedente, centinaia
+di partite con aperture sorteggiate e colori invertiti: i numeri, con i
+loro margini di errore, stanno in
+[docs/ARCHITETTURA.md](docs/ARCHITETTURA.md).
 
 La partita in corso viene passata alla ricerca, non solo la posizione:
 cosi' l'AI sa quali posizioni sono gia' comparse e non chiude patta per
