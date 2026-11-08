@@ -132,6 +132,14 @@ che preesiste alla modifica: una patta per ripetizione o per 50 mosse
 dipende dalla strada percorsa, e la tavola la ricorda come un fatto della
 posizione.
 
+In partita l'effetto e' stato molto oltre l'atteso: 339 su 400 contro la
+versione precedente (84,75%, blocchi da 100 fra il 79% e l'87,5%), cioe'
+circa +300 punti Elo, quando il precedente killer+storia faceva prevedere
+zero. La differenza sta nella taglia del risparmio: 30-60% non compra una
+profondita' intera a 250 ms, 85% si'. Prima la radice spesso non finiva il
+giro a profondita' 6 nel tempo a disposizione; adesso lo finisce sempre, e
+una profondita' piena a questi livelli decide le partite.
+
 **Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
 volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
 volte: alla regola della ripetizione e alla tavola di trasposizione. I
