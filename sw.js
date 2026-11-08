@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
