@@ -172,6 +172,36 @@ tratto ha sempre almeno una mossa vera. Il torneo e' stato giocato dalla
 versione prima della cura, che tocca solo i nodi di stallo: rare volte, e
 sempre nella direzione di correggere un punteggio sbagliato.
 
+Il torneo di conferma sulla versione curata ha dato 215,5 su 400 (53,9%):
+piu' basso del primo, ma la differenza fra due tornei da 400 ha un errore
+di circa 3 punti, e la somma degli 800 fa 55,3% con lo zero fuori
+dall'intervallo. Le partite al limite delle 200 semimosse: 25 su 400 in
+tutti e due i tornei.
+
+**Finali con pedoni passati.** Quattro termini attivi solo sui passati:
+valore che sale del 50% verso il finale; scorta dei re (il proprio re
+vicino alla casa davanti al pedone, quello avversario lontano, pesata con
+l'avanzata e con la fase); torre dietro il passato alla Tarrasch (propria
++14, avversaria -14); regola del quadrato col tempo di chi muove, quando
+l'avversario non ha pezzi (+400..+490, sotto donna-meno-pedone e spenta a
+meno di due passi dalla promozione, a guardia del test della
+sottopromozione). Tutti i termini dipendono solo da pezzi e tratto, che
+stanno nella chiave Zobrist: la tavola resta onesta.
+
+Misurato: costo 1,8% di nodi al secondo (113k a 111k); specchio esatto su
+coppie di posizioni ribaltate, tempo del quadrato compreso; suite dei
+matti 37 su 48 contro 36 di base (il pacchetto senza pedoni e' inerte). In
+torneo 216,5 su 400 = 54,1%, cioe' +29 Elo stimati con intervallo da -2 a
++60: la soglia dichiarata (bene da 51% in su) e' superata. La metrica
+primaria invece non si e' mossa: partite al limite 22 contro 25, perche'
+la profondita' comprata dai due tagli aveva gia' convertito i finali
+convertibili prima che il pacchetto arrivasse. Delle 22 rimaste, 15 hanno
+ancora passati sulla scacchiera e 7 no: la condizione dichiarata per il
+passo successivo (patta rinviata: utile se le bloccate fossero perlopiu'
+SENZA passati, cioe' ripetizioni e fortezze) non si avvera, e quel passo
+non parte. Il valore del pacchetto sta nel gioco generale, non nello
+sbloccare i finali inchiodati.
+
 **Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
 volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
 volte: alla regola della ripetizione e alla tavola di trasposizione. I

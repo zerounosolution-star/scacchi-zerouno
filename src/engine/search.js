@@ -261,6 +261,26 @@ const CONNECTED_PAWN = 7;      // pedone amico di fianco o a sostegno in diagona
 const PASSED_PAWN = [0, 12, 22, 40, 70, 110];
 
 /*
+ * FINALI CON PEDONI PASSATI
+ *
+ * Le partite che muoiono al limite delle 200 semimosse sono finali con
+ * pezzi ancora in gioco che nessuno converte. A queste profondita' i
+ * piani "porta il re sul pedone" e "cambia i pezzi e corri" non entrano
+ * nell'orizzonte: serve un gradiente statico che li suggerisca alle
+ * foglie, dove il motore arriva gia'.
+ *
+ * Tutti i termini dipendono solo da pezzi e tratto, che stanno entrambi
+ * nell'impronta Zobrist: niente ply ne' contatore delle 50 mosse, cosi'
+ * la tavola di trasposizione resta onesta.
+ */
+const PASSED_ENDGAME_SCALE = 0.5;    // a finale pieno il passato vale il 50% in piu'
+const PASSED_OWN_KING = 4;           // per passo del proprio re dalla casa davanti al passato, per avanzata
+const PASSED_ENEMY_KING = 4;         // lo stesso per il re avversario, in positivo quando sta lontano
+const ROOK_BEHIND_PASSED = 14;       // torre propria dietro il passato; quella avversaria vale lo stesso in negativo
+const PASSED_UNSTOPPABLE_BASE = 400; // regola del quadrato: il re avversario non lo prende piu'
+const PASSED_UNSTOPPABLE_STEP = 30;  // in piu' per ogni passo gia' fatto: fra due corse vince la piu' corta
+
+/*
  * FASE DELLA PARTITA
  *
  * Il re sta al riparo a medio gioco e al centro nel finale: due tabelle
@@ -377,6 +397,31 @@ function isConnectedPawn(board, color, r, c) {
     return false;
 }
 
+/** Distanza fra due case in mosse di re. */
+function kingDistance(r1, c1, r2, c2) {
+    const dr = Math.abs(r1 - r2);
+    const dc = Math.abs(c1 - c2);
+    return dr > dc ? dr : dc;
+}
+
+/**
+ * Prima torre sulla colonna dietro un pedone passato: +1 se propria,
+ * -1 se avversaria, 0 se non c'e' o se un altro pezzo sta in mezzo.
+ *
+ * Regola di Tarrasch: la torre dietro il passato lo spinge senza
+ * intralciarlo e guadagna case mentre avanza; davanti fa il contrario.
+ */
+function rookBehindPasser(board, color, r, c) {
+    const step = color === 'w' ? 1 : -1; // dietro un pedone bianco = verso la riga 7
+    for (let rr = r + step; rr >= 0 && rr <= 7; rr += step) {
+        const piece = board[rr][c];
+        if (!piece) continue;
+        if (piece.type === 'r') return piece.color === color ? 1 : -1;
+        return 0;
+    }
+    return 0;
+}
+
 /**
  * Quanto il re perdente e' lontano dal centro: 1 al centro, 7 sul bordo.
  * Sul bordo ha meno case per scappare, e lungo il bordo si da' matto.
@@ -445,6 +490,8 @@ export function evaluatePosition(game, ply = 0) {
     let heavyMaterial = 0;
     let whiteMaterial = 0;
     let blackMaterial = 0;
+    let whitePieces = 0; // pezzi non pedone per colore: serve alla regola del quadrato
+    let blackPieces = 0;
     let whitePawns = 0;
     let blackPawns = 0;
     let whiteKing = null;
@@ -466,6 +513,8 @@ export function evaluatePosition(game, ply = 0) {
                 else blackPawns++;
             } else {
                 heavyMaterial += PIECE_VALUES[p.type];
+                if (p.color === 'w') whitePieces += PIECE_VALUES[p.type];
+                else blackPieces += PIECE_VALUES[p.type];
             }
 
             if (p.color === 'w') whiteMaterial += PIECE_VALUES[p.type];
@@ -476,6 +525,10 @@ export function evaluatePosition(game, ply = 0) {
     // 1 = medio gioco pieno, 0 = finale pieno, in mezzo si passa per gradi
     const phase = Math.max(0, Math.min(1,
         (heavyMaterial - PHASE_ENDGAME) / (PHASE_MIDDLEGAME - PHASE_ENDGAME)));
+
+    // 1 = finale pieno: i termini dei passati pesano in proporzione
+    const endgame = 1 - phase;
+    const sideToMove = game.turn(); // il tempo nella regola del quadrato
 
     scanPawns(board);
 
@@ -517,7 +570,61 @@ export function evaluatePosition(game, ply = 0) {
                 if (isPassedPawn(piece.color, r, c)) {
                     // Quante traverse ha gia' percorso, dalla sua casa di partenza
                     const advance = isWhite ? 6 - r : r - 1;
-                    if (advance > 0 && advance < PASSED_PAWN.length) value += PASSED_PAWN[advance];
+                    const ownKing = isWhite ? whiteKing : blackKing;
+                    const enemyKing = isWhite ? blackKing : whiteKing;
+
+                    if (advance > 0 && advance < PASSED_PAWN.length) {
+                        // A medio gioco un passato e' una promessa, nel finale
+                        // e' il piano della partita: il valore sale con endgame.
+                        let passer = PASSED_PAWN[advance] * (1 + PASSED_ENDGAME_SCALE * endgame);
+
+                        /*
+                         * La corsa si gioca sulla casa davanti al pedone: il
+                         * proprio re vicino lo scorta, quello avversario
+                         * vicino lo blocca. Pesa con l'avanzata, perche' la
+                         * scorta di un passato arretrato non vale il viaggio
+                         * del re, e con endgame: a medio gioco quasi niente.
+                         */
+                        const frontRow = isWhite ? r - 1 : r + 1;
+                        if (ownKing && enemyKing) {
+                            passer += endgame * advance * (
+                                PASSED_ENEMY_KING * kingDistance(enemyKing.r, enemyKing.c, frontRow, c)
+                                - PASSED_OWN_KING * kingDistance(ownKing.r, ownKing.c, frontRow, c));
+                        }
+
+                        // Arrotondamento su valori identici allo specchio: i due
+                        // colori si annullano esatti e il totale resta intero.
+                        value += Math.round(passer);
+
+                        value += ROOK_BEHIND_PASSED * rookBehindPasser(board, piece.color, r, c);
+                    }
+
+                    /*
+                     * Regola del quadrato: se l'avversario non ha pezzi e il
+                     * suo re, contando chi muove, non raggiunge piu' la casa
+                     * di promozione, il pedone promuove da solo. Il premio
+                     * sta sotto donna meno pedone (800), cosi' promuovere
+                     * davvero conviene sempre; e sotto i due passi dalla
+                     * promozione non entra: li' la variante concreta la vede
+                     * la ricerca, e il premio farebbe preferire la promessa
+                     * alla promozione (il test della sottopromozione a
+                     * stallo sorveglia proprio questo).
+                     */
+                    const enemyPieces = isWhite ? blackPieces : whitePieces;
+                    if (enemyPieces === 0 && enemyKing) {
+                        const promoRow = isWhite ? 0 : 7;
+                        // Dalla casa di partenza il pedone parte col doppio passo
+                        const steps = isWhite ? (r === 6 ? 5 : r) : (r === 1 ? 5 : 7 - r);
+                        if (steps >= 2) {
+                            // Chi muove guadagna un tempo nella corsa
+                            const tempo = sideToMove === piece.color ? 1 : 0;
+                            const chase = kingDistance(enemyKing.r, enemyKing.c, promoRow, c);
+                            if (chase > steps - tempo) {
+                                value += PASSED_UNSTOPPABLE_BASE
+                                    + PASSED_UNSTOPPABLE_STEP * (5 - steps);
+                            }
+                        }
+                    }
                 }
             } else if (piece.type === 'r') {
                 const ownPawns = isWhite ? pawnCount.w[c] : pawnCount.b[c];
