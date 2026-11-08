@@ -862,6 +862,38 @@ export class ZeroUnoChessEngine {
         return last;
     }
 
+    /**
+     * Passa il tratto senza muovere: serve alla potatura del tratto
+     * nullo nella ricerca. Non e' una mossa degli scacchi e non passa
+     * da move(): niente moveStack, niente conteggio delle ripetizioni,
+     * niente notazione.
+     *
+     * Chi chiama garantisce che il lato al tratto NON e' sotto scacco:
+     * passare il tratto sotto scacco lascerebbe il re in presa.
+     *
+     * @returns {{enPassantSq: string|null, halfMoves: number}} snapshot
+     *          da restituire a undoNullMove, nient'altro lo deve toccare.
+     */
+    makeNullMove() {
+        const snapshot = { enPassantSq: this.enPassantSq, halfMoves: this.halfMoves };
+        this.activeTurn = this.activeTurn === 'w' ? 'b' : 'w';
+        // La presa al varco vale solo per la risposta immediata: un
+        // tratto passato la spegne come qualunque mossa non di pedone.
+        this.enPassantSq = null;
+        // Mezzo tratto senza cattura ne' pedone, come una mossa vera.
+        this.halfMoves++;
+        this.refreshPositionKey();
+        return snapshot;
+    }
+
+    /** Annulla makeNullMove. Va chiamato con il suo stesso snapshot. */
+    undoNullMove(snapshot) {
+        this.activeTurn = this.activeTurn === 'w' ? 'b' : 'w';
+        this.enPassantSq = snapshot.enPassantSq;
+        this.halfMoves = snapshot.halfMoves;
+        this.refreshPositionKey();
+    }
+
     in_checkmate() {
         return this.in_check() && this.moves().length === 0;
     }

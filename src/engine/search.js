@@ -155,6 +155,23 @@ const ORDER_HISTORY_MAX = 200000;  // tetto della tabella della storia
 /** Quante mosse killer si ricordano per ogni livello di profondita'. */
 const KILLERS_PER_PLY = 2;
 
+/*
+ * POTATURA DEL TRATTO NULLO
+ *
+ * Se in una posizione posso passare il tratto e una ricerca ridotta
+ * dice che resto comunque fuori dalla finestra, una mossa vera lo
+ * farebbe a maggior ragione: il ramo si taglia senza generare le mosse.
+ * E' l'unico taglio del motore che rinuncia alla certezza: si paga nei
+ * casi rari di zugzwang (dove muovere fa perdere), si guadagna un
+ * fattore di ramificazione molto piu' basso, cioe' piu' profondita'
+ * nello stesso tempo.
+ */
+const NULL_MOVE_REDUCTION = 2;  // R: livelli in meno nella ricerca di verifica
+const NULL_MOVE_MIN_DEPTH = 3;  // sotto, il taglio rende poco e rischia troppo
+// Sopra questa soglia il punteggio parla di matto: un matto non si
+// dichiara ne' si nasconde con un tratto passato.
+const NULL_MATE_BOUND = MATE_SCORE - 1000;
+
 /**
  * Ricorda una mossa tranquilla che ha fatto saltare questo nodo.
  *
@@ -566,6 +583,58 @@ function isDrawByRule(game) {
 }
 
 /**
+ * Dice se in questa posizione il tratto nullo si puo' tentare.
+ *
+ * Due esclusioni, tutte e due per lo zugzwang:
+ * - il lato al tratto ha solo re e pedoni: nei finali di pedoni
+ *   l'obbligo di muovere decide le partite, e passare il tratto
+ *   "gratis" fa sembrare tenibili posizioni perse;
+ * - la posizione e' quella della spinta al matto (una parte avanti di
+ *   almeno una torre, l'altra senza pedoni, stessa condizione di
+ *   evaluatePosition): li' la valutazione e' gonfiata apposta per dare
+ *   una direzione, e i finali senza pedoni sono la casa di zugzwang e
+ *   stallo. Cosi' i due meccanismi non si pestano i piedi.
+ */
+function nullMovePruningAllowed(game) {
+    const board = game.board();
+    const side = game.turn();
+
+    let sidePieces = 0;     // pezzi non pedone del lato al tratto
+    let whiteMaterial = 0;
+    let blackMaterial = 0;
+    let whitePawns = 0;
+    let blackPawns = 0;
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const p = board[r][c];
+            if (!p || p.type === 'k') continue;
+
+            if (p.type === 'p') {
+                if (p.color === 'w') whitePawns++;
+                else blackPawns++;
+            } else if (p.color === side) {
+                sidePieces++;
+            }
+
+            if (p.color === 'w') whiteMaterial += PIECE_VALUES[p.type];
+            else blackMaterial += PIECE_VALUES[p.type];
+        }
+    }
+
+    if (sidePieces === 0) return false;
+
+    // Il gate della spinta al matto, identico a quello della valutazione
+    const edge = whiteMaterial - blackMaterial;
+    if (Math.abs(edge) >= PIECE_VALUES.r) {
+        const weakPawns = edge > 0 ? blackPawns : whitePawns;
+        if (weakPawns === 0) return false;
+    }
+
+    return true;
+}
+
+/**
  * Ordina le mosse per far scattare prima la potatura.
  * MVV-LVA: cattura il pezzo piu' prezioso con il pezzo meno prezioso.
  *
@@ -711,6 +780,65 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
         return game.turn() === 'w' ? -(MATE_SCORE - ctx.ply) : (MATE_SCORE - ctx.ply);
     }
 
+    /*
+     * TRATTO NULLO. Sta DOPO il controllo "niente mosse legali" per una
+     * ragione di correttezza trovata in revisione: in uno stallo il
+     * nullo inventerebbe un tempo che non esiste, e la ricerca ridotta,
+     * cieca allo stallo alle sue spalle, certificherebbe come decisa
+     * una posizione che vale 0. Da qui in giu' il lato al tratto ha
+     * almeno una mossa vera.
+     * La radice non e' toccata: al primo livello sotto chooseMove la
+     * finestra e' piena, |limite| e' infinito e il tentativo non parte
+     * nemmeno, quindi ogni mossa di radice resta cercata a finestra
+     * piena come prima.
+     * Le guardie stanno in ordine di costo, dalla piu' economica.
+     */
+    if (depth >= NULL_MOVE_MIN_DEPTH && ctx.nullBanPly !== ctx.ply) {
+        // Il taglio restituisce il limite della finestra: se quel
+        // limite e' infinito o parla di matto, niente tratto nullo.
+        const cutLimit = isMaximizing ? beta : alpha;
+
+        if (Math.abs(cutLimit) < NULL_MATE_BOUND
+            && !game.in_check()
+            && nullMovePruningAllowed(game)) {
+            /*
+             * Il tentativo ha senso solo se la valutazione ferma sta
+             * gia' oltre la finestra: altrimenti la ricerca ridotta
+             * sarebbe tempo perso quasi certo.
+             */
+            const standPat = evaluatePosition(game, ctx.ply);
+            const alreadyOutside = isMaximizing ? standPat >= beta : standPat <= alpha;
+
+            if (alreadyOutside) {
+                const snapshot = game.makeNullMove();
+                const previousBan = ctx.nullBanPly;
+                ctx.ply++;
+                // Il figlio diretto non puo' rispondere con un altro
+                // nullo: due tratti passati di fila non provano niente.
+                ctx.nullBanPly = ctx.ply;
+                const value = isMaximizing
+                    ? minimax(game, depth - 1 - NULL_MOVE_REDUCTION, beta - 1, beta, false, ctx)
+                    : minimax(game, depth - 1 - NULL_MOVE_REDUCTION, alpha, alpha + 1, true, ctx);
+                ctx.nullBanPly = previousBan;
+                ctx.ply--;
+                game.undoNullMove(snapshot);
+
+                /*
+                 * Fail-hard: si restituisce il limite della finestra,
+                 * mai il punteggio della ricerca ridotta. Cosi' nessun
+                 * numero nato da un tratto passato circola nel motore
+                 * ne' finisce in tavola (il ritorno salta lo storeTT
+                 * di questo nodo). Su timeout il valore e' spazzatura
+                 * e si butta: la funzione prosegue per la via normale.
+                 */
+                if (!ctx.timedOut) {
+                    if (isMaximizing && value >= beta) return beta;
+                    if (!isMaximizing && value <= alpha) return alpha;
+                }
+            }
+        }
+    }
+
     let best = isMaximizing ? -Infinity : Infinity;
     let bestMoveHere = null;
 
@@ -761,7 +889,7 @@ export function minimax(game, depth, alpha, beta, isMaximizing, ctx) {
 export const LEVELS = {
     1: { label: 'Principiante', maxDepth: 1, quiescencePlies: 0, timeBudgetMs: 150, blunderChance: 0.35 },
     2: { label: 'Club', maxDepth: 4, quiescencePlies: 2, timeBudgetMs: 900, blunderChance: 0 },
-    3: { label: 'Maestro', maxDepth: 6, quiescencePlies: 2, timeBudgetMs: 2200, blunderChance: 0 }
+    3: { label: 'Maestro', maxDepth: 8, quiescencePlies: 2, timeBudgetMs: 2200, blunderChance: 0 }
 };
 
 /**
@@ -828,6 +956,7 @@ export function chooseMove(fen, level = 2, options = {}) {
             ply: 0,
             nodes: 0,
             timedOut: false,
+            nullBanPly: -1, // ply dove il tratto nullo e' vietato (risposta a un nullo)
             tt,
             killers,
             history

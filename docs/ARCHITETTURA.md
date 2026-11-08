@@ -140,6 +140,38 @@ profondita' intera a 250 ms, 85% si'. Prima la radice spesso non finiva il
 giro a profondita' 6 nel tempo a disposizione; adesso lo finisce sempre, e
 una profondita' piena a questi livelli decide le partite.
 
+**Potatura del tratto nullo.** Se si puo' passare il tratto e una ricerca
+ridotta di due livelli dice che si resta comunque oltre la finestra, una
+mossa vera lo farebbe a maggior ragione: il ramo si taglia. E' l'unico
+taglio del motore che rinuncia alla certezza, e per questo e' recintato:
+mai in scacco, mai con soli re e pedoni al tratto, mai nelle posizioni
+della spinta al matto, mai due nulli di fila, mai quando il limite della
+finestra parla di matto; il taglio restituisce il limite, mai il valore
+della ricerca ridotta, e non scrive in tavola. Il tetto del livello
+Maestro sale da 6 a 8, perche' adesso il tempo per quelle profondita' c'e'.
+
+Misurato: 44% di nodi in meno a parita' di profondita' 6 (sopra la finestra
+di sondaggio, che resta attiva), suite dei matti invariata a 36 su 48, e in
+torneo 227 su 400 contro la versione con la sola finestra di sondaggio:
+56,75%, cioe' +47 Elo con intervallo da +17 a +78. E' il primo guadagno del
+progetto in cui lo zero sta fuori dall'intervallo. Le partite chiuse al
+limite delle 200 semimosse scendono da 41 a 25 su 400: la profondita' in
+piu' converte finali che prima morivano.
+
+La revisione avversaria del diff (quattro lenti indipendenti, tre arbitri
+per rilievo con l'ordine di confutarlo eseguendo codice) ha trovato un
+difetto vero prima dell'integrazione: il blocco del nullo girava prima
+della generazione delle mosse, quindi uno STALLO - zero mosse legali,
+valore vero 0 - poteva essere tagliato a beta come posizione vinta, e il
+bound falso risaliva al padre e finiva in tavola. Riprodotto con la
+posizione KBk5/P1P5/8/8/7p/8/8/8 w: minimax a profondita' 3 con finestra
+(300,400) rispondeva 400 invece di 0, e il difensore si vedeva valutare
+come persa la risorsa ...Rc8 che patta. La cura e' l'ordine: il nullo sta
+dopo il controllo "niente mosse legali", cosi' da li' in giu' il lato al
+tratto ha sempre almeno una mossa vera. Il torneo e' stato giocato dalla
+versione prima della cura, che tocca solo i nodi di stallo: rare volte, e
+sempre nella direzione di correggere un punteggio sbagliato.
+
 **Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
 volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
 volte: alla regola della ripetizione e alla tavola di trasposizione. I
