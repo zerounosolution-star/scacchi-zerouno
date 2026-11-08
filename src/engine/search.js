@@ -129,6 +129,16 @@ const TT_MAX_ENTRIES = 300000;
 const FAST_MOVE = { fast: true };
 
 /*
+ * Mezza ampiezza della finestra di sondaggio alla radice.
+ *
+ * I punteggi della valutazione sono tutti interi: la finestra
+ * (metro - 1, metro + 1) contiene il solo punteggio del migliore.
+ * Basta a distinguere peggiore (limite), pari esatto e forse
+ * migliore, senza mai produrre un punteggio ambiguo.
+ */
+const ROOT_SCOUT_MARGIN = 1;
+
+/*
  * ORDINE DI PROVA DELLE MOSSE
  *
  * La potatura alfa-beta rende quanto prima si prova la mossa giusta.
@@ -833,17 +843,42 @@ export function chooseMove(fen, level = 2, options = {}) {
         if (first > 0) ordered.unshift(ordered.splice(first, 1)[0]);
 
         /*
-         * Alla radice ogni mossa si cerca a finestra piena (-Infinito,
-         * +Infinito). Restringendo la finestra con alpha e beta, un ramo
-         * potato restituisce un limite e non il punteggio vero: alla
-         * radice quel limite verrebbe scambiato per il punteggio della
-         * mossa e si finirebbe per giocare una mossa qualunque con il
-         * punteggio del matto trovato da un'altra.
+         * Alla radice nessun limite deve mai passare per un punteggio:
+         * un ramo potato restituisce un limite, e un limite scambiato
+         * per il punteggio della mossa fa giocare una mossa qualunque
+         * con il punteggio del matto trovato da un'altra (e' gia'
+         * successo in questo progetto).
+         *
+         * Percio' la prima mossa del giro si cerca a finestra piena e
+         * stabilisce il metro. Le altre passano prima da una finestra
+         * di tre punti attorno al metro, che puo' solo dire: peggiore
+         * (limite, si scarta senza usarlo), pari esatto (entra fra le
+         * mosse di pari punteggio), o forse migliore. Solo in questo
+         * ultimo caso la mossa si ricerca a finestra piena, e nel
+         * confronto entra soltanto quel punteggio pieno. Ogni numero
+         * che tocca roundScore o equallyGood resta cosi' un punteggio
+         * vero, come prima: cambia solo quanto costa scartare le
+         * mosse peggiori.
          */
         for (const m of ordered) {
             game.move(m, FAST_MOVE);
             ctx.ply++;
-            const score = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizing, ctx);
+            let score;
+            if (roundBest === null) {
+                // La prima mossa del giro: finestra piena, punteggio esatto.
+                score = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizing, ctx);
+            } else {
+                score = minimax(game, depth - 1,
+                    roundScore - ROOT_SCOUT_MARGIN, roundScore + ROOT_SCOUT_MARGIN,
+                    !isMaximizing, ctx);
+                // Il sondaggio dice "forse migliore": solo il punteggio
+                // pieno puo' entrare nel confronto. Col tempo scaduto il
+                // giro verra' comunque buttato: inutile ricercare.
+                const maybeBetter = isMaximizing ? score > roundScore : score < roundScore;
+                if (maybeBetter && !ctx.timedOut) {
+                    score = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizing, ctx);
+                }
+            }
             ctx.ply--;
             game.undo();
 

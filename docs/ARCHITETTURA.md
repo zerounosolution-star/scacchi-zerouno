@@ -110,11 +110,27 @@ chooseMove(fen, livello)
 mossa, punteggio, profondita' raggiunta, nodi visitati
 ```
 
-**Perche' alla radice la finestra e' piena.** Con alfa e beta ristretti un
-ramo potato restituisce un limite, non il punteggio vero. Alla radice quel
-limite verrebbe scambiato per il punteggio della mossa, e si finirebbe per
-giocare una mossa qualunque con il punteggio del matto trovato da un'altra.
-E' un errore che e' gia' successo in questo progetto.
+**Perche' alla radice nessun limite diventa un punteggio.** Con alfa e beta
+ristretti un ramo potato restituisce un limite, non il punteggio vero;
+scambiato per il punteggio della mossa, fa giocare una mossa qualunque con
+il punteggio del matto trovato da un'altra. E' un errore che e' gia'
+successo in questo progetto. La radice percio' confronta solo punteggi
+usciti da finestre piene: la prima mossa del giro si cerca a finestra piena
+e fa da metro, le altre passano da una finestra di tre punti attorno al
+metro (i punteggi sono interi) che puo' solo dire peggiore (limite, si
+scarta senza usarlo), pari esatto, o forse migliore - e in quel caso la
+mossa si ricerca a finestra piena. La condizione di accettazione, provata
+con l'oracolo a profondita' fissa, e' punteggi identici a prima con meno
+nodi.
+
+Misurata: 85% di nodi in meno a parita' di profondita' (dal 72% al 92% su
+dodici posizioni), punteggi identici su undici. La dodicesima, un finale di
+torri, dava 8 prima e 3 dopo, con la stessa mossa: arbitrata rigiocando ogni
+mossa radice con memorie vergini, la verita' e' 3. La differenza non viene
+dalle finestre ma dalla dipendenza dal cammino delle patte nella tavola,
+che preesiste alla modifica: una patta per ripetizione o per 50 mosse
+dipende dalla strada percorsa, e la tavola la ricorda come un fatto della
+posizione.
 
 **Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
 volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
