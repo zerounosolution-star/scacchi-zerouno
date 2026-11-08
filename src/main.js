@@ -13,6 +13,7 @@ import { initPersistentBoardDOM, renderBoard } from './ui/board.js';
 import { updatePlayerCardsUI, renderTimersUI, setupTimeControlSelects } from './ui/panels.js';
 import { setupReviewControls, exitReview } from './ui/review.js';
 import { setupNotationInput } from './ui/moveinput.js';
+import { setupSidePanel } from './ui/sidepanel.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
@@ -255,6 +256,7 @@ window.onload = async function () {
     setupReviewControls();
     setupTimeControlSelects();
     setupNotationInput();
+    setupSidePanel();
 
     // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
     if (!resumeSavedMatch()) {

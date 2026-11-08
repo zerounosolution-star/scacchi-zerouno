@@ -108,7 +108,7 @@
 
     <!-- ================= CONTENUTO PRINCIPALE ================= -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-6">
-        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,662px)_minmax(340px,1fr)] gap-7 lg:gap-10 items-start">
+        <div id="mainLayout" data-sala="aperta" class="grid grid-cols-1 lg:grid-cols-[minmax(0,662px)_minmax(340px,1fr)] gap-7 lg:gap-10 items-start">
 
             <!-- ======================================================
                  IL TAVOLO: stato della partita, giocatori, scacchiera
@@ -273,7 +273,7 @@
             <!-- ======================================================
                  IL TACCUINO: modalita', notazione, canale
                  ====================================================== -->
-            <div class="w-full">
+            <div id="sidePanel" class="w-full">
 
                 <!-- ---------- Modalita' di gioco ---------- -->
                 <section class="zu-block" aria-labelledby="modeBlockTitle">
@@ -282,6 +282,11 @@
                             <span class="zu-eyebrow">Sala scacchistica</span>
                             <h2 id="modeBlockTitle" class="zu-section mt-0.5">Scegli come giocare</h2>
                         </div>
+                        <button id="collapseSalaBtn" type="button" class="zu-sala-toggle"
+                                aria-expanded="true"
+                                title="Riduci la sala: la scacchiera si prende lo schermo">
+                            Riduci &raquo;
+                        </button>
                     </div>
 
                     <!-- Linguette delle modalita' -->
@@ -440,6 +445,12 @@
 
             </div>
         </div>
+
+        <!-- Linguetta per riaprire la sala quando e' ripiegata -->
+        <button id="reopenSalaBtn" type="button" class="zu-sala-handle"
+                title="Riapri la sala scacchistica">
+            &laquo; Sala
+        </button>
     </main>
 
     <!-- ================= FINE PARTITA + VIDEO DEL CANALE ================= -->

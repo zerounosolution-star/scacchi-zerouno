@@ -1087,3 +1087,75 @@ select.zu-field { cursor: pointer; appearance: auto; }
         transition-duration: 0.001ms !important;
     }
 }
+
+/* ============================================================
+   LA SALA RIPIEGABILE
+   Sugli schermi a due colonne la sala si richiude verso destra
+   e la scacchiera si prende lo schermo. Sotto quella larghezza
+   la sala sta gia' sotto la scacchiera: niente da ripiegare,
+   bottone e linguetta non compaiono.
+   ============================================================ */
+
+.zu-sala-toggle,
+.zu-sala-handle {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .zu-sala-toggle {
+        display: inline-block;
+        padding: 4px 10px;
+        border: 1px solid rgba(146, 102, 60, 0.35);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--bronze-600, #92663c);
+        font-size: 12px;
+        line-height: 16px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .zu-sala-toggle:hover {
+        background: rgba(146, 102, 60, 0.08);
+    }
+
+    /* Sala chiusa: la colonna sparisce e la scacchiera cresce,
+       col tetto dell'altezza dello schermo per non sbordare. */
+    #mainLayout[data-sala="chiusa"] {
+        grid-template-columns: minmax(0, min(86vh, 980px));
+        justify-content: center;
+    }
+
+    #mainLayout[data-sala="chiusa"] #sidePanel {
+        display: none;
+    }
+
+    /* La linguetta fissa sul bordo destro, solo a sala chiusa */
+    #mainLayout[data-sala="chiusa"] ~ .zu-sala-handle,
+    #mainLayout[data-sala="chiusa"] + .zu-sala-handle {
+        display: block;
+    }
+
+    .zu-sala-handle {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 40;
+        padding: 10px 8px 10px 12px;
+        border: 1px solid rgba(146, 102, 60, 0.35);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        background: var(--ivory-50, #faf6ef);
+        color: var(--bronze-600, #92663c);
+        font-size: 12px;
+        line-height: 16px;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(30, 20, 10, 0.12);
+        writing-mode: vertical-rl;
+    }
+
+    .zu-sala-handle:hover {
+        background: rgba(146, 102, 60, 0.08);
+    }
+}
