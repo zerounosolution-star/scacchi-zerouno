@@ -57,10 +57,18 @@ export function loadZeroUnoVideoInModal(videoObj) {
     const titleEl = document.getElementById('currentZeroUnoVideoTitle');
     const directLink = document.getElementById('directVideoYoutubeLink');
 
-    titleEl.textContent = videoObj.title;
-    // Autoplay con parametri ottimizzati per l'incorporamento
-    iframe.src = `https://www.youtube.com/embed/${videoObj.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
-    directLink.href = `https://www.youtube.com/watch?v=${videoObj.id}`;
+    /*
+     * Tollerante: se un pezzo della carta manca, gli altri si aggiornano
+     * lo stesso. Un null qui una volta ha rotto l'intera fine partita.
+     */
+    if (titleEl) titleEl.textContent = videoObj.title;
+    /*
+     * Niente autoplay: il video partiva da solo, col suono, appena la
+     * carta si apriva. Parte solo se lo si tocca; per il canale e' anche
+     * meglio, perche' una riproduzione voluta conta come vista vera.
+     */
+    if (iframe) iframe.src = `https://www.youtube.com/embed/${videoObj.id}?rel=0&playsinline=1&modestbranding=1`;
+    if (directLink) directLink.href = `https://www.youtube.com/watch?v=${videoObj.id}`;
 }
 
 export function triggerEndOfGame(outcomeTitle, outcomeSubtitle = 'Partita Conclusa') {
