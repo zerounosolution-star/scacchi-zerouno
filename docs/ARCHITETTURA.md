@@ -202,6 +202,13 @@ SENZA passati, cioe' ripetizioni e fortezze) non si avvera, e quel passo
 non parte. Il valore del pacchetto sta nel gioco generale, non nello
 sbloccare i finali inchiodati.
 
+**La fotografia della giornata.** Somma dei tre passi (finestra di
+sondaggio, tratto nullo, pedoni passati), misurata una volta sola come
+totale e senza attribuire meriti ai singoli: 352 su 400 contro la versione
+di partenza, cioe' l'88% e circa +346 punti Elo (intervallo da +303 a
++399). I quattro blocchi: 81,5 - 87,5 - 89,5 - 93,5. Il numero non si
+somma coi tornei dei singoli passi: e' la stessa strada misurata dall'alto.
+
 **Impronta della posizione.** Un'impronta Zobrist a 53 bit, calcolata una
 volta per posizione e tenuta da parte (`refreshPositionKey`). Serve due
 volte: alla regola della ripetizione e alla tavola di trasposizione. I
