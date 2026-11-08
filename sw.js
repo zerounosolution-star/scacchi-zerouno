@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -36,6 +36,7 @@ const APP_SHELL = [
     './src/core/state.js',
     './src/core/sound.js',
     './src/core/utils.js',
+    './src/core/update.js',
     './src/core/persistence.js',
     './src/data/pieces.js',
     './src/data/videos.js',

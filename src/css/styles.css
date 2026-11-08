@@ -1285,3 +1285,23 @@ select.zu-field { cursor: pointer; appearance: auto; }
     border-radius: var(--r-sm, 8px);
     outline: none;
 }
+
+/* La fascia dell'aggiornamento: discreta, in basso, sopra tutto */
+.zu-update-banner {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--table, #2A2825);
+    color: var(--ink-on-dark, #F2EDE4);
+    border: 1px solid rgba(197, 166, 103, 0.45);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px -12px rgba(18, 17, 15, 0.6);
+    font-size: 14px;
+    max-width: calc(100vw - 32px);
+}

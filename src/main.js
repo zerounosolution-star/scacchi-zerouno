@@ -15,6 +15,7 @@ import { setupReviewControls, exitReview } from './ui/review.js';
 import { setupNotationInput } from './ui/moveinput.js';
 import { setupSidePanel } from './ui/sidepanel.js';
 import { setupNameEditing } from './ui/nameedit.js';
+import { registerServiceWorker } from './core/update.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
@@ -250,20 +251,6 @@ export function setupEventListeners() {
     });
 }
 
-/**
- * Registra il service worker, che rende l'applicazione giocabile
- * anche senza rete e installabile sul telefono.
- *
- * Funziona solo su HTTPS o su localhost: aperta da file:// la
- * registrazione viene saltata senza disturbare nessuno.
- */
-function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-
-    navigator.serviceWorker
-        .register('sw.js')
-        .catch((err) => console.warn('Service worker non registrato:', err.message));
-}
 
 // Avvio applicazione al caricamento della finestra
 window.onload = async function () {
