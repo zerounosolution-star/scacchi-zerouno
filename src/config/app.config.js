@@ -33,8 +33,14 @@ export function timeControlById(id) {
         || TIME_CONTROLS[0];
 }
 
+/** Indirizzo pubblico del sito: inviti, PGN firmato, condivisioni. */
+export const SITE_URL = 'https://zerounosolution-star.github.io/scacchi-zerouno/';
+
 /** Canale YouTube collegato al progetto. */
 export const YOUTUBE_CHANNEL_URL = 'https://youtube.com/@zerounosolution';
+
+/** Lo stesso canale, ma col prompt di iscrizione gia' aperto. */
+export const YOUTUBE_SUBSCRIBE_URL = 'https://youtube.com/@zerounosolution?sub_confirmation=1';
 
 /**
  * Configurazione del progetto Firebase.

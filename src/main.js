@@ -5,7 +5,7 @@
  */
 
 import { ZEROUNO_VIDEOS } from './data/videos.js';
-import { APP_ID } from './config/app.config.js';
+import { APP_ID, SITE_URL } from './config/app.config.js';
 import { chess, state } from './core/state.js';
 import { saveMatch, readSavedMatch, clearSavedMatch } from './core/persistence.js';
 import { showToast, copyTextToClipboard } from './core/utils.js';
@@ -167,7 +167,12 @@ export function setupEventListeners() {
     });
     document.getElementById('copyWaitingCodeBtn').addEventListener('click', () => {
         const code = document.getElementById('waitingRoomCodeDisplay').textContent;
-        copyTextToClipboard(code, `Codice stanza ${code} copiato!`);
+        /*
+         * Non il codice nudo: un invito pronto da incollare, con il link
+         * che porta l'amico dentro la stanza senza fargli scrivere niente.
+         */
+        const invito = `Ti sfido a scacchi! Apri questo link ed entri subito nella mia stanza: ${SITE_URL}?stanza=${code}`;
+        copyTextToClipboard(invito, 'Invito copiato: incollalo al tuo amico');
     });
     document.getElementById('copyUserIdBtn').addEventListener('click', () => {
         const uid = document.getElementById('userIdDisplay').textContent;
@@ -176,8 +181,17 @@ export function setupEventListeners() {
     document.getElementById('copyPgnBtn').addEventListener('click', () => {
         // A zero mosse non c'e' niente da copiare: il bottone e' spento (C5)
         if (chess.history().length === 0) return;
-        const pgn = chess.pgn();
+        const pgn = `${chess.pgn()}
+
+{Giocata su Scacchi ZeroUno: ${SITE_URL}}`;
         copyTextToClipboard(pgn, "Notazione PGN copiata negli appunti");
+    });
+
+    document.getElementById('challengeFriendBtn').addEventListener('click', () => {
+        copyTextToClipboard(
+            `Ti sfido a scacchi su Scacchi ZeroUno! Si gioca qui, gratis e senza registrarsi: ${SITE_URL}`,
+            'Sfida copiata: incollala a chi vuoi'
+        );
     });
 
     // Pulsanti Modale Video ZeroUno Solution

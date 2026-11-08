@@ -71,6 +71,7 @@ export async function initFirebase() {
                 setNetworkStatus('online', 'Rete Mondiale Attiva');
                 if (uidDisplay) uidDisplay.textContent = user.uid;
                 subscribeToGlobalLobby();
+                joinRoomFromInviteLink();
             }
         });
     } catch (err) {
@@ -78,6 +79,38 @@ export async function initFirebase() {
         setNetworkStatus('errore', 'Rete non raggiungibile');
         if (uidDisplay) uidDisplay.textContent = 'ZU-' + Math.floor(1000 + Math.random() * 9000);
     }
+}
+
+/*
+ * Il link d'invito: ?stanza=CODICE.
+ *
+ * Chi riceve l'invito non deve scrivere niente: apre il link, l'accesso
+ * anonimo parte, e appena la rete e' pronta si entra nella stanza.
+ * Il parametro viene tolto dall'indirizzo subito, cosi' una ricarica
+ * non riprova a entrare in una stanza ormai finita.
+ */
+let inviteConsumed = false;
+
+function joinRoomFromInviteLink() {
+    if (inviteConsumed) return;
+    inviteConsumed = true;
+
+    let code = null;
+    try {
+        const params = new URLSearchParams(window.location.search);
+        code = (params.get('stanza') || '').trim().toUpperCase();
+        if (code) {
+            params.delete('stanza');
+            const resto = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (resto ? '?' + resto : ''));
+        }
+    } catch (err) {
+        return;
+    }
+
+    if (!code) return;
+    showToast(`Invito ricevuto: entro nella stanza ${code}`);
+    joinOnlineMatchById(code);
 }
 
 export function subscribeToGlobalLobby() {
