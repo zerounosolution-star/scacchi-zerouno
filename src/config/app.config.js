@@ -59,7 +59,14 @@ export const YOUTUBE_CHANNEL_URL = 'https://youtube.com/@zerounosolution';
  * dipende dalle regole in firebase/firestore.rules, non dal segreto
  * delle chiavi.
  */
-export const FIREBASE_CONFIG = null;
+export const FIREBASE_CONFIG = {
+    apiKey: "",
+    authDomain: "scacchi-zerouno.firebaseapp.com",
+    projectId: "scacchi-zerouno",
+    storageBucket: "scacchi-zerouno.firebasestorage.app",
+    messagingSenderId: "23108543498",
+    appId: "1:23108543498:web:bea77cdafe6e4948a86bf3"
+};
 
 /**
  * Numero massimo di stanze lette dalla lobby in un solo ascolto.
