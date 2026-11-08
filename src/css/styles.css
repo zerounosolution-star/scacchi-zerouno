@@ -1047,7 +1047,7 @@ select.zu-field { cursor: pointer; appearance: auto; }
    Il pavimento di 520 px impedisce che su uno schermo basso la scacchiera
    diventi un francobollo pur avendo spazio in larghezza. */
 @media (min-width: 1024px) {
-    .zu-table { max-width: min(662px, max(580px, calc(100vh - 436px))); }
+    .zu-table { max-width: min(662px, max(480px, calc(100dvh - 436px))); }
 }
 
 /* Telefono: tutto si stringe di un gradino, ma nessun bersaglio scende sotto
@@ -1158,4 +1158,130 @@ select.zu-field { cursor: pointer; appearance: auto; }
     .zu-sala-handle:hover {
         background: rgba(146, 102, 60, 0.08);
     }
+}
+
+/* ============================================================
+   IL BINARIO: scacchiera protagonista da 1280 px in su
+   Dal parere del designer: su un portatile 1366x768 la scacchiera
+   era tagliata alla traversa 3, perche' sopra e sotto aveva 400 px
+   di contorno. Da qui in su giocatori, stato e comandi stanno in un
+   binario verticale di fianco alle caselle: l'altezza dello schermo
+   va quasi tutta alla scacchiera. Sotto i 1280 px resta tutto come
+   prima; il telefono non e' toccato.
+   ============================================================ */
+@media (min-width: 1280px) {
+    #mainLayout {
+        --board: clamp(520px, min(calc(100dvh - 120px), calc(100vw - 724px)), 800px);
+        grid-template-columns: calc(var(--board) + 306px) minmax(320px, 380px);
+        column-gap: 32px;
+        justify-content: center;
+    }
+    main { padding-top: 12px; padding-bottom: 14px; }
+
+    .zu-table {
+        max-width: none;
+        width: calc(var(--board) + 306px);
+        padding: 14px;
+        display: grid;
+        grid-template-columns: var(--board) 256px;
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas:
+            "board top"
+            "board head"
+            "board controls"
+            "board bottom";
+        column-gap: 20px;
+        row-gap: 10px;
+    }
+    .zu-table > .zu-table-head     { grid-area: head; margin: 0; flex-direction: column; gap: 6px; }
+    .zu-table > .zu-table-divider  { display: none; }
+    .zu-table > .zu-seat--top      { grid-area: top; margin: 0; }
+    .zu-table > #boardWrapper      { grid-area: board; width: var(--board); }
+    .zu-table > .zu-seat--bottom   { grid-area: bottom; margin: 0; align-self: end; }
+    .zu-table > .zu-table-controls { grid-area: controls; margin: 0; padding-top: 10px; align-self: start; }
+
+    /* Fascia del giocatore in colonna: nome sopra, orologio sotto */
+    .zu-table > .zu-seat { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; }
+    .zu-table #topPlayerAvatar,
+    .zu-table #bottomPlayerAvatar { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
+    .zu-table #topTimerBox,
+    .zu-table #bottomTimerBox { font-size: 30px; padding: 7px 10px; min-width: 0; width: 100%; }
+
+    /* Comandi su due colonne; Abbandona da solo in fondo */
+    .zu-table-controls > div:first-child { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .zu-table-controls > div:first-child > div { display: contents; }
+    .zu-table-controls .zu-btn { justify-content: center; }
+    #resignGameBtn { grid-column: 1 / -1; }
+
+    /* Le coordinate crescono con la scacchiera (C4) */
+    .chess-board-container {
+        --frame: clamp(22px, calc(var(--board) * 0.03), 26px);
+    }
+    .coord-rank, .coord-file {
+        font-size: clamp(10px, calc(var(--board) * 0.016), 13px);
+    }
+
+    /* La sala: colonna di servizio ferma accanto al tavolo */
+    #sidePanel {
+        position: sticky;
+        top: 76px;
+        max-height: calc(100dvh - 90px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Il blocco del canale resta in fondo, sempre in vista (C2) */
+    #sidePanel > section:last-of-type { margin-top: auto; }
+
+    /* Sala chiusa: il tavolo resta com'e', si centra soltanto */
+    #mainLayout[data-sala="chiusa"] { grid-template-columns: calc(var(--board) + 306px); }
+}
+
+/* Copia PGN spento quando non c'e' niente da copiare (C5) */
+#copyPgnBtn[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* La matita del nome: discreta a riposo, accesa al passaggio (B2) */
+.zu-name-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    color: var(--accent-line, #9E7B4F);
+    position: relative;
+    cursor: pointer;
+}
+.zu-name-edit::after {
+    /* Bersaglio di tocco pieno anche se la matita e' piccola */
+    content: '';
+    position: absolute;
+    inset: -11px;
+}
+.zu-name-edit:hover,
+.zu-name-edit:focus-visible {
+    color: var(--accent, #C5A667);
+}
+.zu-name-edit:hover + *,
+.zu-name-edit:hover ~ * { text-decoration: none; }
+
+/* Il campo che prende il posto del nome durante la modifica (B3) */
+.zu-name-input {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    padding: 1px 8px;
+    width: 100%;
+    min-width: 0;
+    max-width: 180px;
+    color: var(--ink-on-dark, #F2EDE4);
+    background: var(--table-well, #12110F);
+    border: 1px solid rgba(197, 166, 103, 0.45);
+    border-radius: var(--r-sm, 8px);
+    outline: none;
 }

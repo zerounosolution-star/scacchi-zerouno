@@ -11,6 +11,7 @@ import { chess, state } from '../core/state.js';
 import { canHumanControlCurrentTurn } from '../core/utils.js';
 import { triggerEndOfGame } from './gameover.js';
 import { enterReview } from './review.js';
+import { refreshNamePencils } from './nameedit.js';
 
 /**
  * Scrive un testo solo se e' davvero cambiato.
@@ -110,6 +111,10 @@ export function updateStatusAndHistoryUI() {
     const container = document.getElementById('moveHistoryContainer');
 
     countBadge.textContent = `${history.length} ${history.length === 1 ? 'mossa' : 'mosse'}`;
+
+    // Copia PGN e' spento finche' non c'e' niente da copiare (C5)
+    const copyPgn = document.getElementById('copyPgnBtn');
+    if (copyPgn) copyPgn.setAttribute('aria-disabled', history.length === 0 ? 'true' : 'false');
 
     if (history.length === 0) {
         emptyState.classList.remove('hidden');
@@ -236,6 +241,8 @@ export function updatePlayerCardsUI(whiteName, blackName) {
         topAvatar.textContent = 'B';
         topAvatar.dataset.color = 'w';
     }
+
+    refreshNamePencils();
 }
 
 export function formatSeconds(sec) {

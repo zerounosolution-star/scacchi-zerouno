@@ -37,14 +37,43 @@ export function copyTextToClipboard(text, confirmMessage = "Copiato negli appunt
     document.body.removeChild(textarea);
 }
 
+/** Chiave del nome scelto, ricordato tra una visita e l'altra. */
+const NICKNAME_KEY = 'zerouno_nome_giocatore';
+
 export function getPlayerNickname() {
     const input = document.getElementById('playerNicknameInput');
     const val = input ? input.value.trim() : '';
     if (val) return val;
+    try {
+        const saved = localStorage.getItem(NICKNAME_KEY);
+        if (saved) return saved;
+    } catch (err) {
+        // Senza memoria locale si va avanti coi ripieghi qui sotto
+    }
     if (state.currentUser && state.currentUser.uid) {
         return `Giocatore_${state.currentUser.uid.substring(0, 4).toUpperCase()}`;
     }
     return 'Scacchista_01';
+}
+
+/** Il nome salvato, o stringa vuota. */
+export function getStoredNickname() {
+    try {
+        return localStorage.getItem(NICKNAME_KEY) || '';
+    } catch (err) {
+        return '';
+    }
+}
+
+/** Ricorda il nome scelto; vuoto = torna al nome automatico. */
+export function savePlayerNickname(name) {
+    const pulito = (name || '').trim();
+    try {
+        if (pulito) localStorage.setItem(NICKNAME_KEY, pulito);
+        else localStorage.removeItem(NICKNAME_KEY);
+    } catch (err) {
+        // Senza memoria locale il nome vale solo per questa visita
+    }
 }
 
 export function canHumanControlCurrentTurn() {

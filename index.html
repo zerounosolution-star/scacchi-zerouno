@@ -9,11 +9,20 @@
     <meta name="theme-color" content="#1C1B18">
     <meta name="author" content="ZeroUno Solution">
 
-    <!-- Anteprima nelle condivisioni -->
+    <!-- Anteprima nelle condivisioni (WhatsApp, Facebook, Telegram, X) -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Scacchi ZeroUno — Atelier Scacchistico Internazionale">
     <meta property="og:description" content="Gioca a scacchi contro l'AI, in due o contro altre persone. Un progetto ZeroUno Solution.">
     <meta property="og:locale" content="it_IT">
+    <meta property="og:url" content="https://zerounosolution-star.github.io/scacchi-zerouno/">
+    <meta property="og:image" content="https://zerounosolution-star.github.io/scacchi-zerouno/assets/icons/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="Scacchi ZeroUno">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Scacchi ZeroUno — Atelier Scacchistico Internazionale">
+    <meta name="twitter:description" content="Gioca a scacchi contro l'AI, in due o contro altre persone. Un progetto ZeroUno Solution.">
+    <meta name="twitter:image" content="https://zerounosolution-star.github.io/scacchi-zerouno/assets/icons/icon-512.png">
 
     <!-- Applicazione installabile (PWA) -->
     <link rel="manifest" href="manifest.webmanifest">
@@ -42,7 +51,7 @@
 
     <!-- ================= INTESTAZIONE ================= -->
     <header class="border-b border-ivory-200 bg-ivory-50/95 backdrop-blur-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        <div class="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
 
             <!-- Marchio -->
             <div class="flex items-center gap-3 min-w-0">
@@ -107,7 +116,7 @@
     </header>
 
     <!-- ================= CONTENUTO PRINCIPALE ================= -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-6">
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-2 sm:px-6 lg:px-8 py-5 sm:py-6">
         <div id="mainLayout" data-sala="aperta" class="grid grid-cols-1 lg:grid-cols-[minmax(0,662px)_minmax(340px,1fr)] gap-7 lg:gap-10 items-start">
 
             <!-- ======================================================
@@ -117,7 +126,7 @@
                 <div class="zu-table">
 
                     <!-- Stato della partita: unico titolo della pagina -->
-                    <div class="flex items-start justify-between gap-3 mb-3">
+                    <div class="zu-table-head flex items-start justify-between gap-3 mb-3">
                         <div class="min-w-0">
                             <span class="zu-eyebrow">Partita in corso</span>
                             <h2 id="gameStatusHeadline" data-state="turn" aria-live="polite">
@@ -129,16 +138,16 @@
                         </span>
                     </div>
 
-                    <div class="zu-table-rule mb-3"></div>
+                    <div class="zu-table-divider zu-table-rule mb-3"></div>
 
                     <!-- Giocatore in alto -->
-                    <div class="zu-seat mb-2.5">
+                    <div class="zu-seat zu-seat--top mb-2.5">
                         <div class="flex items-center gap-3 min-w-0">
                             <div id="topPlayerAvatar" data-color="b" aria-hidden="true">
                                 N
                             </div>
                             <div class="min-w-0">
-                                <div id="topPlayerName" class="truncate">Maestro AI (Livello Club)</div>
+                                <div class="flex items-center gap-1.5 min-w-0"><div id="topPlayerName" class="truncate">Maestro AI (Livello Club)</div><button id="editNameBtnTop" type="button" class="zu-name-edit hidden" title="Cambia il tuo nome" aria-label="Cambia il tuo nome"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.9 3.9a2.1 2.1 0 013 3L8 18.8l-4 1 1-4L16.9 3.9z"/></svg></button></div>
                                 <div class="flex items-center gap-2 min-h-[20px] mt-1">
                                     <span id="topPlayerBadge" class="shrink-0">Nero</span>
                                     <div id="topCapturedPieces" class="flex items-center -space-x-0.5"></div>
@@ -188,13 +197,13 @@
                     </div>
 
                     <!-- Giocatore in basso -->
-                    <div class="zu-seat mt-2.5">
+                    <div class="zu-seat zu-seat--bottom mt-2.5">
                         <div class="flex items-center gap-3 min-w-0">
                             <div id="bottomPlayerAvatar" data-color="w" aria-hidden="true">
                                 B
                             </div>
                             <div class="min-w-0">
-                                <div id="bottomPlayerName" class="truncate">Tu (Giocatore)</div>
+                                <div class="flex items-center gap-1.5 min-w-0"><div id="bottomPlayerName" class="truncate">Tu (Giocatore)</div><button id="editNameBtnBottom" type="button" class="zu-name-edit hidden" title="Cambia il tuo nome" aria-label="Cambia il tuo nome"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.9 3.9a2.1 2.1 0 013 3L8 18.8l-4 1 1-4L16.9 3.9z"/></svg></button></div>
                                 <div class="flex items-center gap-2 min-h-[20px] mt-1">
                                     <span id="bottomPlayerBadge" class="shrink-0">Bianco</span>
                                     <div id="bottomCapturedPieces" class="flex items-center -space-x-0.5"></div>
@@ -207,7 +216,7 @@
                         </div>
                     </div>
 
-                    <div class="zu-table-rule mt-3.5 pt-3.5">
+                    <div class="zu-table-controls zu-table-rule mt-3.5 pt-3.5">
                         <!-- Controlli della partita -->
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
@@ -304,7 +313,7 @@
 
                     <!-- Pannello: contro l'AI (e' la partita che parte all'apertura) -->
                     <div id="tabPanelAi" class="space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
                             <div>
                                 <label for="aiDifficultySelect" class="zu-label">Livello del Maestro AI</label>
                                 <select id="aiDifficultySelect" class="zu-field">
@@ -393,7 +402,7 @@
                 </section>
 
                 <!-- ---------- Notazione: il blocco dominante del taccuino ---------- -->
-                <section class="zu-block" aria-labelledby="notationBlockTitle">
+                <section class="zu-block lg:flex lg:flex-col lg:flex-1" aria-labelledby="notationBlockTitle">
                     <div class="zu-block-head">
                         <div class="flex items-baseline gap-2.5">
                             <h2 id="notationBlockTitle" class="zu-section">Notazione</h2>
@@ -409,7 +418,7 @@
                         </div>
                     </div>
 
-                    <div id="moveHistoryContainer" class="h-40 sm:h-56 overflow-y-auto pr-1">
+                    <div id="moveHistoryContainer" class="h-40 sm:h-56 lg:h-auto lg:flex-1 lg:min-h-[160px] overflow-y-auto pr-1">
                         <div id="moveHistoryEmpty" class="h-full flex items-center justify-center zu-small text-center px-6">
                             La partita comincia quando muovi il primo pezzo bianco.
                         </div>
@@ -540,7 +549,7 @@
 
     <!-- ================= PIEDE ================= -->
     <footer class="border-t border-ivory-200 bg-ivory-50 py-4 px-4 mt-4">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 zu-micro zu-muted">
+        <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 zu-micro zu-muted">
             <span>Scacchi ZeroUno &mdash; Motore, interfaccia e pezzi originali</span>
             <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">
                 YouTube: @zerounosolution

@@ -14,6 +14,7 @@ import { updatePlayerCardsUI, renderTimersUI, setupTimeControlSelects } from './
 import { setupReviewControls, exitReview } from './ui/review.js';
 import { setupNotationInput } from './ui/moveinput.js';
 import { setupSidePanel } from './ui/sidepanel.js';
+import { setupNameEditing } from './ui/nameedit.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
@@ -173,7 +174,9 @@ export function setupEventListeners() {
         copyTextToClipboard(uid, "ID Giocatore copiato negli appunti");
     });
     document.getElementById('copyPgnBtn').addEventListener('click', () => {
-        const pgn = chess.pgn() || 'Nessuna mossa registrata';
+        // A zero mosse non c'e' niente da copiare: il bottone e' spento (C5)
+        if (chess.history().length === 0) return;
+        const pgn = chess.pgn();
         copyTextToClipboard(pgn, "Notazione PGN copiata negli appunti");
     });
 
@@ -257,6 +260,7 @@ window.onload = async function () {
     setupTimeControlSelects();
     setupNotationInput();
     setupSidePanel();
+    setupNameEditing();
 
     // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
     if (!resumeSavedMatch()) {
