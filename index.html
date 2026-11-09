@@ -474,6 +474,49 @@
         </button>
     </main>
 
+    <!-- ================= ANNUNCIO DI BENVENUTO ================= -->
+    <div id="promoOverlay" class="hidden fixed inset-0 z-40 bg-anthracite-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="zu-modal max-w-md w-full p-6 sm:p-7 relative">
+            <button id="closePromoBtn" type="button" aria-label="Chiudi l'annuncio"
+                    class="zu-btn zu-btn--onDark zu-btn--icon absolute top-3 right-3">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <span class="zu-eyebrow">I canali di casa</span>
+            <h2 class="zu-display mt-1 mb-2">Ti piace questo gioco?</h2>
+            <p class="zu-small text-ivory-200 mb-5">
+                E' un progetto ZeroUno Solution, gratis e senza registrazione.
+                Se ti va, un'iscrizione ai canali e' il modo migliore per dire grazie.
+            </p>
+
+            <div class="space-y-3">
+                <div class="flex items-center justify-between gap-3 bg-anthracite-800 border border-bronze-500/30 rounded-xl px-4 py-3">
+                    <div class="min-w-0">
+                        <p class="zu-small font-semibold truncate">ZeroUno Solution</p>
+                        <p class="zu-micro text-ivory-200 truncate">Tecnologia di tutti i giorni, spiegata semplice</p>
+                    </div>
+                    <a href="https://www.youtube.com/@ZeroUnoSolution?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
+                       class="zu-btn zu-btn--accent zu-btn--sm shrink-0">Iscriviti</a>
+                </div>
+                <div class="flex items-center justify-between gap-3 bg-anthracite-800 border border-bronze-500/30 rounded-xl px-4 py-3">
+                    <div class="min-w-0">
+                        <p class="zu-small font-semibold truncate">Agjensi Okazione</p>
+                        <p class="zu-micro text-ivory-200 truncate">Le occasioni immobiliari in Albania</p>
+                    </div>
+                    <a href="https://www.youtube.com/@agjensiokazione?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
+                       class="zu-btn zu-btn--accent zu-btn--sm shrink-0">Iscriviti</a>
+                </div>
+            </div>
+
+            <button id="promoPlayBtn" type="button" class="zu-btn zu-btn--onDark w-full mt-5"
+                    onclick="document.getElementById('closePromoBtn').click()">
+                Gioca subito
+            </button>
+        </div>
+    </div>
+
     <!-- ================= FINE PARTITA + VIDEO DEL CANALE ================= -->
     <div id="gameOverModal" class="hidden fixed inset-0 z-50 bg-anthracite-950/85 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div class="zu-modal max-w-xl w-full p-5 sm:p-7 my-auto">

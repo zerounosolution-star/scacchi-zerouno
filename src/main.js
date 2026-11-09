@@ -17,6 +17,7 @@ import { setupSidePanel } from './ui/sidepanel.js';
 import { setupNameEditing } from './ui/nameedit.js';
 import { registerServiceWorker } from './core/update.js';
 import { setupFullscreen } from './ui/fullscreen.js';
+import { setupPromoOverlay } from './ui/promo.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
@@ -231,6 +232,7 @@ window.onload = async function () {
     setupSidePanel();
     setupNameEditing();
     setupFullscreen();
+    setupPromoOverlay();
 
     // Se c'era una partita a meta', si riprende; altrimenti se ne apre una nuova
     if (!resumeSavedMatch()) {

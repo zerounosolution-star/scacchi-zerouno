@@ -976,7 +976,8 @@ select.zu-field { cursor: pointer; appearance: auto; }
    7. FINE PARTITA
    ========================================================================= */
 
-#gameOverModal .zu-modal {
+#gameOverModal .zu-modal,
+#promoOverlay .zu-modal {
     background: var(--table);
     border: 1px solid rgba(197, 166, 103, 0.28);
     border-radius: var(--r-lg);
