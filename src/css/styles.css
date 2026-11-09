@@ -1174,7 +1174,9 @@ select.zu-field { cursor: pointer; appearance: auto; }
    ============================================================ */
 @media (min-width: 1280px) {
     #mainLayout {
-        --board: clamp(520px, min(calc(100dvh - 120px), calc(100vw - 724px)), 800px);
+        /* Pavimento basso: su una finestra bassa la scacchiera si
+           stringe fino a 400px invece di sbordare sotto lo schermo. */
+        --board: clamp(400px, min(calc(100dvh - 120px), calc(100vw - 724px)), 800px);
         grid-template-columns: calc(var(--board) + 306px) minmax(320px, 380px);
         column-gap: 32px;
         justify-content: center;
@@ -1237,8 +1239,11 @@ select.zu-field { cursor: pointer; appearance: auto; }
     /* Il blocco del canale resta in fondo, sempre in vista (C2) */
     #sidePanel > section:last-of-type { margin-top: auto; }
 
-    /* Sala chiusa: il tavolo resta com'e', si centra soltanto */
-    #mainLayout[data-sala="chiusa"] { grid-template-columns: calc(var(--board) + 306px); }
+    /* Sala chiusa: lo spazio della sala va alla scacchiera */
+    #mainLayout[data-sala="chiusa"] {
+        --board: clamp(400px, min(calc(100dvh - 120px), calc(100vw - 372px)), 800px);
+        grid-template-columns: calc(var(--board) + 306px);
+    }
 }
 
 /* Copia PGN spento quando non c'e' niente da copiare (C5) */
@@ -1336,4 +1341,46 @@ select.zu-field { cursor: pointer; appearance: auto; }
 .zu-fs-board svg {
     width: 16px;
     height: 16px;
+}
+
+/* Finestre basse: il binario si stringe, cosi' non supera in altezza
+   la scacchiera gia' compressa e la pagina non scorre */
+@media (min-width: 1280px) and (max-height: 760px) {
+    .zu-table { row-gap: 6px; padding: 12px; }
+    .zu-table > .zu-seat { padding: 6px 8px; gap: 5px; }
+    .zu-table #topTimerBox,
+    .zu-table #bottomTimerBox { font-size: 21px; padding: 4px 8px; }
+    #gameStatusHeadline { font-size: 19px; }
+    .zu-table > .zu-table-controls { padding-top: 6px; }
+    .zu-table-controls .zu-btn { padding-top: 5px; padding-bottom: 5px; font-size: 12px; }
+    /* La riga del suggerimento e' didattica: su uno schermo basso
+       cede il posto alla scacchiera intera */
+    .zu-table-controls .flex.items-center.justify-between.gap-3.mt-3 { display: none; }
+    .zu-table #topPlayerAvatar,
+    .zu-table #bottomPlayerAvatar { width: 26px; height: 26px; font-size: 13px; }
+    /* Su uno schermo basso i crediti e l'etichetta della modalita'
+       cedono il posto alla scacchiera intera */
+    footer { display: none; }
+    #gameModePill { display: none; }
+    .zu-table { row-gap: 3px; padding: 10px; }
+    main { padding-top: 8px; padding-bottom: 8px; }
+    .zu-table > .zu-seat { padding: 5px 8px; }
+    .zu-table #topTimerBox,
+    .zu-table #bottomTimerBox { font-size: 20px; padding: 3px 8px; }
+    .zu-table-controls .zu-field { padding-top: 6px; padding-bottom: 6px; }
+    #gameStatusHeadline { font-size: 18px; }
+}
+
+/* Il respiro verticale della pagina vive qui, non nelle classi: cosi'
+   il binario e gli schermi bassi possono stringerlo. :where() tiene la
+   specificita' a zero, e ogni regola main piu' sopra vince. */
+:where(main) {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+@media (min-width: 640px) {
+    :where(main) {
+        padding-top: 24px;
+        padding-bottom: 24px;
+    }
 }
