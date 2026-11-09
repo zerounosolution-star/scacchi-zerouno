@@ -84,22 +84,24 @@ Revoked**.
 
 ## Cosa resta da decidere
 
-**1. Il `git push --force`.** Lo storico pulito è solo sul computer. Su GitHub
-c'è ancora quello vecchio, con la chiave dentro. Per allinearlo serve:
+**1. ~~Il `git push --force`~~ — fatto il 9.11.2026.** Con il sì del titolare,
+lo storico riscritto è stato mandato su GitHub: `35b4dca` → `ab94017`,
+aggiornamento forzato dei 46 commit. La cartella `.git` vecchia resta nella
+copia di sicurezza.
 
-```
-git push --force origin main
-```
-
-È **irreversibile**: tutti i 46 commit cambiano codice sul repository
-pubblico. Non è stato fatto: serve il sì scritto del titolare.
-Se si cambia idea prima del push, si torna indietro rimettendo la cartella
-`.git` dalla copia di sicurezza.
+> **Attenzione, e qui sta il motivo per cui la revoca conta davvero.**
+> Il vecchio commit `8f84f738` **è ancora raggiungibile su GitHub** scrivendo
+> il suo numero nell'indirizzo: riscrivere un ramo non cancella subito gli
+> oggetti vecchi, che restano finché GitHub non fa pulizia. Chi ha quel
+> numero — ed è scritto nella mail di avviso — può ancora leggere la chiave.
+> Si può chiedere a GitHub Support di cancellarli subito, ma la cosa che
+> chiude la faccenda è **revocare la chiave**, non la riscrittura.
 
 **2. La sala mondiale sul sito pubblicato.** Il sito è servito da GitHub Pages
 dal ramo `main`, cartella radice: non c'è nessun passaggio di pubblicazione
 che possa aggiungere la chiave. Siccome `firebase.config.js` non sta nel
-repository, **dopo il push il sito pubblicato partirà in Modalità Locale**.
+repository, **il sito pubblicato ora parte in Modalità Locale** (verificato
+il 9.11.2026: la pagina si apre, la scacchiera c'è, la sala mondiale no).
 Due strade, da scegliere con calma:
 
 - lasciare così: online solo sul computer di casa, il sito pubblico resta
