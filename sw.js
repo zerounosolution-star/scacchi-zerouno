@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v18';
+const CACHE_VERSION = 'v19';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -122,36 +122,48 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // La pagina: prima la rete, poi la cache
-    if (request.mode === 'navigate') {
-        event.respondWith((async () => {
-            try {
-                const fresh = await fetch(request);
-                const cache = await caches.open(CACHE_NAME);
-                cache.put('./index.html', fresh.clone());
-                return fresh;
-            } catch (err) {
-                const cached = await caches.match('./index.html');
-                return cached || Response.error();
-            }
-        })());
-        return;
-    }
-
-    // Tutto il resto: copia in cache subito, aggiornamento in sottofondo
+    /*
+     * PAGINA E MODULI VIAGGIANO INSIEME, DALLA STESSA GENERAZIONE.
+     *
+     * Prima la pagina arrivava dalla rete e i moduli dalla cache: nella
+     * finestra di un aggiornamento il browser mischiava HTML nuovo e
+     * JavaScript vecchio, e ogni volta qualcosa si rompeva in modo
+     * strano (e' successo tre volte in un giorno). Ora tutto cio' che
+     * sta nella dispensa della versione corrente si serve DALLA
+     * dispensa: una versione intera e coerente. La versione nuova
+     * arriva solo quando il service worker nuovo si installa, e la
+     * fascia "Nuova versione disponibile" propone la ricarica: il
+     * passaggio e' atomico.
+     */
     event.respondWith((async () => {
         const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(request);
 
-        const network = fetch(request)
-            .then((response) => {
-                if (response && (response.ok || response.type === 'opaque')) {
-                    cache.put(request, response.clone());
-                }
-                return response;
-            })
-            .catch(() => null);
+        // La navigazione si serve dalla copia della pagina in dispensa
+        if (request.mode === 'navigate') {
+            const cached = await cache.match('./index.html');
+            if (cached) return cached;
+            try {
+                return await fetch(request);
+            } catch (err) {
+                return Response.error();
+            }
+        }
 
-        return cached || (await network) || Response.error();
+        const cached = await cache.match(request, { ignoreSearch: false });
+        if (cached) return cached;
+
+        /*
+         * Fuori dispensa (per esempio le anteprime dei video): rete,
+         * con copia in cache per l'uso senza rete.
+         */
+        try {
+            const response = await fetch(request);
+            if (response && (response.ok || response.type === 'opaque')) {
+                cache.put(request, response.clone());
+            }
+            return response;
+        } catch (err) {
+            return Response.error();
+        }
     })());
 });
