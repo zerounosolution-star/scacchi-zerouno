@@ -97,18 +97,23 @@ copia di sicurezza.
 > Si può chiedere a GitHub Support di cancellarli subito, ma la cosa che
 > chiude la faccenda è **revocare la chiave**, non la riscrittura.
 
-**2. La sala mondiale sul sito pubblicato.** Il sito è servito da GitHub Pages
-dal ramo `main`, cartella radice: non c'è nessun passaggio di pubblicazione
-che possa aggiungere la chiave. Siccome `firebase.config.js` non sta nel
-repository, **il sito pubblicato ora parte in Modalità Locale** (verificato
-il 9.11.2026: la pagina si apre, la scacchiera c'è, la sala mondiale no).
-Due strade, da scegliere con calma:
+**2. La sala mondiale sul sito pubblicato — pronta, mancano due clic.**
+Siccome `firebase.config.js` non sta nel repository, il sito pubblicato parte
+in Modalità Locale (verificato il 9.11.2026). Per riaccenderlo è stato scritto
+il flusso `.github/workflows/pubblica-il-sito.yml`: ricostruisce la
+configurazione al momento del rilascio prendendo la chiave dai Secrets, così
+l'online funziona sul sito e la chiave non entra mai nello storico.
 
-- lasciare così: online solo sul computer di casa, il sito pubblico resta
-  gioco contro l'AI e in due;
-- aggiungere una pubblicazione con **GitHub Actions**, con la chiave messa in
-  *Settings → Secrets and variables → Actions*: la chiave entra nel sito al
-  momento del rilascio e non passa mai dallo storico. Mezz'ora di lavoro.
+Serve questo, una volta sola, quando la chiave nuova esiste:
+
+- **Settings → Secrets and variables → Actions → New repository secret**
+  Name: `FIREBASE_API_KEY` — Secret: la chiave nuova.
+- **Settings → Pages → Source: «GitHub Actions»** (al posto di
+  «Deploy from a branch»).
+
+Poi il sito si ripubblica a ogni modifica, con i test che devono passare
+prima del rilascio. Finché il secret non c'è, il flusso si ferma da solo e
+non manda nessun errore.
 
 **3. App Check** (Firebase → App Check, con reCAPTCHA Enterprise): il vero
 lucchetto contro chi usa la chiave da fuori. Da accendere con calma e

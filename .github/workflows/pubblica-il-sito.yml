@@ -1,0 +1,113 @@
+# PUBBLICAZIONE DEL SITO SU GITHUB PAGES
+#
+# Perche' esiste: dal 9 novembre 2026 la chiave Firebase non sta piu' nel
+# repository, quindi il sito servito direttamente dal ramo main partirebbe in
+# «Modalita Locale». Questo flusso ricostruisce firebase.config.js al momento
+# del rilascio, prendendo la chiave dai Secrets del repository. Cosi' la sala
+# mondiale funziona anche sul sito pubblicato e la chiave non entra mai nello
+# storico di git.
+#
+# Da fare una volta sola, nelle impostazioni del repository:
+#   1. Settings > Secrets and variables > Actions > New repository secret
+#      Name:   FIREBASE_API_KEY
+#      Secret: la chiave nuova
+#   2. Settings > Pages > Source: «GitHub Actions»
+#
+# Finche' il secret non c'e', questo flusso non pubblica niente e non da'
+# errore: si ferma da solo e lo scrive nel riepilogo.
+#
+# Gli altri valori qui sotto (progetto, dominio, identificativi) non sono
+# segreti: identificano il progetto Firebase e sono visibili in ogni pagina
+# del gioco. Il segreto vero e' solo la chiave.
+
+name: Pubblica il sito
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  controllo:
+    name: La chiave e' configurata?
+    runs-on: ubuntu-latest
+    outputs:
+      pronto: ${{ steps.verifica.outputs.pronto }}
+    steps:
+      - name: Cerca il secret FIREBASE_API_KEY
+        id: verifica
+        env:
+          CHIAVE: ${{ secrets.FIREBASE_API_KEY }}
+        run: |
+          if [ -n "$CHIAVE" ]; then
+            echo "pronto=si" >> "$GITHUB_OUTPUT"
+            echo "Chiave trovata: si pubblica." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "pronto=no" >> "$GITHUB_OUTPUT"
+            echo "Manca il secret FIREBASE_API_KEY: niente da pubblicare." >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Manca il secret FIREBASE_API_KEY: pubblicazione saltata."
+          fi
+
+  pubblica:
+    name: Prova e pubblica
+    needs: controllo
+    if: needs.controllo.outputs.pronto == 'si'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.rilascio.outputs.page_url }}
+    steps:
+      - name: Scarica il progetto
+        uses: actions/checkout@v7
+
+      - name: Prepara Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: I test devono passare
+        run: npm test
+
+      - name: Scrivi la configurazione Firebase
+        env:
+          CHIAVE: ${{ secrets.FIREBASE_API_KEY }}
+        run: |
+          cat > firebase.config.js <<'INTESTAZIONE'
+          /**
+           * Scritto dalla pubblicazione automatica, non sta nel repository.
+           * La chiave arriva dal secret FIREBASE_API_KEY.
+           */
+          INTESTAZIONE
+          cat >> firebase.config.js <<FINE
+          export const FIREBASE_CONFIG = {
+              apiKey: "$CHIAVE",
+              authDomain: "scacchi-zerouno.firebaseapp.com",
+              projectId: "scacchi-zerouno",
+              storageBucket: "scacchi-zerouno.firebasestorage.app",
+              messagingSenderId: "23108543498",
+              appId: "1:23108543498:web:bea77cdafe6e4948a86bf3"
+          };
+          FINE
+          node --check firebase.config.js
+          echo "Configurazione scritta e sintassi verificata."
+
+      - name: Prepara GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Impacchetta il sito
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .
+
+      - name: Pubblica
+        id: rilascio
+        uses: actions/deploy-pages@v5

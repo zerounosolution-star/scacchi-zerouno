@@ -327,12 +327,15 @@ dati dipende dalle regole in [`firebase/firestore.rules`](firebase/firestore.rul
 non dal segreto delle chiavi. Vanno comunque limitate nella console Google
 (Credenziali > limitazioni per referrer HTTP e per API).
 
-> **Sito pubblicato.** Il sito su GitHub Pages e' servito dal ramo `main`,
-> cartella radice. Siccome `firebase.config.js` non sta nel repository, il
-> sito pubblicato parte in **Modalita Locale**: AI e due giocatori sullo
-> stesso dispositivo funzionano, la sala mondiale no. Per riaccenderla serve
-> una pubblicazione che inserisca la chiave al momento del rilascio
-> (GitHub Actions con la chiave nei Secrets). Vedi
+> **Sito pubblicato.** Siccome `firebase.config.js` non sta nel repository,
+> il sito pubblicato avrebbe la sala mondiale spenta. Per questo c'e'
+> [`.github/workflows/pubblica-il-sito.yml`](.github/workflows/pubblica-il-sito.yml):
+> ricostruisce la configurazione al momento del rilascio prendendo la chiave
+> dal secret `FIREBASE_API_KEY`, cosi' l'online funziona sul sito e la chiave
+> non entra mai nello storico. Serve, una volta sola, il secret in
+> *Settings > Secrets and variables > Actions* e *Settings > Pages > Source:
+> GitHub Actions*. Senza il secret il flusso si ferma da solo senza errori, e
+> il sito resta in **Modalita Locale**. Vedi
 > [`NOTE-SICUREZZA-2026-11-09.md`](NOTE-SICUREZZA-2026-11-09.md).
 
 ### Consumi
