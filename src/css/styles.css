@@ -267,6 +267,9 @@ body {
 #copyWaitingCodeBtn { color: var(--ink-on-dark-2); }
 #copyWaitingCodeBtn:hover { color: #FFFFFF; }
 #directVideoYoutubeLink { color: var(--accent); }
+/* Sfida un amico vive sulla carta scura: al passaggio resta chiaro */
+#challengeFriendBtn { color: var(--accent); }
+#challengeFriendBtn:hover { color: #FFFFFF; text-decoration: underline; }
 #directVideoYoutubeLink:hover { color: #E3CFA2; }
 #copyUserIdBtn { padding: 0 4px; }
 .zu-btn--icon { width: var(--tap); min-height: var(--tap); padding: 0; }
