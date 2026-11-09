@@ -5,94 +5,107 @@ Avviso di GitHub «Action needed: Secrets detected» sul repository pubblico
 
 ## Cosa ha trovato GitHub
 
-- **Avviso numero 1**, aperto l'8 novembre 2026 alle 19:02.
+- **Avviso numero 1**, aperto l'8 novembre 2026 alle 19:02. È l'unico aperto.
 - Tipo: **Google API Key**.
-- Dove: `src/config/app.config.js`, riga 69, dentro `FIREBASE_CONFIG`.
-- Primo commit che la contiene: `8f84f73` dell'8 novembre 2026,
-  «feat: la rete mondiale si accende».
-- La chiave finisce con **STUM**. In questa nota non si scrive mai intera.
-- È l'unica cosa trovata: nessun'altra chiave, password o certificato
-  nel progetto, né nei file tracciati né in quelli fuori da git.
+- Dove: `src/config/app.config.js`, dentro `FIREBASE_CONFIG`.
+- Entrata con il commit `8f84f73` dell'8 novembre, «feat: la rete mondiale
+  si accende», e presente in 9 commit su 45.
+- La chiave finisce con **STUM**. Qui non si scrive mai intera.
+- Nient'altro: nessuna seconda chiave, nessuna password, nessun certificato,
+  né nei file del progetto né nello storico.
 
-## Che tipo di chiave è
+## Che chiave è, e cosa succede quando si revoca
 
-È la **chiave Firebase del browser**, quella del gioco online.
+È la **chiave Firebase del browser**: quella che fa funzionare la **sala
+mondiale online** del gioco. Non è una chiave Gemini e non è una chiave di
+servizio.
 
-Questo tipo di chiave **serve solo a dire quale progetto Firebase sei**.
-Non apre i dati. Google la chiama «identifica, non autorizza»: chi tiene i
-dati al sicuro sono le regole in `firebase/firestore.rules`, non il segreto
-della chiave.
+Cosa fa davvero: dice a Google *quale progetto Firebase sei*. Non apre i dati.
+Chi tiene al sicuro le partite sono le regole in `firebase/firestore.rules`,
+che sono già strette: si legge solo da autenticati, una partita la modificano
+solo i due che ci giocano, tutto il resto è chiuso.
 
-Non è una chiave Gemini e non è una chiave di servizio. Quelle due non
-devono mai uscire. Questa invece **viaggia dentro ogni pagina del gioco**:
-chiunque apra il sito e guardi il codice della pagina la legge. È fatta così.
+**Quindi, al momento della revoca: la sala mondiale si spegne.** Restano le
+partite contro l'AI e in due sullo stesso dispositivo, e l'intestazione lo
+dichiara con la scritta «Modalità Locale». L'online torna quando la chiave
+nuova è al suo posto.
 
-Le regole di Firestore del progetto sono già strette:
-si legge e si scrive solo da autenticati, una partita la modificano solo
-i due che ci giocano, e tutto il resto è chiuso.
+## Cosa deve fare il titolare, nell'ordine
 
-## Perché nascondere la chiave qui non servirebbe
-
-Il sito sta su **GitHub Pages, ramo `main`, cartella radice**: il sito
-pubblicato *è* il repository. Non c'è nessun passaggio di compilazione,
-nessun server, nessuna variabile d'ambiente.
-
-Quindi, se la chiave esce dal repository:
-
-- il gioco online **smette di funzionare per tutti** (restano l'AI e il
-  gioco in due sullo stesso dispositivo);
-- la chiave resterebbe comunque pubblica, perché è già stata vista;
-- riscrivere lo storico di git non cancella quello che è già uscito.
-
-Anche rigenerare la chiave non cambierebbe niente: la nuova chiave
-finirebbe nello stesso punto, pubblica allo stesso modo.
-
-## Cosa deve fare il titolare (10 minuti, nella console Google)
-
-Niente panico e niente fretta: il rischio qui non è che qualcuno legga le
-partite, è che qualcuno usi la chiave dal **suo** sito per consumare il
-piano gratuito di Firebase.
+**Prima la nuova, poi via la vecchia**, così non si resta mai scoperti.
 
 1. Aprire <https://console.cloud.google.com/apis/credentials>
-   e scegliere in alto il progetto **scacchi-zerouno**.
-2. Cliccare sulla chiave che finisce con **STUM**.
-3. In **Limitazioni per l'applicazione** scegliere **Siti web (referrer HTTP)**
-   e aggiungere questi due indirizzi, uno per riga:
-   - `https://zerounosolution-star.github.io/*`
-   - `http://127.0.0.1:8099/*`  (serve per provare il gioco sul computer)
-4. In **Limitazioni per l'API** scegliere **Limita chiave** e lasciare
-   spuntate solo le voci che il gioco usa davvero:
-   **Identity Toolkit API** e **Cloud Firestore API**.
-5. Salvare, aspettare qualche minuto, poi aprire il sito e fare una
-   partita online di prova.
-6. Controllare una volta i consumi del progetto in Firebase
-   (Console Firebase → Utilizzo), per vedere che non ci siano stati
-   accessi strani fra l'8 e il 9 novembre.
+   (**API e servizi → Credenziali**) e scegliere in alto il progetto
+   **scacchi-zerouno**.
+2. **Crea credenziali → Chiave API**: nasce la chiave nuova.
+3. Sulla chiave nuova, prima di usarla, mettere le limitazioni:
+   - **Limitazioni per l'applicazione → Siti web (referrer HTTP)**, con
+     `https://zerounosolution-star.github.io/*` e `http://127.0.0.1:8099/*`;
+   - **Limitazioni per l'API → Limita chiave**, lasciando solo
+     **Identity Toolkit API** e **Cloud Firestore API**.
+4. Scrivere la chiave nuova **a mano** nel file `firebase.config.js`, nella
+   radice del progetto, al posto di quella vecchia (campo `apiKey`).
+   Quel file ora non entra più in git. **Non va incollata in chat a nessuno.**
+5. Provare il gioco in locale: deve comparire «Rete Mondiale Attiva».
+6. Solo adesso, nella stessa pagina della console, **eliminare la chiave
+   vecchia** (quella che finisce con STUM).
+7. Controllare una volta i consumi in Console Firebase → Utilizzo, per vedere
+   se fra l'8 e il 9 novembre c'è stato traffico strano.
 
-Poi, su GitHub: **Security → Secret scanning → avviso numero 1 →
-Close as → Used in tests / Won't fix**, con nota «chiave pubblica per
-definizione, limitata per dominio». L'avviso si chiude senza toccare lo storico.
+Poi su GitHub: **Security → Secret scanning → avviso numero 1 → Close as →
+Revoked**.
 
-## Cosa resta aperto
+## Cosa è stato fatto nel progetto (9.11.2026)
 
-- **App Check** (Firebase → App Check, con reCAPTCHA Enterprise): è il vero
-  lucchetto contro chi usa la chiave da fuori. Gratuito entro una soglia
-  larga, ma va acceso con calma e provato, perché se è configurato male
-  blocca anche i giocatori veri. Da fare in un secondo momento.
-- Controllo dei consumi Firebase dopo una settimana.
+- La chiave è uscita da `src/config/app.config.js`. Al suo posto c'è
+  `loadFirebaseConfig()`, che legge la configurazione da un file esterno.
+- La configurazione vive in **`firebase.config.js`**, nella radice, e
+  `.gitignore` lo tiene fuori da git.
+- Nel repository resta il modello a campi vuoti
+  **`firebase.config.ESEMPIO.js`**, con le istruzioni per chi riprende il
+  progetto.
+- Se quel file manca, il gioco non si rompe: resta giocabile e dichiara
+  «Modalità Locale».
+- **Storico ripulito**: copia di sicurezza della cartella `.git` in
+  `C:\Users\Utente\Documents\Claude\Projects\_copia-git-scacchi-2026-11-09`,
+  poi `git filter-branch` su tutti i 46 commit, `reflog expire` e
+  `gc --prune=now`. Verificato: la stringa non è più in nessun commit e in
+  nessun oggetto del repository locale.
+- README e `docs/ARCHITETTURA.md` aggiornati. `CACHE_VERSION` del service
+  worker alzata da `v15` a `v16`.
+- Prove: `node --check` su tutti i file toccati, 58 test su 58 passati, gioco
+  aperto nel browser con e senza il file di configurazione.
 
-## Se invece si decidesse di togliere la chiave
+## Cosa resta da decidere
 
-Non è consigliato (vedi sopra), ma è pronto: significa accettare che il
-gioco online si spenga per tutti, riscrivere tutto lo storico di git e
-mandarlo su GitHub con un `push --force`, che è irreversibile.
-In quel caso si fa prima una copia della cartella `.git`, si toglie il file
-dallo storico con `git filter-branch`, e si rimette al suo posto un modello
-a campi vuoti. Il lavoro è preparato ma **non è stato eseguito**: serve il sì
-del titolare.
+**1. Il `git push --force`.** Lo storico pulito è solo sul computer. Su GitHub
+c'è ancora quello vecchio, con la chiave dentro. Per allinearlo serve:
+
+```
+git push --force origin main
+```
+
+È **irreversibile**: tutti i 46 commit cambiano codice sul repository
+pubblico. Non è stato fatto: serve il sì scritto del titolare.
+Se si cambia idea prima del push, si torna indietro rimettendo la cartella
+`.git` dalla copia di sicurezza.
+
+**2. La sala mondiale sul sito pubblicato.** Il sito è servito da GitHub Pages
+dal ramo `main`, cartella radice: non c'è nessun passaggio di pubblicazione
+che possa aggiungere la chiave. Siccome `firebase.config.js` non sta nel
+repository, **dopo il push il sito pubblicato partirà in Modalità Locale**.
+Due strade, da scegliere con calma:
+
+- lasciare così: online solo sul computer di casa, il sito pubblico resta
+  gioco contro l'AI e in due;
+- aggiungere una pubblicazione con **GitHub Actions**, con la chiave messa in
+  *Settings → Secrets and variables → Actions*: la chiave entra nel sito al
+  momento del rilascio e non passa mai dallo storico. Mezz'ora di lavoro.
+
+**3. App Check** (Firebase → App Check, con reCAPTCHA Enterprise): il vero
+lucchetto contro chi usa la chiave da fuori. Da accendere con calma e
+provare, perché configurato male blocca anche i giocatori veri.
 
 ---
 
 Nessun account è stato toccato. Niente è stato mandato online.
-Gli unici file cambiati sono questa nota e un commento in
-`src/config/app.config.js`. I 58 test del progetto passano.
