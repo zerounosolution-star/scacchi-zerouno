@@ -217,40 +217,7 @@ export function setupEventListeners() {
     });
 
     // Aggiunta nuovo video YouTube di ZeroUno Solution
-    document.getElementById('addCustomVideoBtn').addEventListener('click', () => {
-        const rawUrl = document.getElementById('customVideoUrlInput').value.trim();
-        const customTitle = document.getElementById('customVideoTitleInput').value.trim();
-        if (!rawUrl) {
-            showToast("Inserisci un URL o ID video di YouTube");
-            return;
-        }
-
-        // Estrae l'ID di 11 caratteri da qualsiasi link YouTube standard, youtu.be o Shorts
-        let extractedId = rawUrl;
-        const match = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([^&?\/\s]{11})/);
-        if (match && match[1]) {
-            extractedId = match[1];
-        }
-
-        if (extractedId.length !== 11) {
-            showToast("Formato ID YouTube non riconosciuto (richiesti 11 caratteri)");
-            return;
-        }
-
-        const newVideo = {
-            id: extractedId,
-            title: customTitle || `ZeroUno Solution — Video (${extractedId})`
-        };
-
-        ZEROUNO_VIDEOS.push(newVideo);
-        document.getElementById('videoPoolCount').textContent = ZEROUNO_VIDEOS.length;
-        document.getElementById('customVideoUrlInput').value = '';
-        document.getElementById('customVideoTitleInput').value = '';
-
-        loadZeroUnoVideoInModal(newVideo);
-        showToast("Nuovo video aggiunto e avviato!", "gold");
-    });
-}
+    }
 
 
 // Avvio applicazione al caricamento della finestra

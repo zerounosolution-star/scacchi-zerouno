@@ -499,9 +499,9 @@
             <!-- Video del canale -->
             <div class="mb-5">
                 <div class="flex items-center justify-between gap-3 mb-2.5">
-                    <span class="zu-eyebrow truncate">ZeroUno Solution &bull; Video di fine partita</span>
-                    <a id="currentChannelLink" href="https://www.youtube.com/@ZeroUnoSolution" target="_blank" rel="noopener noreferrer" class="zu-micro text-ivory-200 hover:text-white underline shrink-0">
-                        Vai al canale
+                    <span id="currentChannelEyebrow" class="zu-eyebrow truncate">Video di fine partita</span>
+                    <a id="subscribeChannelBtn" href="https://www.youtube.com/@ZeroUnoSolution?sub_confirmation=1" target="_blank" rel="noopener noreferrer" class="zu-btn zu-btn--accent zu-btn--sm shrink-0">
+                        Iscriviti al canale
                     </a>
                 </div>
 
@@ -517,15 +517,12 @@
                     </iframe>
                 </div>
 
-                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div class="min-w-0">
-                        <p id="currentZeroUnoVideoTitle" class="zu-small truncate">
-                            ZeroUno Solution — Pillola Tecnologica
-                        </p>
-                        <a id="directVideoYoutubeLink" href="https://youtube.com/@zerounosolution" target="_blank" rel="noopener noreferrer" class="zu-micro text-ivory-200 hover:text-white underline">
-                            Apri su YouTube
-                        </a>
-                    </div>
+                <div class="mt-3 flex items-center justify-between gap-3">
+                    <a id="directVideoYoutubeLink" href="https://www.youtube.com/@ZeroUnoSolution" target="_blank" rel="noopener noreferrer"
+                       class="zu-small truncate min-w-0 text-ivory-100 hover:text-white hover:underline"
+                       title="Apri questo video su YouTube">
+                        <span id="currentZeroUnoVideoTitle">ZeroUno Solution — Pillola Tecnologica</span>
+                    </a>
                     <button id="nextRandomVideoBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm shrink-0">
                         Un altro video
                     </button>
@@ -534,10 +531,7 @@
 
             <!-- Azioni -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5">
-                <a id="subscribeChannelBtn" href="https://youtube.com/@zerounosolution?sub_confirmation=1" target="_blank" rel="noopener noreferrer" class="zu-btn zu-btn--accent sm:mr-auto">
-                    Iscriviti al canale
-                </a>
-                <button id="challengeFriendBtn" type="button" class="zu-btn zu-btn--onDark">
+                <button id="challengeFriendBtn" type="button" class="zu-btn zu-btn--quiet sm:mr-auto">
                     Sfida un amico
                 </button>
                 <button id="modalReviewBoardBtn" type="button" class="zu-btn zu-btn--onDark">
@@ -548,19 +542,6 @@
                 </button>
             </div>
 
-            <!-- Aggiunta di un video del canale: strumento, non contenuto -->
-            <details class="mt-5 pt-4 border-t border-bronze-500/20">
-                <summary class="zu-micro text-ivory-200 cursor-pointer select-none hover:text-white">
-                    Aggiungi un video di @zerounosolution alla rotazione (<span id="videoPoolCount">6</span> in elenco)
-                </summary>
-                <div class="mt-3 flex flex-col sm:flex-row gap-2">
-                    <input id="customVideoUrlInput" type="text" placeholder="Link YouTube o Shorts" class="zu-field flex-1" />
-                    <input id="customVideoTitleInput" type="text" placeholder="Titolo (facoltativo)" class="zu-field sm:w-40" />
-                    <button id="addCustomVideoBtn" type="button" class="zu-btn zu-btn--onDark shrink-0">
-                        Aggiungi
-                    </button>
-                </div>
-            </details>
         </div>
     </div>
 

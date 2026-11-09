@@ -70,11 +70,10 @@ export function loadZeroUnoVideoInModal(videoObj) {
      */
     if (iframe) iframe.src = `https://www.youtube.com/embed/${videoObj.id}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1`;
     const canale = CHANNELS[videoObj.channel] || CHANNELS.zerouno;
-    const channelLink = document.getElementById('currentChannelLink');
-    if (channelLink) {
-        channelLink.href = canale.url;
-        channelLink.textContent = `Vai al canale ${canale.nome}`;
-    }
+    const eyebrow = document.getElementById('currentChannelEyebrow');
+    if (eyebrow) eyebrow.textContent = `${canale.nome} • Video di fine partita`;
+    const subscribe = document.getElementById('subscribeChannelBtn');
+    if (subscribe) subscribe.href = `${canale.url}?sub_confirmation=1`;
     if (directLink) directLink.href = `https://www.youtube.com/watch?v=${videoObj.id}`;
 }
 
