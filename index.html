@@ -474,44 +474,48 @@
         </button>
     </main>
 
-    <!-- ================= ANNUNCIO DI BENVENUTO ================= -->
+    <!-- ================= ANNUNCIO DI BENVENUTO: UN VIDEO DEI CANALI ================= -->
     <div id="promoOverlay" class="hidden fixed inset-0 z-40 bg-anthracite-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="zu-modal max-w-md w-full p-6 sm:p-7 relative">
-            <button id="closePromoBtn" type="button" aria-label="Chiudi l'annuncio"
-                    class="zu-btn zu-btn--onDark zu-btn--icon absolute top-3 right-3">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+        <div class="zu-modal max-w-lg w-full p-5 sm:p-6">
 
-            <span class="zu-eyebrow">I canali di casa</span>
-            <h2 class="zu-display mt-1 mb-2">Ti piace questo gioco?</h2>
-            <p class="zu-small text-ivory-200 mb-5">
-                E' un progetto ZeroUno Solution, gratis e senza registrazione.
-                Se ti va, un'iscrizione ai canali e' il modo migliore per dire grazie.
-            </p>
-
-            <div class="space-y-3">
-                <div class="flex items-center justify-between gap-3 bg-anthracite-800 border border-bronze-500/30 rounded-xl px-4 py-3">
-                    <div class="min-w-0">
-                        <p class="zu-small font-semibold truncate">ZeroUno Solution</p>
-                        <p class="zu-micro text-ivory-200 truncate">Tecnologia di tutti i giorni, spiegata semplice</p>
-                    </div>
-                    <a href="https://www.youtube.com/@ZeroUnoSolution?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
-                       class="zu-btn zu-btn--accent zu-btn--sm shrink-0">Iscriviti</a>
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <div class="min-w-0">
+                    <span id="promoChannelEyebrow" class="zu-eyebrow truncate">ZeroUno Solution</span>
+                    <p class="zu-micro text-ivory-200">Un assaggio dai canali di casa</p>
                 </div>
-                <div class="flex items-center justify-between gap-3 bg-anthracite-800 border border-bronze-500/30 rounded-xl px-4 py-3">
-                    <div class="min-w-0">
-                        <p class="zu-small font-semibold truncate">Agjensi Okazione</p>
-                        <p class="zu-micro text-ivory-200 truncate">Le occasioni immobiliari in Albania</p>
-                    </div>
-                    <a href="https://www.youtube.com/@agjensiokazione?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
-                       class="zu-btn zu-btn--accent zu-btn--sm shrink-0">Iscriviti</a>
-                </div>
+                <button id="closePromoBtn" type="button" aria-label="Chiudi l'annuncio e ferma il video"
+                        class="zu-btn zu-btn--onDark zu-btn--icon shrink-0">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
 
-            <button id="promoPlayBtn" type="button" class="zu-btn zu-btn--onDark w-full mt-5"
-                    onclick="document.getElementById('closePromoBtn').click()">
+            <div class="relative w-full aspect-video rounded-lg overflow-hidden bg-black border border-bronze-500/30">
+                <iframe
+                    id="promoYoutubeIframe"
+                    class="w-full h-full"
+                    src=""
+                    title="Video dei canali di casa"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen>
+                </iframe>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between gap-3">
+                <a id="promoVideoLink" href="https://www.youtube.com/@ZeroUnoSolution" target="_blank" rel="noopener noreferrer"
+                   class="zu-small truncate min-w-0 text-ivory-100 hover:text-white hover:underline"
+                   title="Apri questo video su YouTube">
+                    <span id="promoVideoTitle">Video dei canali di casa</span>
+                </a>
+                <a id="promoSubscribeBtn" href="https://www.youtube.com/@ZeroUnoSolution?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
+                   class="zu-btn zu-btn--accent zu-btn--sm shrink-0">
+                    Iscriviti
+                </a>
+            </div>
+
+            <button id="promoPlayBtn" type="button" class="zu-btn zu-btn--onDark w-full mt-4">
                 Gioca subito
             </button>
         </div>
