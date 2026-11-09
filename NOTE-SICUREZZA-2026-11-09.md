@@ -43,8 +43,14 @@ nuova è al suo posto.
      `https://zerounosolution-star.github.io/*` e `http://127.0.0.1:8099/*`;
    - **Limitazioni per l'API → Limita chiave**, lasciando solo
      **Identity Toolkit API** e **Cloud Firestore API**.
-4. Scrivere la chiave nuova **a mano** nel file `firebase.config.js`, nella
-   radice del progetto, al posto di quella vecchia (campo `apiKey`).
+4. Scrivere la chiave nuova **a mano**, fra le virgolette del campo `apiKey`,
+   in questo file e in questa riga:
+
+   ```
+   C:\Users\Utente\Documents\Claude\Projects\Scacchi ZeroUno\firebase.config.js
+   riga 14:     apiKey: "qui dentro",
+   ```
+
    Quel file ora non entra più in git. **Non va incollata in chat a nessuno.**
 5. Provare il gioco in locale: deve comparire «Rete Mondiale Attiva».
 6. Solo adesso, nella stessa pagina della console, **eliminare la chiave
