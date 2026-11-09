@@ -5,7 +5,7 @@
  * finestra di fine partita con un video del canale ZeroUno.
  */
 
-import { ZEROUNO_VIDEOS } from '../data/videos.js';
+import { ZEROUNO_VIDEOS, CHANNELS } from '../data/videos.js';
 import { chess, state } from '../core/state.js';
 import { clearSavedMatch } from '../core/persistence.js';
 import { playChessSound } from '../core/sound.js';
@@ -63,11 +63,18 @@ export function loadZeroUnoVideoInModal(videoObj) {
      */
     if (titleEl) titleEl.textContent = videoObj.title;
     /*
-     * Niente autoplay: il video partiva da solo, col suono, appena la
-     * carta si apriva. Parte solo se lo si tocca; per il canale e' anche
-     * meglio, perche' una riproduzione voluta conta come vista vera.
+     * Il video parte da solo ma MUTO: il proprietario vuole il video
+     * subito in moto a fine partita, e nessuno vuole l'audio a
+     * sorpresa (i browser peraltro bloccano l'autoplay sonoro). Chi
+     * vuole il suono tocca l'altoparlante del player.
      */
-    if (iframe) iframe.src = `https://www.youtube.com/embed/${videoObj.id}?rel=0&playsinline=1&modestbranding=1`;
+    if (iframe) iframe.src = `https://www.youtube.com/embed/${videoObj.id}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1`;
+    const canale = CHANNELS[videoObj.channel] || CHANNELS.zerouno;
+    const channelLink = document.getElementById('currentChannelLink');
+    if (channelLink) {
+        channelLink.href = canale.url;
+        channelLink.textContent = `Vai al canale ${canale.nome}`;
+    }
     if (directLink) directLink.href = `https://www.youtube.com/watch?v=${videoObj.id}`;
 }
 
