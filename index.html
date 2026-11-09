@@ -92,17 +92,6 @@
                 </select>
 
                 <!-- Suoni -->
-                <!-- Schermo intero (sparisce dove il browser non lo offre) -->
-                <button id="fullscreenBtn" type="button" aria-label="Schermo intero" aria-pressed="false"
-                        class="zu-btn zu-btn--outline zu-btn--icon">
-                    <svg id="fullscreenEnterIcon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V5a1 1 0 011-1h3m8 0h3a1 1 0 011 1v3m0 8v3a1 1 0 01-1 1h-3m-8 0H5a1 1 0 01-1-1v-3"/>
-                    </svg>
-                    <svg id="fullscreenExitIcon" class="hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 4v3a1 1 0 01-1 1H4m16 0h-3a1 1 0 01-1-1V4m0 16v-3a1 1 0 011-1h3M4 16h3a1 1 0 011 1v3"/>
-                    </svg>
-                </button>
-
                 <button id="soundToggleBtn" type="button" aria-label="Attiva o disattiva i suoni"
                         class="zu-btn zu-btn--outline zu-btn--icon">
                     <svg id="soundOnIcon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
@@ -174,6 +163,18 @@
                     <!-- Scacchiera: cornice scura, coordinate incise nel bordo -->
                     <div id="boardWrapper" class="chess-board-container relative overflow-hidden">
                         <div id="chessboard" class="chess-grid"></div>
+
+                        <!-- Schermo intero: vive nell'angolo della scacchiera
+                             (sparisce dove il browser non lo offre) -->
+                        <button id="fullscreenBtn" type="button" aria-label="Schermo intero" aria-pressed="false"
+                                class="zu-fs-board">
+                            <svg id="fullscreenEnterIcon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V5a1 1 0 011-1h3m8 0h3a1 1 0 011 1v3m0 8v3a1 1 0 01-1 1h-3m-8 0H5a1 1 0 01-1-1v-3"/>
+                            </svg>
+                            <svg id="fullscreenExitIcon" class="hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 4v3a1 1 0 01-1 1H4m16 0h-3a1 1 0 01-1-1V4m0 16v-3a1 1 0 011-1h3M4 16h3a1 1 0 011 1v3"/>
+                            </svg>
+                        </button>
 
                         <!-- Scelta del pezzo di promozione -->
                         <div id="promotionOverlay" class="hidden absolute inset-0 bg-anthracite-950/70 backdrop-blur-xs z-20 flex items-center justify-center p-4">
