@@ -20,7 +20,7 @@ import { setupFullscreen } from './ui/fullscreen.js';
 import { setupPromoOverlay } from './ui/promo.js';
 import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, closeGameOverModal } from './ui/gameover.js';
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
-import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch } from './online/firestore.js';
+import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch, finishOnlineMatch } from './online/firestore.js';
 
 export function setupEventListeners() {
     // Cambio Tema Scacchiera
@@ -117,15 +117,7 @@ export function setupEventListeners() {
         }
         const title = 'Partita Patta per Accordo';
         const subtitle = 'I giocatori hanno concordato la patta';
-        if (state.gameMode === 'online' && state.currentMatchId && state.currentUser && state.db) {
-            const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', state.currentMatchId);
-            await updateDoc(matchDocRef, {
-                status: 'finished',
-                winnerTitle: title,
-                winnerSubtitle: subtitle,
-                updatedAt: Date.now()
-            });
-        }
+        await finishOnlineMatch(title, subtitle);
         triggerEndOfGame(title, subtitle);
     });
 
@@ -135,17 +127,7 @@ export function setupEventListeners() {
         const title = `Vittoria del ${winnerColor} per Abbandono`;
         const subtitle = 'Partita conclusa per resa';
 
-        if (state.gameMode === 'online' && state.currentMatchId && state.currentUser && state.db && !state.matchEnded) {
-            try {
-                const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', state.currentMatchId);
-                await updateDoc(matchDocRef, {
-                    status: 'finished',
-                    winnerTitle: title,
-                    winnerSubtitle: subtitle,
-                    updatedAt: Date.now()
-                });
-            } catch (e) {}
-        }
+        if (!state.matchEnded) await finishOnlineMatch(title, subtitle);
         triggerEndOfGame(title, subtitle);
     });
 

@@ -269,6 +269,10 @@ export async function createOnlineRoom(isPrivate = false) {
         state.playerColor = 'w';
         state.boardOrientation = 'w';
 
+        // Anche chi crea parte pulito: vale il reset di chi entra
+        state.matchEnded = false;
+        startMatchTimers();
+
         document.getElementById('waitingRoomCodeDisplay').textContent = roomCode;
         document.getElementById('matchmakingOverlay').classList.remove('hidden');
         document.getElementById('gameModePill').textContent = `Stanza #${roomCode}`;
@@ -327,6 +331,15 @@ export async function joinOnlineMatchById(roomCodeInput) {
             state.boardOrientation = 'w';
             showToast(`Stai osservando la partita #${code}`);
         }
+
+        /*
+         * Chi entra parte da uno stato PULITO. Senza questo reset si
+         * ereditavano matchEnded e orologi della partita precedente:
+         * scacchiera bloccata per sempre dopo una partita AI conclusa,
+         * o tempo scaduto spurio con l'orologio vecchio ancora vivo.
+         */
+        state.matchEnded = false;
+        startMatchTimers();
 
         document.getElementById('gameModePill').textContent = `Online #${code}`;
         listenToActiveMatch(code);
@@ -388,6 +401,31 @@ export function listenToActiveMatch(roomCode) {
             console.error("Errore sincronizzazione partita:", err);
         }
     );
+}
+
+/**
+ * Dichiara finita la partita online sul documento condiviso, cosi'
+ * anche l'avversario vede il risultato. Fuori dall'online non fa nulla.
+ *
+ * Nata da un bug vero: i bottoni Patta e Abbandona usavano doc() e
+ * updateDoc() direttamente in main.js, dove quelle funzioni non sono
+ * mai state importate. La patta online lanciava ReferenceError e non
+ * succedeva niente; la resa falliva in silenzio e l'avversario non
+ * veniva mai avvisato.
+ */
+export async function finishOnlineMatch(title, subtitle) {
+    if (!(state.gameMode === 'online' && state.currentMatchId && state.currentUser && state.db)) return;
+    try {
+        const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', state.currentMatchId);
+        await updateDoc(matchDocRef, {
+            status: 'finished',
+            winnerTitle: title,
+            winnerSubtitle: subtitle,
+            updatedAt: Date.now()
+        });
+    } catch (e) {
+        console.error('Errore chiusura partita online:', e);
+    }
 }
 
 export async function syncOnlineMove(moveObj) {
