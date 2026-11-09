@@ -41,9 +41,29 @@ export function setupPromoOverlay() {
     const subscribe = document.getElementById('promoSubscribeBtn');
     if (subscribe) subscribe.href = `${canale.url}?sub_confirmation=1`;
 
-    // Parte da solo ma muto: niente audio a sorpresa all'apertura
-    iframe.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1`;
+    /*
+     * Parte da solo ma muto: l'autoplay sonoro lo vieta il browser,
+     * non e' una scelta. Il bottone sul player accende l'audio al
+     * primo tocco, che per il browser vale come consenso.
+     */
+    iframe.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1`;
     overlay.classList.remove('hidden');
+
+    const unmuteBtn = document.getElementById('promoUnmuteBtn');
+    if (unmuteBtn) {
+        unmuteBtn.classList.remove('hidden');
+        unmuteBtn.addEventListener('click', () => {
+            const comando = (func) => iframe.contentWindow.postMessage(
+                JSON.stringify({ event: 'command', func, args: func === 'setVolume' ? [100] : [] }), '*');
+            try {
+                comando('unMute');
+                comando('setVolume');
+                unmuteBtn.classList.add('hidden');
+            } catch (err) {
+                // Se il player non risponde, il volume resta nelle sue mani
+            }
+        });
+    }
 
     function chiudi() {
         overlay.classList.add('hidden');
