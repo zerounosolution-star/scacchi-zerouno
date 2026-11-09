@@ -4,8 +4,9 @@
  * Connessione, autenticazione anonima, lobby, creazione e ingresso
  * nelle stanze, sincronizzazione delle mosse.
  *
- * Senza configurazione Firebase (src/config/app.config.js) questo
- * modulo non si connette e l'applicazione resta in modalita' locale.
+ * Senza configurazione Firebase (firebase.config.js nella radice, tenuto
+ * fuori da git) questo modulo non si connette e l'applicazione resta in
+ * modalita' locale.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -13,7 +14,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, getFirestore, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { ZeroUnoChessEngine } from '../engine/chess-engine.js';
 import { WORLD_CHALLENGERS } from '../data/challengers.js';
-import { APP_ID, FIREBASE_CONFIG, LOBBY_MAX_ROOMS } from '../config/app.config.js';
+import { APP_ID, loadFirebaseConfig, LOBBY_MAX_ROOMS } from '../config/app.config.js';
 import { chess, state } from '../core/state.js';
 import { playChessSound } from '../core/sound.js';
 import { showToast, getPlayerNickname } from '../core/utils.js';
@@ -51,14 +52,17 @@ export async function initFirebase() {
     // La lobby mostra subito gli sfidanti AI, cosi' e' giocabile da subito
     renderGlobalLobbyUI();
 
-    if (!FIREBASE_CONFIG) {
+    // La configurazione sta fuori da git: puo' non esserci.
+    const firebaseConfig = await loadFirebaseConfig();
+
+    if (!firebaseConfig) {
         setNetworkStatus('locale', 'Modalita Locale');
         if (uidDisplay) uidDisplay.textContent = 'ZU-' + Math.floor(1000 + Math.random() * 9000);
         return;
     }
 
     try {
-        const app = initializeApp(FIREBASE_CONFIG);
+        const app = initializeApp(firebaseConfig);
         state.auth = getAuth(app);
         state.db = getFirestore(app);
 

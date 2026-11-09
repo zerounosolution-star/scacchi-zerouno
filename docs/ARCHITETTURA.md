@@ -368,7 +368,7 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 | Serve | File |
 |---|---|
 | Aggiungere o cambiare un tempo di gioco | `src/config/app.config.js` (`TIME_CONTROLS`) |
-| Attivare il multiplayer | `src/config/app.config.js` (`FIREBASE_CONFIG`) |
+| Attivare il multiplayer | `firebase.config.js` nella radice, copiato da `firebase.config.ESEMPIO.js` (fuori da git) |
 | Rendere l'AI piu' forte | `src/engine/search.js` (tabella `LEVELS`, valutazione) |
 | Cambiare i tempi di riflessione | `src/engine/search.js`, campo `timeBudgetMs` |
 | Aggiungere un tema di scacchiera | `src/css/styles.css` + `index.html` (menu a tendina) |

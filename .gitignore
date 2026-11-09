@@ -28,3 +28,6 @@ _tmp_*
 
 # Attrezzatura locale di Claude Code
 .claude/
+
+# Configurazione Firebase con la chiave: resta solo sul computer
+/firebase.config.js

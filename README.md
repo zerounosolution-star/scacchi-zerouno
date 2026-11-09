@@ -308,18 +308,32 @@ nell'intestazione ("Modalita Locale"). Per attivare le partite fra persone:
    gratuito, senza carta di credito).
 2. Attivare **Firestore Database** e, in Authentication, il metodo
    **Anonimo**.
-3. Copiare la configurazione web del progetto (Impostazioni progetto > Le tue
-   app > Configurazione SDK) dentro `FIREBASE_CONFIG` in
-   [`src/config/app.config.js`](src/config/app.config.js).
+3. Copiare [`firebase.config.ESEMPIO.js`](firebase.config.ESEMPIO.js) in
+   `firebase.config.js` (stessa cartella, la radice del progetto) e riempire
+   i campi con la configurazione web del proprio progetto
+   (Impostazioni progetto > Le tue app > Configurazione SDK).
 4. Pubblicare le regole di sicurezza:
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
+`firebase.config.js` **non entra in git**: `.gitignore` lo tiene fuori, cosi'
+la chiave non finisce nello storico del repository pubblico. Chi clona il
+progetto trova solo il modello a campi vuoti e ci mette la propria.
+
 Le chiavi Firebase del client sono pubbliche per definizione: la sicurezza dei
 dati dipende dalle regole in [`firebase/firestore.rules`](firebase/firestore.rules),
-non dal segreto delle chiavi.
+non dal segreto delle chiavi. Vanno comunque limitate nella console Google
+(Credenziali > limitazioni per referrer HTTP e per API).
+
+> **Sito pubblicato.** Il sito su GitHub Pages e' servito dal ramo `main`,
+> cartella radice. Siccome `firebase.config.js` non sta nel repository, il
+> sito pubblicato parte in **Modalita Locale**: AI e due giocatori sullo
+> stesso dispositivo funzionano, la sala mondiale no. Per riaccenderla serve
+> una pubblicazione che inserisca la chiave al momento del rilascio
+> (GitHub Actions con la chiave nei Secrets). Vedi
+> [`NOTE-SICUREZZA-2026-11-09.md`](NOTE-SICUREZZA-2026-11-09.md).
 
 ### Consumi
 

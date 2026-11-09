@@ -45,34 +45,31 @@ export const YOUTUBE_SUBSCRIBE_URL = 'https://youtube.com/@zerounosolution?sub_c
 /**
  * Configurazione del progetto Firebase.
  *
- * Finche' vale `null`, l'applicazione funziona in modalita' locale:
- * partite contro l'AI e in due sullo stesso dispositivo, senza rete.
+ * La chiave NON sta piu' qui dentro e non entra nello storico di git.
+ * Vive in `firebase.config.js`, nella radice del progetto, che .gitignore
+ * tiene fuori. Il modello a campi vuoti e' `firebase.config.ESEMPIO.js`.
  *
- * Per attivare il multiplayer online reale, incollare qui l'oggetto di
- * configurazione del proprio progetto Firebase (Console Firebase >
- * Impostazioni progetto > Le tue app > Configurazione SDK):
+ * Senza quel file l'applicazione resta giocabile: partite contro l'AI e
+ * in due sullo stesso dispositivo. Si spegne solo la sala mondiale, e
+ * l'intestazione lo dichiara invece di fingere una rete che non c'e'.
  *
- *   export const FIREBASE_CONFIG = {
- *       apiKey: "...",
- *       authDomain: "....firebaseapp.com",
- *       projectId: "...",
- *       storageBucket: "....appspot.com",
- *       messagingSenderId: "...",
- *       appId: "..."
- *   };
+ * La chiave del browser di Firebase identifica il progetto, non apre i
+ * dati: quelli li proteggono le regole in firebase/firestore.rules.
+ * Va comunque limitata nella console Google (Credenziali > limitazioni
+ * per referrer HTTP e per API). Vedi NOTE-SICUREZZA-2026-11-09.md.
  *
- * Queste chiavi sono pubbliche per progetto: la sicurezza dei dati
- * dipende dalle regole in firebase/firestore.rules, non dal segreto
- * delle chiavi.
+ * @returns {Promise<object|null>} la configurazione, o null se manca.
  */
-export const FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "scacchi-zerouno.firebaseapp.com",
-    projectId: "scacchi-zerouno",
-    storageBucket: "scacchi-zerouno.firebasestorage.app",
-    messagingSenderId: "23108543498",
-    appId: "1:23108543498:web:bea77cdafe6e4948a86bf3"
-};
+export async function loadFirebaseConfig() {
+    try {
+        const modulo = await import('../../firebase.config.js');
+        const config = modulo.FIREBASE_CONFIG;
+        if (!config || !config.apiKey || !config.projectId) return null;
+        return config;
+    } catch {
+        return null;
+    }
+}
 
 /**
  * Numero massimo di stanze lette dalla lobby in un solo ascolto.
