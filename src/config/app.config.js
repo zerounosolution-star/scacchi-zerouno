@@ -36,6 +36,14 @@ export function timeControlById(id) {
 /** Indirizzo pubblico del sito: inviti, PGN firmato, condivisioni. */
 export const SITE_URL = 'https://zerounosolution-star.github.io/scacchi-zerouno/';
 
+/**
+ * Statistiche di visita (GoatCounter, senza cookie).
+ * null = spente. Per accenderle: il codice scelto creando l'account su
+ * goatcounter.com, per esempio 'scacchizerouno' per
+ * https://scacchizerouno.goatcounter.com
+ */
+export const GOATCOUNTER_CODE = null;
+
 /** Canale YouTube collegato al progetto. */
 export const YOUTUBE_CHANNEL_URL = 'https://youtube.com/@zerounosolution';
 

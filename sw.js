@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v21';
+const CACHE_VERSION = 'v22';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -37,6 +37,7 @@ const APP_SHELL = [
     './src/core/sound.js',
     './src/core/utils.js',
     './src/core/update.js',
+    './src/core/analytics.js',
     './src/core/persistence.js',
     './src/data/pieces.js',
     './src/data/videos.js',
@@ -118,6 +119,11 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     // Le partite online devono sempre passare dalla rete
+    // Anche i conteggi delle statistiche: mai dalla cache, mai in cache
+    if (url.hostname.endsWith('goatcounter.com') || url.hostname === 'gc.zgo.at') {
+        return;
+    }
+
     if (url.hostname.endsWith('googleapis.com') || url.hostname.endsWith('firebaseio.com')) {
         return;
     }
