@@ -82,7 +82,7 @@ pubblicazione, guardando il sito.
   `tests/serviceworker.test.mjs`, `package.json`, `README.md`,
   `docs/ARCHITETTURA.md`.
 
-Niente è stato pubblicato: le modifiche sono sul computer, in attesa del sì.
+Pubblicato lo stesso giorno, dopo il sì del titolare (commit `4348e66`).
 
 ## Proposte, in ordine di importanza
 
@@ -117,3 +117,89 @@ scacchiera e il nome, rende il link molto più invitante. Lavoro per Grafica.
 nessuno in attesa parte una partita contro uno sfidante finto, con il
 messaggio «Connesso con…». Nella sala è segnato «AI», nel messaggio no.
 Basterebbe una parola per non far credere di giocare con una persona.
+
+---
+
+# Seconda parte della giornata: «sì, fai tutto»
+
+Il titolare ha letto le proposte e ha detto di farle. Questo è lo stato a fine
+giornata.
+
+## Fatto e online
+
+**Correzioni di sicurezza e del gioco online** (commit `4348e66`). Pubblicate
+e riprovate sul sito vero: l'aggiornamento arriva con la fascia «Nuova versione
+disponibile», e due giocatori veri (uno dal sito, uno da un indirizzo locale,
+quindi due identità diverse) hanno giocato una partita intera con lista delle
+mosse, orologio e resa. La stanza privata non compariva nella sala dell'altro.
+
+**Tailwind e Tone.js dentro il progetto** (commit `5d1150a`), proposta B.
+- Tone.js 14.8.49 in `assets/vendor`, identico all'originale: l'impronta
+  coincide con quella pubblicata da cdnjs, e un test la ricontrolla.
+- Tailwind non gira più nel browser: `npm run css` costruisce
+  `src/css/tailwind.css` (Tailwind 3.4.17, la versione che serviva il suo
+  sito). Da un programma di circa 400 kB a un foglio di 23 kB.
+- **Prova dell'aspetto:** versione di prima e versione nuova misurate nello
+  stesso browser, elemento per elemento, a sei larghezze (da 390 a 1600 px) e
+  in tredici situazioni di gioco: 65.376 misure, nessuna differenza. Tutte le
+  251 regole di stile di prima sono nel foglio nuovo, identiche.
+- Il foglio pubblicato è byte per byte quello costruito sul computer.
+- Programmi presi da fuori: nessuno. Restano esterni i caratteri (Google
+  Fonts), il programma di Firebase per l'online e i video di YouTube.
+
+**Lo sfidante internazionale dichiara di essere un'AI** (stesso commit),
+proposta F. Frasi scritte dal Revisore Social: avviso d'inizio, scheda
+dell'avversario, pillola, una riga sotto «Gioca nel mondo ora», la schermata
+d'attesa e il suo tasto. Corretti anche tre avvisi.
+
+**Regole del database più strette** (commit `fdb6f86`), proposta A. Pubblicate
+su Firestore.
+- Ora controllano anche cosa si scrive: campi, tipi, misure, giocatori che non
+  si riscrivono, partita finita che non si tocca, stanza che nasce pulita.
+- **Prova:** 21 prove nell'emulatore (`npm run regole`). Contro le regole di
+  prima ne falliscono dieci: erano i varchi aperti.
+- **Dal vivo:** dopo la pubblicazione, una partita intera fra due giocatori
+  veri è passata e sei tentativi scorretti sono stati rifiutati dal database
+  vero. Nessun dato di prova è rimasto.
+
+Prove automatiche: da 58 del mattino a 83, più le 21 dell'emulatore.
+
+## Pronto, in attesa del sì del titolare
+
+**Immagine per le condivisioni**, proposta E. Fatta da Grafica (1200 × 630,
+91 kB), promossa dal master-designer con due ritocchi già applicati, e dal
+Revisore Social. È in `Zerouno WP/anteprime/2026-11-20-scacchi-og/`. Va
+collegata alla pagina insieme al titolo e alla descrizione del Revisore:
+- titolo: «Scacchi ZeroUno: gioca contro l'AI, in due o online»
+- descrizione: «Dal telefono o dal computer, senza registrarti. Un progetto di
+  ZeroUno Solution.»
+Non è online: è un'immagine pubblica nuova, la vede prima il titolare.
+
+## Cose messe sul computer oggi
+
+- **Java 21** (Eclipse Temurin 21.0.13.1, file ufficiale da adoptium.net,
+  49 MB, impronta verificata), scompattato in
+  `%LOCALAPPDATA%\ZeroUno-strumenti\jre-21`. Non è installato nel sistema:
+  è una cartella, e serve solo a `npm run regole`. Si può cancellare.
+- L'emulatore di Firestore, scaricato da solo dallo strumento `firebase`
+  nella sua cartella di lavoro.
+- Windows ha chiesto se aprire la rete a Java: la risposta giusta è «Annulla».
+  L'emulatore parla solo dentro il computer.
+
+## Resta aperto
+
+- **App Check** di Firebase (proposta C) e **pulizia automatica delle partite
+  vecchie** (proposta D): si accendono dalla console di Firebase, cioè
+  dall'account del titolare.
+- Non visto: l'anteprima vera del link dentro WhatsApp, Facebook e Telegram.
+  Si può guardare solo dopo aver collegato l'immagine.
+- Dal Revisore, per un altro giro: a chi avvia la partita in due il gioco dice
+  «muovi col mouse!», che sul telefono è sbagliato; il punteggio accanto agli
+  sfidanti AI non l'ha misurato nessuno; il pallino verde sul bottone pulsa
+  anche quando non c'è nessuno in attesa.
+- Domanda del Revisore per il titolare: all'apertura e a fine partita il gioco
+  mostra anche video del canale Agjensi Okazione. Con la regola «niente
+  pubblicità ai clienti» restano? Se il canale è suo, va bene così.
+- Idea del Revisore: un indirizzo con il nome di ZeroUno al posto di
+  `zerounosolution-star.github.io`, che è la riga che la gente guarda per
+  decidere se fidarsi di un link.
