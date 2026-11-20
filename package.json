@@ -8,8 +8,9 @@
   "homepage": "https://youtube.com/@zerounosolution",
   "scripts": {
     "start": "python -m http.server 8099",
-    "test": "node --test tests/engine.test.mjs tests/search.test.mjs tests/persistence.test.mjs tests/notation.test.mjs tests/serviceworker.test.mjs tests/online.test.mjs tests/pagina.test.mjs",
-    "css": "node tailwind/costruisci.mjs"
+    "test": "node --test tests/engine.test.mjs tests/search.test.mjs tests/persistence.test.mjs tests/notation.test.mjs tests/serviceworker.test.mjs tests/online.test.mjs tests/pagina.test.mjs tests/regole.test.mjs",
+    "css": "node tailwind/costruisci.mjs",
+    "regole": "node firebase/prova-regole.mjs"
   },
   "engines": {
     "node": ">=20"

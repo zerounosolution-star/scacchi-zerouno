@@ -17,16 +17,32 @@
       {
         "source": "**/*.@(js|css)",
         "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=3600" }
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
         ]
       },
       {
         "source": "/index.html",
         "headers": [
-          { "key": "Cache-Control", "value": "no-cache" }
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
         ]
       }
     ],
     "cleanUrls": true
+  },
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8188
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
   }
 }

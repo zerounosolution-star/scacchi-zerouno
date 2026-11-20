@@ -34,7 +34,7 @@ npx serve .
 npm test
 ```
 
-75 prove che girano fuori dal browser, senza dipendenze.
+83 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
@@ -69,7 +69,9 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
 │   └── input.css               Da qui nasce src/css/tailwind.css (npm run css)
 ├── firebase/
 │   ├── firestore.rules         Regole di sicurezza del database
-│   └── firestore.indexes.json  Indici Firestore
+│   ├── firestore.indexes.json  Indici Firestore
+│   ├── regole.test.mjs         Prove delle regole nell'emulatore (npm run regole)
+│   └── prova-regole.mjs        Avvia l'emulatore e lancia le prove
 ├── src/
 │   ├── main.js                 Punto di ingresso: collega i controlli e avvia
 │   ├── config/app.config.js    Costanti e configurazione Firebase
@@ -110,7 +112,9 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
     ├── notation.test.mjs       Test della mossa scritta
     ├── persistence.test.mjs    Test della partita salvata
     ├── serviceworker.test.mjs  Test del service worker e della sua lista di file
-    └── online.test.mjs         Test del gioco online e guardie di sicurezza
+    ├── online.test.mjs         Test del gioco online e guardie di sicurezza
+    ├── pagina.test.mjs         Test della pagina: niente programmi esterni, foglio di Tailwind aggiornato
+    └── regole.test.mjs         Test che gioco e regole del database vadano d'accordo
 ```
 
 Regola del progetto: `index.html` contiene **solo** markup. Ogni stile sta nel
@@ -347,11 +351,18 @@ nell'intestazione ("Modalita Locale"). Per attivare le partite fra persone:
    `firebase.config.js` (stessa cartella, la radice del progetto) e riempire
    i campi con la configurazione web del proprio progetto
    (Impostazioni progetto > Le tue app > Configurazione SDK).
-4. Pubblicare le regole di sicurezza:
+4. Provare le regole di sicurezza, poi pubblicarle:
 
 ```bash
-firebase deploy --only firestore:rules
+npm run regole
+firebase deploy --only firestore:rules --project scacchi-zerouno
 ```
+
+`npm run regole` mette in moto l'emulatore di Firestore sul computer e gli
+manda tutto cio' che il gioco scrive davvero (deve passare) e una serie di
+scritture scorrette (devono essere rifiutate). Non tocca il database vero.
+Gli servono lo strumento `firebase` e Java 21 o successivo: lo script lo
+cerca nel sistema e poi in `%LOCALAPPDATA%\ZeroUno-strumenti\jre-21`.
 
 `firebase.config.js` **non entra in git**: `.gitignore` lo tiene fuori, cosi'
 la chiave non finisce nello storico del repository pubblico. Chi clona il

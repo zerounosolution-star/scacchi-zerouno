@@ -8,47 +8,148 @@ rules_version = '2';
  *
  * Principio: chiunque sia autenticato (anche in forma anonima) puo'
  * vedere le stanze aperte e giocare, ma una partita puo' essere
- * modificata solo dalle due persone che la stanno giocando.
+ * modificata solo dalle due persone che la stanno giocando, e solo
+ * nei modi in cui il gioco la modifica davvero.
  *
- * Pubblicazione:  firebase deploy --only firestore:rules
+ * Dal 20 novembre 2026 le regole controllano anche COSA si scrive:
+ * - solo i campi previsti, del tipo giusto e di misura ragionevole;
+ * - chi ha creato la stanza, la data di creazione e il «privata» non si
+ *   riscrivono; il posto del nero lo prende chi entra, una volta sola;
+ * - una partita finita non si tocca piu';
+ * - una stanza nasce a proprio nome, in attesa, senza avversario gia'
+ *   assegnato e con una data di creazione vera.
+ *
+ * Prima di pubblicarle:   npm run regole     (le prova nell'emulatore)
+ * Pubblicazione:          firebase deploy --only firestore:rules --project scacchi-zerouno
+ *
+ * Se il gioco comincia a scrivere un campo nuovo, va aggiunto anche qui:
+ * tests/regole.test.mjs lo ricorda fallendo.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /artifacts/{appId}/public/data/chess_matches/{matchId} {
+    match /artifacts/scacchi-zerouno-world/public/data/chess_matches/{matchId} {
+
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      // Un testo non piu' lungo di max caratteri.
+      function isText(v, max) {
+        return v is string && v.size() <= max;
+      }
+
+      function isTextOrNull(v, max) {
+        return v == null || isText(v, max);
+      }
+
+      // Una casa della scacchiera ("e4"), oppure niente.
+      function isSquareOrNull(v) {
+        return v == null || (v is string && v.matches('^[a-h][1-8]$'));
+      }
+
+      // Una posizione scritta come la scrive il motore del gioco.
+      function isFen(v) {
+        return v is string
+          && v.size() <= 100
+          && v.matches('^[pnbrqkPNBRQK1-8]{1,8}(/[pnbrqkPNBRQK1-8]{1,8}){7} [wb] (-|[KQkq]{1,4}) (-|[a-h][36]) [0-9]{1,3} [0-9]{1,4}$');
+      }
+
+      // Il documento, cosi' come resterebbe dopo la scrittura: solo i campi
+      // previsti, del tipo giusto, di misura ragionevole.
+      function validMatch(d) {
+        return d.keys().hasOnly(['status', 'isPrivate', 'fen', 'pgn', 'lastFrom', 'lastTo',
+                                 'whiteUid', 'whiteName', 'blackUid', 'blackName',
+                                 'winnerTitle', 'winnerSubtitle', 'createdAt', 'updatedAt'])
+          && d.keys().hasAll(['status', 'fen', 'whiteUid', 'createdAt'])
+          && d.status in ['waiting', 'active', 'finished']
+          && isFen(d.fen)
+          && isText(d.whiteUid, 128)
+          && d.createdAt is int
+          && isTextOrNull(d.get('blackUid', null), 128)
+          && isTextOrNull(d.get('whiteName', null), 40)
+          && isTextOrNull(d.get('blackName', null), 40)
+          && isTextOrNull(d.get('pgn', null), 20000)
+          && isSquareOrNull(d.get('lastFrom', null))
+          && isSquareOrNull(d.get('lastTo', null))
+          && isTextOrNull(d.get('winnerTitle', null), 80)
+          && isTextOrNull(d.get('winnerSubtitle', null), 80)
+          && d.get('isPrivate', false) is bool
+          && d.get('updatedAt', 0) is int;
+      }
 
       // Chi ha creato la stanza o chi vi e' entrato come secondo giocatore.
       function isPlayer() {
-        return request.auth != null && (
+        return signedIn() && (
           resource.data.whiteUid == request.auth.uid ||
-          resource.data.blackUid == request.auth.uid
+          resource.data.get('blackUid', null) == request.auth.uid
         );
       }
 
-      // La stanza non ha ancora un secondo giocatore: chiunque puo' entrare.
-      function isJoiningOpenRoom() {
-        return request.auth != null
-          && resource.data.status == 'waiting'
-          && resource.data.blackUid == null
-          && request.resource.data.blackUid == request.auth.uid
-          && request.resource.data.whiteUid == resource.data.whiteUid;
+      // Cio' che dopo la creazione non cambia piu'.
+      function sameIdentity() {
+        return request.resource.data.whiteUid == resource.data.whiteUid
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.get('isPrivate', false) == resource.data.get('isPrivate', false);
       }
 
-      // Lettura: serve essere autenticati. Basta per vedere la lobby.
-      allow read: if request.auth != null;
+      // I campi che questa scrittura cambia davvero.
+      function changed() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
 
-      // Creazione: solo a proprio nome, e solo con i campi previsti.
-      allow create: if request.auth != null
+      // Chi entra in una stanza aperta: prende il posto del nero, e basta.
+      function joinsOpenRoom() {
+        return signedIn()
+          && resource.data.status == 'waiting'
+          && resource.data.get('blackUid', null) == null
+          && request.resource.data.blackUid == request.auth.uid
+          && request.resource.data.status == 'active'
+          && changed().hasOnly(['blackUid', 'blackName', 'status', 'updatedAt']);
+      }
+
+      // Uno dei due giocatori: muove, oppure chiude la partita.
+      // Il posto dell'avversario non si tocca, il nome dell'altro neppure,
+      // e una partita finita resta com'e'.
+      function playerUpdates() {
+        return isPlayer()
+          && resource.data.status != 'finished'
+          && request.resource.data.get('blackUid', null) == resource.data.get('blackUid', null)
+          && (request.resource.data.status == resource.data.status
+              || request.resource.data.status == 'finished')
+          && changed().hasOnly(['fen', 'pgn', 'lastFrom', 'lastTo', 'updatedAt', 'status',
+                                'winnerTitle', 'winnerSubtitle', 'whiteName', 'blackName'])
+          && (!changed().hasAny(['whiteName']) || resource.data.whiteUid == request.auth.uid)
+          && (!changed().hasAny(['blackName']) || resource.data.get('blackUid', null) == request.auth.uid);
+      }
+
+      // Lettura di una stanza: serve essere autenticati (ci si entra col codice).
+      allow get: if signedIn();
+
+      // Elenco per la sala: sempre con un limite, mai tutta la raccolta in un colpo.
+      allow list: if signedIn() && request.query.limit <= 50;
+
+      // Creazione: a proprio nome, in attesa, senza avversario gia' assegnato,
+      // con un codice ben fatto e una data di creazione vera.
+      allow create: if signedIn()
+        && matchId.matches('^[A-Z0-9]{4,8}$')
+        && validMatch(request.resource.data)
         && request.resource.data.whiteUid == request.auth.uid
-        && request.resource.data.status in ['waiting', 'active']
-        && request.resource.data.keys().hasAll(['whiteUid', 'status', 'fen', 'createdAt']);
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.get('blackUid', null) == null
+        && request.resource.data.createdAt > request.time.toMillis() - 86400000
+        && request.resource.data.createdAt < request.time.toMillis() + 86400000;
 
-      // Modifica: i due giocatori della partita, o chi entra in una stanza aperta.
-      // Il colore di chi ha creato la stanza non si puo' riscrivere.
-      allow update: if isPlayer() || isJoiningOpenRoom();
+      // Modifica: chi entra in una stanza aperta, o uno dei due giocatori.
+      allow update: if validMatch(request.resource.data)
+        && sameIdentity()
+        && (joinsOpenRoom() || playerUpdates());
 
-      // Cancellazione: solo chi ha creato la stanza, per ripulire a fine partita.
-      allow delete: if request.auth != null && resource.data.whiteUid == request.auth.uid;
+      // Cancellazione: solo chi ha creato la stanza, e solo se nessuno la
+      // sta giocando (in attesa, oppure finita).
+      allow delete: if signedIn()
+        && resource.data.whiteUid == request.auth.uid
+        && resource.data.status in ['waiting', 'finished'];
     }
 
     // Tutto il resto e' chiuso.

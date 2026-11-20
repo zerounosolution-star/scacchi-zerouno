@@ -398,7 +398,8 @@ l'ha scritto un'altra persona. Tre regole, tutte coperte da
 | Cambiare la soglia del tempo agli sgoccioli | `src/ui/panels.js`, `LOW_TIME_SECONDS` |
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
-| Cambiare i permessi del database | `firebase/firestore.rules` |
+| Cambiare i permessi del database | `firebase/firestore.rules`, poi `npm run regole` prima di pubblicarle |
+| Far scrivere al gioco un campo nuovo su Firestore | il codice **e** l'elenco dei campi nelle regole (`npm test` lo ricorda) |
 | Cambiare cosa compare nella sala online | `src/online/lobby.js` |
 | Cambiare la notazione accettata quando si scrive | `src/engine/notation.js` |
 | Cambiare quanto pesa un termine della valutazione | `src/engine/search.js`, costanti in cima |
@@ -432,10 +433,12 @@ l'ha scritto un'altra persona. Tre regole, tutte coperte da
 - Online ogni dispositivo tiene i suoi orologi: non sono sincronizzati, e
   il tempo scaduto non viene scritto sul documento. I due schermi possono
   differire di qualche secondo.
-- Le regole in `firebase/firestore.rules` non controllano tipo e lunghezza
-  dei campi, ne' che `whiteUid` e `blackUid` restino quelli: il sito si
-  difende da solo (vedi "I dati degli altri"), ma un giocatore scorretto
-  puo' ancora scrivere dati sporchi o pesanti nella sua partita.
+- Le regole in `firebase/firestore.rules` controllano chi scrive e che cosa
+  (campi, tipi, misure, giocatori che non si riscrivono, partita finita che
+  non si tocca). Non conoscono pero' gli scacchi: un giocatore scorretto puo'
+  ancora, al suo turno, scrivere una posizione che non nasce da una mossa
+  legale. E non mettono un freno al numero di stanze che uno puo' creare:
+  per quello serve App Check.
 - I documenti delle partite finite non vengono mai cancellati.
 - La mossa scritta accetta solo le lettere inglesi dei pezzi (K Q R B N).
   In italiano la R vorrebbe dire re mentre qui vuol dire torre: accettare
