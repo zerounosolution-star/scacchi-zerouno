@@ -162,18 +162,27 @@ su Firestore.
   veri è passata e sei tentativi scorretti sono stati rifiutati dal database
   vero. Nessun dato di prova è rimasto.
 
-Prove automatiche: da 58 del mattino a 83, più le 21 dell'emulatore.
+Prove automatiche: da 58 del mattino a 85, più le 21 dell'emulatore.
 
-## Pronto, in attesa del sì del titolare
+## Immagine per le condivisioni: approvata e online
 
-**Immagine per le condivisioni**, proposta E. Fatta da Grafica (1200 × 630,
-91 kB), promossa dal master-designer con due ritocchi già applicati, e dal
-Revisore Social. È in `Zerouno WP/anteprime/2026-11-20-scacchi-og/`. Va
-collegata alla pagina insieme al titolo e alla descrizione del Revisore:
+Proposta E, commit `68f3490`. Fatta da Grafica (1200 × 630, 91 kB), promossa
+dal master-designer con due ritocchi applicati e dal Revisore Social, vista e
+approvata dal titolare. Sta in `assets/og-scacchi-zerouno.jpg`. Insieme sono
+cambiati il titolo e la descrizione dell'anteprima, scritti dal Revisore:
 - titolo: «Scacchi ZeroUno: gioca contro l'AI, in due o online»
 - descrizione: «Dal telefono o dal computer, senza registrarti. Un progetto di
   ZeroUno Solution.»
-Non è online: è un'immagine pubblica nuova, la vede prima il titolare.
+
+Verificato dopo la pubblicazione: la pagina vera dichiara l'immagine nuova con
+le misure giuste, il file risponde ed è identico byte per byte a quello di
+Grafica, il gioco funziona. Due prove automatiche tengono fermo il tutto
+(da 83 a 85).
+
+**Non verificato:** come esce davvero dentro WhatsApp, Facebook e Telegram. Lo
+si vede mandando il link a qualcuno. I messaggi già mandati tengono
+l'anteprima vecchia; se anche un link nuovo mostra ancora l'icona, è la
+memoria dell'app: basta aggiungere `?v=2` in fondo all'indirizzo.
 
 ## Cose messe sul computer oggi
 
@@ -191,8 +200,6 @@ Non è online: è un'immagine pubblica nuova, la vede prima il titolare.
 - **App Check** di Firebase (proposta C) e **pulizia automatica delle partite
   vecchie** (proposta D): si accendono dalla console di Firebase, cioè
   dall'account del titolare.
-- Non visto: l'anteprima vera del link dentro WhatsApp, Facebook e Telegram.
-  Si può guardare solo dopo aver collegato l'immagine.
 - Dal Revisore, per un altro giro: a chi avvia la partita in due il gioco dice
   «muovi col mouse!», che sul telefono è sbagliato; il punteggio accanto agli
   sfidanti AI non l'ha misurato nessuno; il pallino verde sul bottone pulsa
