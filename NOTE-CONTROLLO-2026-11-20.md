@@ -315,3 +315,21 @@ collegamenti. Corretto anche il README. Un test tiene ferma la riga.
   Finché non risponde, il Developer non mette il gioco nella pagina del sito.
 - **Rivincita:** dopo una partita a distanza, «Nuova partita» porta a uno
   sfidante AI. Per rigiocare con l'amico serve un invito nuovo.
+
+## Online la sera
+
+Pubblicato il 20 novembre alle 19:10 (commit `fcd80eb`), dopo il «Sì,
+pubblica» del titolare. Controllato sul sito vero:
+
+- quindici file cambiati confrontati con quelli sul computer: identici, byte
+  per byte. Il service worker è alla v26;
+- chi aveva la versione di prima vede la fascia «Nuova versione disponibile»,
+  preme «Ricarica» e ha quella nuova;
+- una partita a due fra due giocatori anonimi diversi, tutti e due sulla
+  versione nuova: invito, ingresso dal link, mosse nei due sensi, resa.
+  Nessun errore nelle due pagine. Stanza di prova cancellata;
+- la partita in due sullo stesso schermo: la scacchiera si gira dopo la mossa
+  e torna indietro con «Annulla».
+
+Resta da guardare con un telefono vero: il bottone «Manda il link» deve
+aprire WhatsApp e le altre app.
