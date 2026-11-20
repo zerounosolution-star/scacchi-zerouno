@@ -29,20 +29,24 @@
     <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="src/config/tailwind.config.js"></script>
-
     <!-- Caratteri: Cormorant Garamond (titoli), Inter (interfaccia), JetBrains Mono (notazione e orologi) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Tone.js: feedback sonoro -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Tone.js: feedback sonoro. Copia tenuta in casa, identica all'originale (vedi assets/vendor) -->
+    <script src="assets/vendor/tone-14.8.49.js"></script>
 
-    <!-- Fogli di stile del progetto -->
+    <!--
+        Fogli di stile del progetto.
+        L'ORDINE CONTA: prima styles.css, poi tailwind.css. Quando Tailwind
+        arrivava dal suo sito scriveva i suoi stili in fondo alla testa della
+        pagina, quindi dopo styles.css: a parita' di peso vinceva lui. Il
+        foglio costruito tiene lo stesso posto. tailwind.css non si modifica
+        a mano: nasce da `npm run css`.
+    -->
     <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="src/css/tailwind.css">
 </head>
 <body class="min-h-screen flex flex-col selection:bg-bronze-400/30">
 
@@ -190,7 +194,7 @@
                             <div class="w-11 h-11 rounded-full border-2 border-bronze-400 border-t-transparent animate-spin mb-4" aria-hidden="true"></div>
                             <h3 class="zu-display mb-2">Ricerca avversario</h3>
                             <p id="matchmakingSubtext" class="zu-small text-ivory-200 max-w-xs mb-4">
-                                Connessione alla sala globale in corso. Puoi condividere il codice stanza o iniziare subito contro uno sfidante internazionale online.
+                                In attesa che entri qualcuno. Puoi mandare il codice stanza a un amico, o giocare subito contro uno sfidante AI.
                             </p>
                             <div class="flex items-center gap-2 bg-anthracite-800 border border-bronze-500/40 rounded-lg px-3.5 py-2 mb-4">
                                 <span class="zu-micro text-ivory-200">Codice stanza</span>
@@ -199,7 +203,7 @@
                             </div>
                             <div class="flex flex-wrap items-center justify-center gap-2">
                                 <button id="instantWorldOpponentBtn" type="button" class="zu-btn zu-btn--accent zu-btn--sm">
-                                    Gioca con uno sfidante internazionale
+                                    Gioca subito contro uno sfidante AI
                                 </button>
                                 <button id="cancelMatchmakingBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
                                     Annulla
@@ -384,10 +388,16 @@
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <button id="findWorldMatchBtn" type="button" class="zu-btn zu-btn--primary">
+                            <button id="findWorldMatchBtn" type="button" class="zu-btn zu-btn--primary" aria-describedby="findWorldMatchNote">
                                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
                                 <span>Gioca nel mondo ora</span>
                             </button>
+                            <!--
+                                La condizione sta accanto alla promessa, prima che la persona
+                                tocchi il bottone. Sul telefono resta subito sotto «Gioca nel
+                                mondo ora»; con due colonne scende sotto i due bottoni.
+                            -->
+                            <p id="findWorldMatchNote" class="zu-micro zu-muted sm:order-last sm:col-span-2">Se nessuno è in attesa, giochi contro uno sfidante AI.</p>
                             <button id="createPrivateRoomBtn" type="button" class="zu-btn zu-btn--outline">
                                 Crea una stanza privata
                             </button>

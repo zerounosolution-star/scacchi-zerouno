@@ -403,9 +403,15 @@ l'ha scritto un'altra persona. Tre regole, tutte coperte da
 | Cambiare la notazione accettata quando si scrive | `src/engine/notation.js` |
 | Cambiare quanto pesa un termine della valutazione | `src/engine/search.js`, costanti in cima |
 | Aggiungere un modulo | `src/...` **e** la lista `APP_SHELL` in `sw.js` |
+| Aggiungere una classe Tailwind nella pagina o in un modulo | scriverla, poi `npm run css` (ricostruisce `src/css/tailwind.css`) |
+| Cambiare colori o caratteri del tema Tailwind | `tailwind/tailwind.config.js`, poi `npm run css` |
+| Aggiornare Tone.js | sostituire il file in `assets/vendor/` e l'impronta in `tests/pagina.test.mjs` |
 
 ## Limiti noti
 
+- Restano tre cose prese da fuori a ogni visita: i caratteri (Google Fonts), il
+  programma di Firebase per il gioco online (dal sito di Google, versione
+  fissata) e i video (YouTube). Tailwind e Tone.js invece stanno nel progetto.
 - `sw.js` non ha versionamento automatico: dopo una modifica ai file va
   alzato `CACHE_VERSION` a mano. Che tutti i moduli siano nella lista lo
   controlla un test, la versione no.

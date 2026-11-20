@@ -2,7 +2,8 @@
  * SISTEMA SONORO (TONE.JS)
  *
  * Feedback sonoro discreto per mosse, catture, scacco e fine partita.
- * Tone.js e' caricato da CDN in index.html e vive su `window.Tone`.
+ * Tone.js e' una copia tenuta in casa (assets/vendor), caricata da
+ * index.html, e vive su `window.Tone`.
  */
 
 import { state } from './state.js';

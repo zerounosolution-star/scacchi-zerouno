@@ -132,7 +132,7 @@ function joinRoomFromInviteLink() {
     // Il codice viene dall'indirizzo: se non ha la forma di un codice
     // stanza non si usa e non si ripete a schermo.
     if (!isValidRoomCode(code)) {
-        showToast("Il link d'invito non è valido");
+        showToast("Link d'invito non valido: chiedine un altro a chi te l'ha mandato.");
         return;
     }
 
@@ -518,8 +518,15 @@ export async function syncOnlineMove(moveObj) {
         });
     } catch (e) {
         console.error("Errore invio mossa:", e);
-        // Senza avviso chi gioca crede che la mossa sia arrivata
-        showToast('Mossa non inviata all\'avversario: controlla la connessione');
+        /*
+         * Senza avviso chi gioca crede che la mossa sia arrivata.
+         * Qui non si arriva quando manca la rete: in quel caso Firestore
+         * tiene la mossa da parte e la manda al ritorno della linea, senza
+         * errore. Si arriva quando il server la rifiuta: stanza cancellata,
+         * partita gia' chiusa, limite del giorno. Per questo l'avviso non
+         * parla di connessione.
+         */
+        showToast('Mossa non arrivata all\'avversario: la partita si è interrotta.');
     }
 }
 

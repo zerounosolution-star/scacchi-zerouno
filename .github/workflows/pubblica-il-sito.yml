@@ -19,6 +19,9 @@
 # Gli altri valori qui sotto (progetto, dominio, identificativi) non sono
 # segreti: identificano il progetto Firebase e sono visibili in ogni pagina
 # del gioco. Il segreto vero e' solo la chiave.
+#
+# Dal 20 novembre 2026 il flusso ricostruisce anche il foglio di stile di
+# Tailwind (src/css/tailwind.css) prima dei test: vedi il passo piu' sotto.
 
 name: Pubblica il sito
 
@@ -73,6 +76,25 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '20'
+
+      # Il foglio di Tailwind si ricostruisce qui, dalla pagina e dai moduli
+      # cosi' come sono: se qualcuno ha aggiunto una classe senza rilanciare
+      # `npm run css`, il sito pubblicato ha comunque i suoi stili.
+      # Lo script costruisce in un file a parte e sostituisce quello vecchio
+      # solo se e' riuscito bene. Se la costruzione non riesce (rete, registro
+      # npm) il passo fallisce senza fermare il flusso: decidono i test qui
+      # sotto. Se il foglio nel repository e' aggiornato si pubblica con
+      # quello; se e' indietro i test falliscono e non si pubblica niente.
+      - name: Ricostruisci il foglio di Tailwind
+        continue-on-error: true
+        run: |
+          npm run css
+          if git diff --quiet -- src/css/tailwind.css tailwind/classi.json; then
+            echo "Foglio di Tailwind: uguale a quello nel repository." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Foglio di Tailwind: quello nel repository era indietro, pubblicato quello ricostruito. Rilanciare «npm run css» e committare." >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Il foglio di Tailwind nel repository era indietro: pubblicato quello ricostruito. Rilanciare «npm run css» e committare."
+          fi
 
       - name: I test devono passare
         run: npm test

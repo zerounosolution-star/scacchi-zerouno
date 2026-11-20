@@ -29,7 +29,7 @@ import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatch
  */
 function isWatchingOnly() {
     if (state.gameMode === 'online' && state.spectator) {
-        showToast('Stai solo guardando questa partita');
+        showToast('Stai solo guardando: questo tasto è per chi gioca.');
         return true;
     }
     return false;

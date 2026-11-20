@@ -92,14 +92,20 @@ export function startWorldChallengerMatch(challengerObj) {
     state.boardOrientation = 'w';
     state.aiDifficulty = chosen.level || 2;
 
+    /*
+     * Lo sfidante internazionale e' un avversario AI, e lo si dice ovunque
+     * compare: nell'avviso, nella scheda e nella pillola. «Connesso con…»
+     * faceva credere che dall'altra parte ci fosse una persona. «AI» sta
+     * subito dopo il nome: se sul telefono la riga si taglia, la parola resta.
+     */
     const humanLabel = `${getPlayerNickname()} (Tu)`;
-    const oppLabel = `${chosen.name} ${chosen.country} (${chosen.elo})`;
+    const oppLabel = `${chosen.name} · AI · ${chosen.country} (${chosen.elo})`;
 
     updatePlayerCardsUI(humanLabel, oppLabel);
-    document.getElementById('gameModePill').textContent = `Mondiale vs ${chosen.country}`;
+    document.getElementById('gameModePill').textContent = `Sfidante AI · ${chosen.country}`;
     startMatchTimers();
     renderBoard();
-    showToast(`Connesso con ${chosen.name} (${chosen.country}). Tocca a te col Bianco!`, 'gold');
+    showToast(`Giochi contro ${chosen.name}, sfidante AI. Tocca a te col Bianco!`, 'gold');
 }
 
 /** Nomi dei tre livelli dell'AI, usati nelle schede dei giocatori. */

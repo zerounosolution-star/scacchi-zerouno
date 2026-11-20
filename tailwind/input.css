@@ -1,0 +1,7 @@
+/*
+ * Da qui nasce src/css/tailwind.css (npm run css).
+ * Non si modifica a mano il file costruito: si rilancia la costruzione.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

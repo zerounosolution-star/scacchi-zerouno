@@ -42,15 +42,16 @@ test('service worker: ci sono anche pagina, manifesto e icone', () => {
     }
 });
 
-test('service worker: i file di terze parti si scaricano all\'installazione', () => {
+test('service worker: Tailwind e Tone.js stanno nella dispensa come file di casa', () => {
     /*
-     * Alla prima visita il service worker non controlla ancora la pagina:
-     * Tailwind e Tone.js non passerebbero da lui e senza rete la pagina
-     * resterebbe senza impaginazione.
+     * Fino al 20 novembre 2026 arrivavano da siti esterni e il service
+     * worker li metteva da parte a modo suo. Ora sono file del progetto:
+     * senza di loro nella lista la pagina, senza rete, perde
+     * l'impaginazione e i suoni.
      */
-    assert.match(serviceWorker, /CDN_SHELL\s*=/);
-    assert.ok(serviceWorker.includes('cdn.tailwindcss.com'), 'Tailwind non e\' fra i file di terze parti');
-    assert.ok(serviceWorker.includes('cdnjs.cloudflare.com'), 'Tone.js non e\' fra i file di terze parti');
+    assert.ok(serviceWorker.includes("'./src/css/tailwind.css'"), 'manca il foglio di Tailwind costruito');
+    assert.ok(serviceWorker.includes("'./assets/vendor/tone-14.8.49.js'"), 'manca la copia di Tone.js');
+    assert.ok(!/cdn\.tailwindcss\.com|cdnjs\.cloudflare\.com/.test(serviceWorker), 'sw.js nomina ancora un sito esterno');
 });
 
 test('service worker: la versione della cache e\' dichiarata', () => {

@@ -4,7 +4,9 @@ Scacchiera web del canale [ZeroUno Solution](https://youtube.com/@zerounosolutio
 Si gioca contro l'intelligenza artificiale, in due sullo stesso dispositivo
 oppure, quando Firebase e' configurato, contro altre persone in rete.
 
-Nessuna libreria da installare: moduli ES nativi, Tailwind e Tone.js da CDN.
+Nessuna libreria da installare: moduli ES nativi, e i due programmi di terze
+parti (Tailwind per l'impaginazione, Tone.js per i suoni) stanno dentro il
+progetto, non arrivano da siti esterni.
 Il motore scacchistico e' scritto da zero in JavaScript puro.
 
 ---
@@ -61,15 +63,19 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
 ├── package.json                Script di avvio e di test
 ├── firebase.json               Hosting e percorso delle regole Firestore
 ├── assets/icons/               Icone dell'applicazione
+├── assets/vendor/              Tone.js, copia identica all'originale, con la sua licenza
+├── tailwind/
+│   ├── tailwind.config.js      Tema (colori avorio, antracite, bronzo)
+│   └── input.css               Da qui nasce src/css/tailwind.css (npm run css)
 ├── firebase/
 │   ├── firestore.rules         Regole di sicurezza del database
 │   └── firestore.indexes.json  Indici Firestore
 ├── src/
 │   ├── main.js                 Punto di ingresso: collega i controlli e avvia
-│   ├── config/
-│   │   ├── app.config.js       Costanti e configurazione Firebase
-│   │   └── tailwind.config.js  Tema (colori avorio, antracite, bronzo)
-│   ├── css/styles.css          Stili della scacchiera e dei pezzi
+│   ├── config/app.config.js    Costanti e configurazione Firebase
+│   ├── css/
+│   │   ├── styles.css          Stili della scacchiera e dei pezzi
+│   │   └── tailwind.css        Foglio di Tailwind COSTRUITO: non si modifica a mano
 │   ├── core/
 │   │   ├── state.js            Stato condiviso dell'applicazione
 │   │   ├── sound.js            Feedback sonoro
@@ -293,10 +299,35 @@ installare sul telefono.
 **Dopo ogni modifica ai file, alzare `CACHE_VERSION` in `sw.js`**, altrimenti
 chi ha gia' visitato il sito continua a vedere la versione vecchia.
 
-Tailwind e Tone.js arrivano da una CDN. Alla prima visita il service worker
-non controlla ancora la pagina, quindi quelle due richieste non passerebbero
-da lui: vengono scaricate durante l'installazione (`CDN_SHELL` in `sw.js`).
-Senza il foglio di stile di Tailwind la pagina perderebbe l'impaginazione.
+Tailwind e Tone.js sono file del progetto come gli altri e stanno nella stessa
+lista (`APP_SHELL` in `sw.js`): senza rete il gioco ha comunque impaginazione
+e suoni.
+
+## Tailwind e Tone.js, tenuti in casa
+
+Fino al 20 novembre 2026 la pagina li caricava da due siti esterni a ogni
+visita. Ora:
+
+- **Tone.js** e' in [`assets/vendor/`](assets/vendor/), versione 14.8.49,
+  identico all'originale: un test confronta la sua impronta con quella
+  pubblicata da cdnjs. Per aggiornarlo si sostituisce il file e si aggiorna
+  l'impronta nel test, sapendo di farlo.
+- **Tailwind** non gira piu' nel browser: gli stili si costruiscono una volta
+  e finiscono in [`src/css/tailwind.css`](src/css/tailwind.css).
+
+```bash
+npm run css
+```
+
+Va rilanciato quando in `index.html` o nei file di `src/` compare una classe
+Tailwind che prima non c'era (scarica Tailwind 3.4.17 al momento, non installa
+niente nel progetto). Se ci si dimentica, un test segnala le classi rimaste
+senza regola, e la pubblicazione automatica ricostruisce comunque il foglio
+prima di mettere online il sito.
+
+Nella pagina `tailwind.css` e' collegato **dopo** `styles.css`: e' lo stesso
+ordine che c'era quando Tailwind scriveva i suoi stili in fondo alla testa
+della pagina. Invertirli cambia chi vince a parita' di peso.
 
 Il service worker funziona solo su HTTPS o su localhost. Aprendo i file con
 un doppio click non si attiva.

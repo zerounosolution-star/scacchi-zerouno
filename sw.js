@@ -6,19 +6,25 @@
  * dopo la prima visita non devono piu' scaricare nulla.
  *
  * Strategie:
- * - navigazione (la pagina): prima la rete, la copia in cache se la
- *   rete manca. Cosi' una versione nuova arriva subito quando c'e'
- *   connessione.
- * - file dell'applicazione: si serve la copia in cache e intanto si
- *   scarica l'aggiornamento, che vale dal caricamento successivo.
- * - CDN (Tailwind, Tone.js, caratteri): si tiene la copia scaricata.
+ * - pagina e file del gioco: si servono dalla dispensa della versione
+ *   corrente, tutti della stessa generazione. La versione nuova arriva
+ *   quando il service worker nuovo si installa, e una fascia propone
+ *   la ricarica.
+ * - tutto il resto (caratteri, anteprime dei video): rete, con copia
+ *   in dispensa per l'uso senza rete.
+ * - partite online, statistiche e configurazione con la chiave: sempre
+ *   dalla rete, mai dalla dispensa.
+ *
+ * Dal 20 novembre 2026 Tailwind e Tone.js non arrivano piu' da siti
+ * esterni: sono file del progetto come gli altri, e stanno nella lista
+ * qui sotto.
  *
  * ATTENZIONE: dopo aver modificato i file del progetto, alzare
  * CACHE_VERSION, altrimenti i visitatori abituali continuano a vedere
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v23';
+const CACHE_VERSION = 'v24';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -29,10 +35,11 @@ const APP_SHELL = [
     './assets/icons/favicon.svg',
     './assets/icons/icon-192.png',
     './assets/icons/icon-512.png',
+    './assets/vendor/tone-14.8.49.js',
     './src/main.js',
     './src/config/app.config.js',
-    './src/config/tailwind.config.js',
     './src/css/styles.css',
+    './src/css/tailwind.css',
     './src/core/state.js',
     './src/core/sound.js',
     './src/core/utils.js',
@@ -64,40 +71,11 @@ const APP_SHELL = [
     './src/online/sync.js'
 ];
 
-/**
- * File di terze parti indispensabili all'aspetto della pagina.
- *
- * Alla prima visita il service worker non controlla ancora la pagina:
- * queste richieste partono prima di lui e non finiscono in cache. Senza
- * il foglio di stile di Tailwind la pagina perde tutta l'impaginazione,
- * quindi conviene scaricarli durante l'installazione.
- */
-const CDN_SHELL = [
-    'https://cdn.tailwindcss.com/',
-    'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js'
-];
-
-/**
- * Mette in cache un file servito da un altro dominio.
- *
- * La risposta e' opaca (status 0) perche' quei domini non concedono
- * CORS: cache.add la rifiuterebbe, cache.put la accetta.
- */
-async function cacheCrossOrigin(cache, url) {
-    try {
-        const response = await fetch(url, { mode: 'no-cors', cache: 'reload' });
-        if (response) await cache.put(url, response);
-    } catch (err) {
-        // Senza rete non si puo' fare nulla: si riprova alla prossima installazione
-    }
-}
-
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
         const cache = await caches.open(CACHE_NAME);
         // addAll fallisce in blocco se un file manca: meglio uno per uno
         await Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => null)));
-        await Promise.all(CDN_SHELL.map((url) => cacheCrossOrigin(cache, url)));
         await self.skipWaiting();
     })());
 });
