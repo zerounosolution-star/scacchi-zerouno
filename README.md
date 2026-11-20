@@ -34,7 +34,7 @@ npx serve .
 npm test
 ```
 
-83 prove che girano fuori dal browser, senza dipendenze.
+85 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,

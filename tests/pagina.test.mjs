@@ -106,3 +106,64 @@ test('pagina: le classi Tailwind riconoscibili hanno la loro regola nel foglio c
     const mancanti = sicure.filter((c) => !foglio.includes(`.${selettore(c)}`));
     assert.deepEqual(mancanti, [], `classi senza regola in tailwind.css (rilancia "npm run css"): ${mancanti.join(' ')}`);
 });
+
+/* ------------------------------------------------------------------ */
+/* L'anteprima del link (quella che si vede su WhatsApp)                */
+/* ------------------------------------------------------------------ */
+
+/** Il valore di un meta della pagina, per proprieta' (og:...) o per nome (twitter:...). */
+function meta(chiave) {
+    const trovato = pagina.match(new RegExp(`<meta (?:property|name)="${chiave}" content="([^"]*)">`));
+    return trovato ? trovato[1] : null;
+}
+
+/** Larghezza e altezza scritte dentro un file JPEG. */
+function misureJpeg(dati) {
+    let i = 2;
+    while (i < dati.length) {
+        if (dati[i] !== 0xFF) { i++; continue; }
+        const segno = dati[i + 1];
+        if (segno >= 0xC0 && segno <= 0xCF && ![0xC4, 0xC8, 0xCC].includes(segno)) {
+            return { altezza: dati.readUInt16BE(i + 5), larghezza: dati.readUInt16BE(i + 7) };
+        }
+        i += 2 + dati.readUInt16BE(i + 2);
+    }
+    return null;
+}
+
+test('anteprima: l\'immagine del link esiste, e\' quella dichiarata e pesa poco', () => {
+    /*
+     * Se il file viene spostato o rifatto con altre misure, l'anteprima
+     * su WhatsApp sparisce o si deforma, e nessuno se ne accorge finche'
+     * non manda il link a qualcuno.
+     */
+    const SITO = 'https://zerounosolution-star.github.io/scacchi-zerouno/';
+    const indirizzo = meta('og:image');
+    assert.ok(indirizzo && indirizzo.startsWith(SITO), `og:image deve stare sul sito del gioco: ${indirizzo}`);
+    assert.equal(meta('twitter:image'), indirizzo, 'twitter:image e og:image devono essere la stessa immagine');
+    assert.equal(meta('twitter:card'), 'summary_large_image');
+
+    const file = leggi(indirizzo.slice(SITO.length));
+    assert.ok(file[0] === 0xFF && file[1] === 0xD8, 'il file non e\' un JPEG');
+    assert.equal(meta('og:image:type'), 'image/jpeg');
+    assert.ok(file.length < 300 * 1024, `immagine troppo pesante per WhatsApp: ${file.length} byte`);
+
+    const misure = misureJpeg(file);
+    assert.ok(misure, 'misure non trovate nel file');
+    assert.equal(String(misure.larghezza), meta('og:image:width'), 'larghezza dichiarata diversa da quella vera');
+    assert.equal(String(misure.altezza), meta('og:image:height'), 'altezza dichiarata diversa da quella vera');
+    assert.deepEqual(misure, { altezza: 630, larghezza: 1200 });
+});
+
+test('anteprima: titolo e descrizione uguali ovunque, e della lunghezza giusta', () => {
+    const titolo = meta('og:title');
+    const descrizione = meta('og:description');
+    assert.ok(titolo && descrizione, 'titolo o descrizione dell\'anteprima mancanti');
+    assert.equal(meta('twitter:title'), titolo);
+    assert.equal(meta('twitter:description'), descrizione);
+    assert.equal(meta('twitter:image:alt'), meta('og:image:alt'));
+    assert.ok(meta('og:image:alt'), 'manca la descrizione dell\'immagine per chi non la vede');
+    // WhatsApp taglia: il titolo su due righe, la descrizione dopo circa 80 caratteri
+    assert.ok(titolo.length <= 60, `titolo lungo ${titolo.length} caratteri`);
+    assert.ok(descrizione.length <= 80, `descrizione lunga ${descrizione.length} caratteri`);
+});
