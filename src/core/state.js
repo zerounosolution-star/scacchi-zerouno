@@ -80,6 +80,11 @@ export const state = {
     auth: null,
     currentUser: null,
     currentMatchId: null,
+    /**
+     * Vero quando si e' entrati in una stanza che aveva gia' due
+     * giocatori: si guarda la partita, non si muove niente.
+     */
+    spectator: false,
     activeMatchUnsubscribe: null,
     lobbyUnsubscribe: null,
     availableWaitingRooms: []

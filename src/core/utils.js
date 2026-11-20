@@ -7,12 +7,31 @@
 
 import { chess, state } from './state.js';
 
+/**
+ * Notifica a comparsa.
+ *
+ * Il messaggio e' SEMPRE testo, mai HTML: dentro ci finiscono il nome
+ * dell'avversario e il codice letto dal link d'invito, cioe' parole
+ * scritte da altri. Scritto come HTML, un nome fatto apposta
+ * eseguirebbe codice nella pagina di chi lo legge.
+ *
+ * @param {string} message
+ * @param {'info'|'gold'} [type]
+ */
 export function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
+
     const toast = document.createElement('div');
     toast.className = 'zu-toast';
     toast.dataset.tone = type;
-    toast.innerHTML = `<span class="zu-toast-dot"></span><span>${message}</span>`;
+
+    const dot = document.createElement('span');
+    dot.className = 'zu-toast-dot';
+    const text = document.createElement('span');
+    text.textContent = String(message);
+    toast.append(dot, text);
+
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
@@ -78,6 +97,8 @@ export function savePlayerNickname(name) {
 
 export function canHumanControlCurrentTurn() {
     if (state.matchEnded) return false;
+    // Chi guarda una partita altrui non muove i pezzi di nessuno
+    if (state.gameMode === 'online' && state.spectator) return false;
     const currentTurn = chess.turn();
     if (state.gameMode === 'local') return true;
     return currentTurn === state.playerColor;

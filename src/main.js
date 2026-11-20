@@ -23,6 +23,18 @@ import { pickRandomZeroUnoVideo, loadZeroUnoVideoInModal, triggerEndOfGame, clos
 import { startNewAiGame, startNewLocalGame, startWorldChallengerMatch, resumeSavedMatch } from './game/modes.js';
 import { initFirebase, findOrCreateWorldMatch, createOnlineRoom, joinOnlineMatchById, cleanupActiveOnlineMatch, finishOnlineMatch } from './online/firestore.js';
 
+/**
+ * Chi guarda una partita altrui non puo' ne' arrendersi ne' proporre
+ * la patta: non e' la sua partita. Lo dice e si ferma.
+ */
+function isWatchingOnly() {
+    if (state.gameMode === 'online' && state.spectator) {
+        showToast('Stai solo guardando questa partita');
+        return true;
+    }
+    return false;
+}
+
 export function setupEventListeners() {
     // Cambio Tema Scacchiera
     document.getElementById('boardThemeSelect').addEventListener('change', (e) => {
@@ -112,6 +124,7 @@ export function setupEventListeners() {
 
     // Pulsante Patta
     document.getElementById('drawGameBtn').addEventListener('click', async () => {
+        if (isWatchingOnly()) return;
         if (state.matchEnded) {
             triggerEndOfGame('Partita Patta', 'Fine Partita');
             return;
@@ -124,6 +137,7 @@ export function setupEventListeners() {
 
     // Pulsante Abbandona / Resa (Attiva subito il video di fine partita ZeroUno Solution)
     document.getElementById('resignGameBtn').addEventListener('click', async () => {
+        if (isWatchingOnly()) return;
         const winnerColor = state.playerColor === 'w' ? 'Nero' : 'Bianco';
         const title = `Vittoria del ${winnerColor} per Abbandono`;
         const subtitle = 'Partita conclusa per resa';

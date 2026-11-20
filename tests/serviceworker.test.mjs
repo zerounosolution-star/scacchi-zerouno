@@ -58,3 +58,78 @@ test('service worker: la versione della cache e\' dichiarata', () => {
     assert.ok(match, 'CACHE_VERSION non trovata');
     assert.match(match[1], /^v\d+$/, `versione fuori formato: ${match[1]}`);
 });
+
+/* ------------------------------------------------------------------ */
+/* Il service worker messo in moto davvero, con un browser finto        */
+/* ------------------------------------------------------------------ */
+
+import vm from 'node:vm';
+import { existsSync } from 'node:fs';
+
+const ORIGINE = 'https://sito.test';
+
+/**
+ * Esegue sw.js dentro un ambiente che imita quello del browser e
+ * restituisce gli ascoltatori che ha registrato e la lista dei file.
+ */
+function avviaServiceWorker() {
+    const ascolti = {};
+    const dispensa = { match: async () => new Response('dalla dispensa'), put: async () => {}, add: async () => {} };
+    const contesto = vm.createContext({
+        self: {
+            addEventListener: (tipo, fn) => { ascolti[tipo] = fn; },
+            location: { origin: ORIGINE },
+            skipWaiting: async () => {},
+            clients: { claim: async () => {} }
+        },
+        caches: { open: async () => dispensa, keys: async () => [], delete: async () => true },
+        fetch: async () => new Response('dalla rete'),
+        URL, Response, Promise, console
+    });
+    vm.runInContext(`${serviceWorker}\n;globalThis.__APP_SHELL = APP_SHELL;`, contesto);
+    // Copia: la lista nasce in un altro ambiente e il confronto stretto la rifiuterebbe
+    return { ascolti, appShell: Array.from(contesto.__APP_SHELL) };
+}
+
+/** Manda una richiesta al service worker e dice se l'ha presa in carico lui. */
+function presaInCarico(ascolti, url, extra = {}) {
+    let risposto = false;
+    ascolti.fetch({
+        request: { method: 'GET', mode: 'cors', url, ...extra },
+        respondWith: (promessa) => { risposto = true; Promise.resolve(promessa).catch(() => {}); }
+    });
+    return risposto;
+}
+
+test('service worker: ogni file della dispensa esiste davvero', () => {
+    /*
+     * L'installazione salta in silenzio i file che non trova: un nome
+     * scritto male non da' errore, lascia solo il gioco a meta' senza rete.
+     */
+    const { appShell } = avviaServiceWorker();
+    assert.ok(appShell.length > 20, 'lista della dispensa vuota: il test non sta guardando niente');
+
+    const mancanti = appShell
+        .filter((voce) => voce !== './')
+        .filter((voce) => !existsSync(join(radice, voce)));
+    assert.deepEqual(mancanti, [], `in sw.js ma non sul disco: ${mancanti.join(', ')}`);
+});
+
+test('service worker: la configurazione con la chiave passa sempre dalla rete', () => {
+    const { ascolti } = avviaServiceWorker();
+
+    // Non la prende in carico: la richiesta va alla rete, e non finisce in dispensa
+    assert.equal(presaInCarico(ascolti, `${ORIGINE}/scacchi-zerouno/firebase.config.js`), false);
+    assert.equal(presaInCarico(ascolti, `${ORIGINE}/firebase.config.js`), false);
+
+    // I file del gioco invece li serve lui
+    assert.equal(presaInCarico(ascolti, `${ORIGINE}/scacchi-zerouno/src/main.js`), true);
+    assert.equal(presaInCarico(ascolti, `${ORIGINE}/scacchi-zerouno/`, { mode: 'navigate' }), true);
+
+    // Un file con lo stesso nome su un altro sito non e' la nostra configurazione
+    assert.equal(presaInCarico(ascolti, 'https://altro.test/firebase.config.js'), true);
+
+    // Come prima: le partite online e le scritture non passano dalla dispensa
+    assert.equal(presaInCarico(ascolti, 'https://firestore.googleapis.com/v1/x'), false);
+    assert.equal(presaInCarico(ascolti, `${ORIGINE}/scacchi-zerouno/src/main.js`, { method: 'POST' }), false);
+});

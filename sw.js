@@ -18,7 +18,7 @@
  * la versione vecchia fino alla scadenza della cache del browser.
  */
 
-const CACHE_VERSION = 'v22';
+const CACHE_VERSION = 'v23';
 const CACHE_NAME = `scacchi-zerouno-${CACHE_VERSION}`;
 
 /** File indispensabili per giocare senza rete. */
@@ -59,7 +59,9 @@ const APP_SHELL = [
     './src/ui/panels.js',
     './src/ui/gameover.js',
     './src/game/modes.js',
-    './src/online/firestore.js'
+    './src/online/firestore.js',
+    './src/online/lobby.js',
+    './src/online/sync.js'
 ];
 
 /**
@@ -125,6 +127,17 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (url.hostname.endsWith('googleapis.com') || url.hostname.endsWith('firebaseio.com')) {
+        return;
+    }
+
+    /*
+     * La configurazione Firebase (con la chiave) non entra in dispensa:
+     * passa sempre dalla rete. Se la chiave viene cambiata, chi torna sul
+     * sito deve ricevere quella nuova subito, non restare con la vecchia
+     * fino alla versione successiva. Senza rete il file non arriva e il
+     * gioco parte in Modalita Locale, che e' la verita'.
+     */
+    if (url.origin === self.location.origin && url.pathname.endsWith('/firebase.config.js')) {
         return;
     }
 

@@ -32,7 +32,7 @@ npx serve .
 npm test
 ```
 
-53 prove che girano fuori dal browser, senza dipendenze.
+75 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
@@ -94,13 +94,17 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
 │   │   ├── panels.js           Turno, notazione, catture, orologi
 │   │   └── gameover.js         Fine partita e video del canale
 │   ├── game/modes.js           Avvio delle modalita' di gioco
-│   └── online/firestore.js     Multiplayer in tempo reale
+│   └── online/
+│       ├── firestore.js        Multiplayer in tempo reale
+│       ├── lobby.js            Quali stanze si vedono nella sala (puro, testabile)
+│       └── sync.js             La mossa dell'avversario dalla posizione (puro, testabile)
 └── tests/
     ├── engine.test.mjs         Test delle regole
     ├── search.test.mjs         Test del gioco dell'AI
     ├── notation.test.mjs       Test della mossa scritta
     ├── persistence.test.mjs    Test della partita salvata
-    └── serviceworker.test.mjs  Test della lista dei file in cache
+    ├── serviceworker.test.mjs  Test del service worker e della sua lista di file
+    └── online.test.mjs         Test del gioco online e guardie di sicurezza
 ```
 
 Regola del progetto: `index.html` contiene **solo** markup. Ogni stile sta nel

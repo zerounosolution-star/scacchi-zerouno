@@ -74,8 +74,8 @@ core/state.js ──────────────┘ (crea l'istanza del 
         ├── ui/board.js, ui/input.js, ui/panels.js, ui/gameover.js
         ├── ui/review.js, ui/moveinput.js, ui/keyboard.js
         ├── game/modes.js
-        └── online/firestore.js
-                ▲
+        └── online/firestore.js  (usa online/lobby.js e online/sync.js,
+                ▲                 che non toccano ne' pagina ne' rete)
             main.js  (punto di ingresso unico)
 ```
 
@@ -363,6 +363,27 @@ artifacts/{APP_ID}/public/data/chess_matches/{codiceStanza}
 Il codice stanza (`ZU` + 4 caratteri) e' anche l'identificativo del documento:
 entrare in una stanza e' una lettura diretta, non una ricerca.
 
+### I dati degli altri
+
+Tutto cio' che sta in quel documento, e il codice letto dal link d'invito,
+l'ha scritto un'altra persona. Tre regole, tutte coperte da
+`tests/online.test.mjs`:
+
+1. **Si mostra come testo, mai come HTML.** Nomi, codici e messaggi entrano
+   nella pagina con `textContent`. Fino al 20 novembre 2026 la sala e le
+   notifiche li scrivevano con `innerHTML`: un nome di stanza fatto apposta
+   eseguiva codice sullo schermo di chiunque avesse la sala aperta, e cosi'
+   un link d'invito truccato.
+2. **Cosa compare nella sala lo decide `online/lobby.js`**: stanze in attesa,
+   recenti, con un codice ben fatto; le private solo a chi le ha create; il
+   nome ripulito e accorciato da `displayName()`.
+3. **La mossa dell'avversario si ricostruisce, non si carica.** Sul documento
+   viaggia la posizione. `online/sync.js` trova la mossa legale che ci porta
+   e la gioca sul motore: cosi' restano lista delle mosse, catture,
+   ripetizione e orologio. Caricare la posizione nuda azzerava la storia a
+   ogni mossa ricevuta. La posizione si carica cosi' com'e' solo quando
+   nessuna mossa singola ci arriva (ingresso a partita iniziata).
+
 ## Dove intervenire
 
 | Serve | File |
@@ -378,6 +399,7 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
 | Cambiare i video di fine partita | `src/data/videos.js` |
 | Cambiare gli sfidanti | `src/data/challengers.js` |
 | Cambiare i permessi del database | `firebase/firestore.rules` |
+| Cambiare cosa compare nella sala online | `src/online/lobby.js` |
 | Cambiare la notazione accettata quando si scrive | `src/engine/notation.js` |
 | Cambiare quanto pesa un termine della valutazione | `src/engine/search.js`, costanti in cima |
 | Aggiungere un modulo | `src/...` **e** la lista `APP_SHELL` in `sw.js` |
@@ -397,9 +419,18 @@ entrare in una stanza e' una lettura diretta, non una ricerca.
   i pezzi inchiodati e le torri sulla settima traversa.
 - L'abbandono di una partita online non viene notificato all'avversario in
   tempo reale se chi abbandona chiude il browser di colpo.
-- La revisione di una mossa passata non si apre nelle partite online:
-  cominciano da una posizione caricata e rigiocare la storia darebbe
-  un'altra scacchiera. Il modulo se ne accorge e si rifiuta di aprirsi.
+- La revisione di una mossa passata, online, si apre solo se la partita e'
+  stata seguita dalla prima mossa. Chi entra a partita iniziata parte da
+  una posizione caricata: rigiocare la storia darebbe un'altra scacchiera,
+  il modulo se ne accorge e si rifiuta di aprirsi.
+- Online ogni dispositivo tiene i suoi orologi: non sono sincronizzati, e
+  il tempo scaduto non viene scritto sul documento. I due schermi possono
+  differire di qualche secondo.
+- Le regole in `firebase/firestore.rules` non controllano tipo e lunghezza
+  dei campi, ne' che `whiteUid` e `blackUid` restino quelli: il sito si
+  difende da solo (vedi "I dati degli altri"), ma un giocatore scorretto
+  puo' ancora scrivere dati sporchi o pesanti nella sua partita.
+- I documenti delle partite finite non vengono mai cancellati.
 - La mossa scritta accetta solo le lettere inglesi dei pezzi (K Q R B N).
   In italiano la R vorrebbe dire re mentre qui vuol dire torre: accettare
   tutte e due le notazioni renderebbe ambigue le mosse. Per farlo

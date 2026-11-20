@@ -19,9 +19,24 @@ import { chess, state } from '../core/state.js';
 import { playChessSound } from '../core/sound.js';
 import { showToast, getPlayerNickname } from '../core/utils.js';
 import { renderBoard } from '../ui/board.js';
-import { updatePlayerCardsUI, startMatchTimers } from '../ui/panels.js';
+import { updatePlayerCardsUI, startMatchTimers, applyClockIncrement } from '../ui/panels.js';
 import { checkAndHandleGameOver, triggerEndOfGame } from '../ui/gameover.js';
 import { startWorldChallengerMatch } from '../game/modes.js';
+import { visibleLobbyRooms, displayName, isValidRoomCode } from './lobby.js';
+import { findMoveToFen } from './sync.js';
+
+/*
+ * REGOLA DI QUESTO MODULO: tutto cio' che arriva da Firestore o
+ * dall'indirizzo della pagina l'ha scritto qualcun altro. Si mostra
+ * sempre come testo (textContent), mai come HTML, e i nomi passano da
+ * displayName(). Un test in tests/online.test.mjs lo controlla.
+ */
+
+/** Titoli di fine partita scritti dall'avversario: testo corto, non un romanzo. */
+function shortText(value, fallback) {
+    if (typeof value !== 'string' || !value.trim()) return fallback;
+    return value.trim().slice(0, 80);
+}
 
 /**
  * Mostra lo stato reale della connessione nell'intestazione.
@@ -113,6 +128,14 @@ function joinRoomFromInviteLink() {
     }
 
     if (!code) return;
+
+    // Il codice viene dall'indirizzo: se non ha la forma di un codice
+    // stanza non si usa e non si ripete a schermo.
+    if (!isValidRoomCode(code)) {
+        showToast("Il link d'invito non è valido");
+        return;
+    }
+
     showToast(`Invito ricevuto: entro nella stanza ${code}`);
     joinOnlineMatchById(code);
 }
@@ -135,18 +158,17 @@ export function subscribeToGlobalLobby() {
     state.lobbyUnsubscribe = onSnapshot(
         lobbyQuery,
         (snapshot) => {
-            const rooms = [];
-            const now = Date.now();
+            const received = [];
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                // Filtra in memoria JS le stanze aperte negli ultimi 30 minuti
-                if (data && data.status === 'waiting' && (now - (data.createdAt || 0) < 1800000)) {
-                    rooms.push({ id: docSnap.id, ...data });
-                }
+                if (data) received.push({ ...data, id: docSnap.id });
             });
-            // Ordina in memoria JS dalla più recente
-            rooms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            state.availableWaitingRooms = rooms;
+            /*
+             * Cosa si mostra lo decide lobby.js: stanze in attesa, recenti,
+             * non private (tranne la propria), con nome e codice ripuliti.
+             */
+            const myUid = state.currentUser ? state.currentUser.uid : null;
+            state.availableWaitingRooms = visibleLobbyRooms(received, myUid, Date.now());
             renderGlobalLobbyUI();
         },
         (err) => {
@@ -165,51 +187,70 @@ export function renderGlobalLobbyUI() {
     const realRooms = state.availableWaitingRooms.length;
     badgeEl.textContent = realRooms === 1 ? '1 persona in attesa' : `${realRooms} persone in attesa`;
 
-    listEl.innerHTML = '';
+    listEl.replaceChildren();
 
     // 1. Stanze create da altri utenti reali su Firebase
     state.availableWaitingRooms.forEach((room) => {
-        const isOwnRoom = state.currentUser && room.whiteUid === state.currentUser.uid;
-        const row = document.createElement('div');
-        row.className = 'zu-lobby-row';
-        row.dataset.kind = 'human';
-        row.innerHTML = `
-            <span class="zu-lobby-main">
-                <span class="zu-lobby-live"></span>
-                <span class="zu-lobby-name">${room.whiteName || 'Scacchista'}</span>
-                <span class="zu-lobby-meta">Stanza #${room.id}</span>
-            </span>
-            <button type="button" class="zu-lobby-btn">
-                ${isOwnRoom ? 'In attesa...' : 'Entra Ora'}
-            </button>
-        `;
-        row.querySelector('button').addEventListener('click', () => {
-            if (!isOwnRoom) joinOnlineMatchById(room.id);
-        });
-        listEl.appendChild(row);
+        const isOwnRoom = Boolean(state.currentUser && room.whiteUid === state.currentUser.uid);
+        listEl.appendChild(buildLobbyRow({
+            kind: 'human',
+            live: true,
+            name: displayName(room.whiteName),
+            metas: [`Stanza #${room.id}`],
+            buttonLabel: isOwnRoom ? 'In attesa...' : 'Entra Ora',
+            onClick: () => {
+                if (!isOwnRoom) joinOnlineMatchById(room.id);
+            }
+        }));
     });
 
     // 2. Sfidanti internazionali: avversari AI, sempre pronti a giocare
     WORLD_CHALLENGERS.forEach((challenger) => {
-        const row = document.createElement('div');
-        row.className = 'zu-lobby-row';
-        row.dataset.kind = 'ai';
-        row.innerHTML = `
-            <span class="zu-lobby-main">
-                <span class="zu-lobby-name">${challenger.name}</span>
-                <span class="zu-lobby-tag">AI</span>
-                <span class="zu-lobby-meta">${challenger.country}</span>
-                <span class="zu-lobby-meta">(${challenger.elo})</span>
-            </span>
-            <button type="button" class="zu-lobby-btn zu-lobby-btn--quiet">
-                Sfida Ora
-            </button>
-        `;
-        row.querySelector('button').addEventListener('click', () => {
-            startWorldChallengerMatch(challenger);
-        });
-        listEl.appendChild(row);
+        listEl.appendChild(buildLobbyRow({
+            kind: 'ai',
+            name: challenger.name,
+            tag: 'AI',
+            metas: [challenger.country, `(${challenger.elo})`],
+            buttonLabel: 'Sfida Ora',
+            quiet: true,
+            onClick: () => startWorldChallengerMatch(challenger)
+        }));
     });
+}
+
+/**
+ * Una riga della sala, costruita pezzo per pezzo.
+ *
+ * Ogni scritta entra con textContent: il nome di una stanza lo sceglie
+ * chi la crea, e non deve mai poter diventare codice nella pagina di
+ * chi guarda la sala.
+ */
+function buildLobbyRow({ kind, live = false, name, tag = null, metas = [], buttonLabel, quiet = false, onClick }) {
+    const span = (className, text) => {
+        const el = document.createElement('span');
+        el.className = className;
+        if (text !== undefined) el.textContent = text;
+        return el;
+    };
+
+    const row = document.createElement('div');
+    row.className = 'zu-lobby-row';
+    row.dataset.kind = kind;
+
+    const main = span('zu-lobby-main');
+    if (live) main.appendChild(span('zu-lobby-live'));
+    main.appendChild(span('zu-lobby-name', name));
+    if (tag) main.appendChild(span('zu-lobby-tag', tag));
+    metas.forEach((meta) => main.appendChild(span('zu-lobby-meta', meta)));
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = quiet ? 'zu-lobby-btn zu-lobby-btn--quiet' : 'zu-lobby-btn';
+    button.textContent = buttonLabel;
+    button.addEventListener('click', onClick);
+
+    row.append(main, button);
+    return row;
 }
 
 export function generateRoomCode() {
@@ -242,7 +283,7 @@ export async function createOnlineRoom(isPrivate = false) {
 
     cleanupActiveOnlineMatch();
     const roomCode = generateRoomCode();
-    const myName = getPlayerNickname();
+    const myName = displayName(getPlayerNickname());
 
     const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', roomCode);
     const initialData = {
@@ -266,6 +307,7 @@ export async function createOnlineRoom(isPrivate = false) {
         await setDoc(matchDocRef, initialData);
         state.currentMatchId = roomCode;
         state.gameMode = 'online';
+        state.spectator = false;
         state.playerColor = 'w';
         state.boardOrientation = 'w';
 
@@ -291,9 +333,15 @@ export async function joinOnlineMatchById(roomCodeInput) {
         return;
     }
 
-    const code = roomCodeInput.trim().toUpperCase();
-    if (!code) {
+    const code = String(roomCodeInput || '').trim().toUpperCase();
+    if (!isValidRoomCode(code)) {
         showToast("Inserisci un codice stanza valido");
+        return;
+    }
+
+    // Rientrare nella stanza in cui si e' gia' la farebbe cancellare
+    if (code === state.currentMatchId) {
+        showToast(`Sei già nella stanza #${code}`);
         return;
     }
 
@@ -307,11 +355,12 @@ export async function joinOnlineMatchById(roomCodeInput) {
         }
 
         const data = snap.data();
-        const myName = getPlayerNickname();
+        const myName = displayName(getPlayerNickname());
 
         cleanupActiveOnlineMatch();
         state.currentMatchId = code;
         state.gameMode = 'online';
+        state.spectator = false;
 
         if (data.whiteUid === state.currentUser.uid) {
             state.playerColor = 'w';
@@ -326,7 +375,8 @@ export async function joinOnlineMatchById(roomCodeInput) {
                 updatedAt: Date.now()
             });
         } else {
-            // Spettatore se la stanza ha già due giocatori
+            // La stanza ha gia' due giocatori: si guarda, non si muove
+            state.spectator = true;
             state.playerColor = 'w';
             state.boardOrientation = 'w';
             showToast(`Stai osservando la partita #${code}`);
@@ -361,6 +411,10 @@ export function listenToActiveMatch(roomCode) {
             if (!docSnap.exists()) return;
             const data = docSnap.data();
 
+            // I nomi li ha scritti qualcun altro: si ripuliscono prima di mostrarli
+            const whiteName = displayName(data.whiteName, 'Bianco');
+            const blackName = displayName(data.blackName, 'In attesa...');
+
             // Se il secondo giocatore si è unito, chiudiamo l'overlay di attesa
             if (data.status === 'active') {
                 const overlay = document.getElementById('matchmakingOverlay');
@@ -368,20 +422,41 @@ export function listenToActiveMatch(roomCode) {
                     overlay.classList.add('hidden');
                     state.matchEnded = false;
                     startMatchTimers();
-                    showToast(`Sfida iniziata: ${data.whiteName} vs ${data.blackName}`, 'gold');
+                    showToast(`Sfida iniziata: ${whiteName} vs ${blackName}`, 'gold');
                 }
             }
 
             // Aggiorna i nomi dei giocatori
-            updatePlayerCardsUI(
-                data.whiteName || 'Bianco',
-                data.blackName || 'In attesa...'
-            );
+            updatePlayerCardsUI(whiteName, blackName);
 
             // Sincronizza la posizione sulla scacchiera tramite FEN
-            if (data.fen && data.fen !== chess.fen()) {
-                chess.load(data.fen);
-                state.lastMoveSquares = { from: data.lastFrom || null, to: data.lastTo || null };
+            if (typeof data.fen === 'string' && data.fen && data.fen !== chess.fen()) {
+                /*
+                 * Prima si cerca la MOSSA che porta alla posizione ricevuta e
+                 * la si gioca: cosi' restano la lista delle mosse, i pezzi
+                 * catturati, la patta per ripetizione e l'orologio, che parte
+                 * solo a storia non vuota. Caricare la posizione nuda li
+                 * azzerava a ogni mossa dell'avversario. Si carica cosi'
+                 * com'e' solo se nessuna mossa ci arriva (ingresso a partita
+                 * iniziata, scacchiere disallineate).
+                 */
+                const opponentMove = findMoveToFen(chess.fen(), data.fen);
+                const played = opponentMove ? chess.move(opponentMove) : null;
+
+                if (played) {
+                    state.lastMoveSquares = { from: played.from, to: played.to };
+                    // Anche l'orologio dell'avversario si riprende l'incremento
+                    applyClockIncrement(played.color);
+                } else {
+                    chess.load(data.fen);
+                    state.lastMoveSquares = {
+                        from: typeof data.lastFrom === 'string' ? data.lastFrom : null,
+                        to: typeof data.lastTo === 'string' ? data.lastTo : null
+                    };
+                }
+
+                state.selectedSquare = null;
+                state.legalMovesForSelected = [];
                 playChessSound('move');
                 renderBoard();
                 checkAndHandleGameOver();
@@ -392,8 +467,8 @@ export function listenToActiveMatch(roomCode) {
             // Se la partita è stata dichiarata conclusa (es. abbandono o patta concordata)
             if (data.status === 'finished' && !state.matchEnded) {
                 triggerEndOfGame(
-                    data.winnerTitle || 'Partita Conclusa',
-                    data.winnerSubtitle || 'Match Internazionale Terminato'
+                    shortText(data.winnerTitle, 'Partita Conclusa'),
+                    shortText(data.winnerSubtitle, 'Match Internazionale Terminato')
                 );
             }
         },
@@ -415,6 +490,8 @@ export function listenToActiveMatch(roomCode) {
  */
 export async function finishOnlineMatch(title, subtitle) {
     if (!(state.gameMode === 'online' && state.currentMatchId && state.currentUser && state.db)) return;
+    // Chi guarda non chiude la partita di altri
+    if (state.spectator) return;
     try {
         const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', state.currentMatchId);
         await updateDoc(matchDocRef, {
@@ -441,6 +518,8 @@ export async function syncOnlineMove(moveObj) {
         });
     } catch (e) {
         console.error("Errore invio mossa:", e);
+        // Senza avviso chi gioca crede che la mossa sia arrivata
+        showToast('Mossa non inviata all\'avversario: controlla la connessione');
     }
 }
 
@@ -450,9 +529,22 @@ export async function cleanupActiveOnlineMatch() {
         state.activeMatchUnsubscribe();
         state.activeMatchUnsubscribe = null;
     }
-    if (state.currentMatchId && state.currentUser && state.db) {
+
+    /*
+     * La stanza vecchia si dimentica SUBITO, prima di ogni attesa di
+     * rete. Chi chiama questa funzione non la aspetta e imposta subito
+     * la stanza nuova: azzerando lo stato alla fine, dopo le attese, si
+     * cancellava il codice della stanza NUOVA, e da li' in poi le mosse
+     * non partivano piu' verso l'avversario (seconda partita online
+     * della stessa visita).
+     */
+    const previousMatchId = state.currentMatchId;
+    state.currentMatchId = null;
+    state.spectator = false;
+
+    if (previousMatchId && state.currentUser && state.db) {
         try {
-            const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', state.currentMatchId);
+            const matchDocRef = doc(state.db, 'artifacts', APP_ID, 'public', 'data', 'chess_matches', previousMatchId);
             const snap = await getDoc(matchDocRef);
             if (snap.exists() && snap.data().status === 'waiting' && snap.data().whiteUid === state.currentUser.uid) {
                 await deleteDoc(matchDocRef);
@@ -461,5 +553,4 @@ export async function cleanupActiveOnlineMatch() {
             // Ignora errori di pulizia
         }
     }
-    state.currentMatchId = null;
 }
