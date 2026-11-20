@@ -43,6 +43,11 @@ export const state = {
     playerColor: 'w',
     /** Colore mostrato in basso sulla scacchiera: 'w' | 'b' */
     boardOrientation: 'w',
+    /**
+     * In due sullo stesso schermo la scacchiera si gira da sola verso chi
+     * deve muovere. La spegne la spunta nella linguetta «2 Giocatori».
+     */
+    localAutoFlip: true,
     /** Livello dell'AI: 1 = facile, 2 = club, 3 = difficile */
     aiDifficulty: 2,
     /** Vero mentre l'AI sta cercando la mossa: impedisce ricerche sovrapposte. */

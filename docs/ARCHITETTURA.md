@@ -73,9 +73,12 @@ core/state.js ──────────────┘ (crea l'istanza del 
         ├── engine/ai.js
         ├── ui/board.js, ui/input.js, ui/panels.js, ui/gameover.js
         ├── ui/review.js, ui/moveinput.js, ui/keyboard.js
+        ├── ui/orientation.js    (gira la scacchiera; QUANDO lo decide
+        │                         game/autoflip.js, che non tocca la pagina)
         ├── game/modes.js
-        └── online/firestore.js  (usa online/lobby.js e online/sync.js,
-                ▲                 che non toccano ne' pagina ne' rete)
+        └── online/firestore.js  (usa online/lobby.js, online/sync.js e
+                ▲                 online/invite.js, che non toccano ne'
+                │                 pagina ne' rete)
             main.js  (punto di ingresso unico)
 ```
 
@@ -401,6 +404,9 @@ l'ha scritto un'altra persona. Tre regole, tutte coperte da
 | Cambiare i permessi del database | `firebase/firestore.rules`, poi `npm run regole` prima di pubblicarle |
 | Far scrivere al gioco un campo nuovo su Firestore | il codice **e** l'elenco dei campi nelle regole (`npm test` lo ricorda) |
 | Cambiare cosa compare nella sala online | `src/online/lobby.js` |
+| Cambiare la frase o il link dell'invito a un amico | `src/online/invite.js` |
+| Cambiare quando la scacchiera si gira da sola (in due) | `src/game/autoflip.js`; l'attesa prima di girare e' `FLIP_DELAY_MS` in `src/ui/orientation.js` |
+| Togliere un bottone o un campo dalla pagina | `index.html` **e** il codice che lo cerca (`npm test` lo ricorda) |
 | Cambiare la notazione accettata quando si scrive | `src/engine/notation.js` |
 | Cambiare quanto pesa un termine della valutazione | `src/engine/search.js`, costanti in cima |
 | Aggiungere un modulo | `src/...` **e** la lista `APP_SHELL` in `sw.js` |

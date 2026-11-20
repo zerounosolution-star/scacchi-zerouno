@@ -197,3 +197,19 @@ export function renderBoard() {
     updateStatusAndHistoryUI();
     updateCapturedMaterialUI();
 }
+
+/**
+ * Dopo aver scelto come giocare, la scacchiera torna in vista.
+ *
+ * Sul telefono la sala sta sotto la scacchiera: senza questo, chi avvia
+ * una partita resta a guardare il bottone appena premuto. Dove il tavolo
+ * e' gia' in vista (schermi larghi) non succede niente.
+ */
+export function scrollBoardIntoView() {
+    const tavolo = document.querySelector('.zu-table');
+    if (tavolo === null) return;
+    if (tavolo.getBoundingClientRect().top >= 0) return;
+
+    const calmo = Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    window.scrollTo({ top: 0, behavior: calmo ? 'auto' : 'smooth' });
+}

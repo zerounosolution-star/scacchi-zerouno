@@ -28,6 +28,14 @@ function setText(el, text) {
 }
 
 /**
+ * Vero dove si gioca col dito. Li' «clicca», «trascina» e «frecce e
+ * Invio» sono parole sbagliate: si tocca.
+ */
+function usesTouch() {
+    return Boolean(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+}
+
+/**
  * Un clic sulla notazione riporta la scacchiera a quella mossa.
  * L'ascoltatore sta sul corpo della tabella e non sulle singole righe:
  * le righe si rifanno a ogni mossa, il corpo no.
@@ -90,9 +98,17 @@ export function updateStatusAndHistoryUI() {
         } else if (humanTurn) {
             dot.dataset.state = 'you';
             // Il titolo qui sopra dice gia' di chi e' il turno: qui solo l'istruzione
-            setText(banner, state.selectedSquare
-                ? `Casa ${state.selectedSquare.toUpperCase()} selezionata — Clicca sulla casella evidenziata per muovere`
-                : 'Clicca o trascina un pezzo, oppure usa le frecce e Invio');
+            const casa = state.selectedSquare ? state.selectedSquare.toUpperCase() : '';
+            if (usesTouch()) {
+                // La casa scelta la dice gia' l'etichetta a destra: qui solo cosa fare
+                setText(banner, casa
+                    ? 'Tocca una casa evidenziata'
+                    : 'Tocca un pezzo, poi la casa dove va');
+            } else {
+                setText(banner, casa
+                    ? `Casa ${casa} selezionata — Clicca sulla casella evidenziata per muovere`
+                    : 'Clicca o trascina un pezzo, oppure usa le frecce e Invio');
+            }
         } else {
             dot.dataset.state = 'waiting';
             setText(banner, `L'avversario (${turnLabel}) sta pensando la mossa...`);

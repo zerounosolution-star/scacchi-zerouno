@@ -198,26 +198,29 @@
                             </div>
                         </div>
 
-                        <!-- Ricerca di un avversario online -->
+                        <!--
+                            In attesa dell'amico invitato. Una cosa sola da fare:
+                            mandare il link. Sul telefono il bottone apre WhatsApp
+                            e le altre app; altrove copia l'invito negli appunti
+                            (la scritta la cambia main.js).
+                        -->
                         <div id="matchmakingOverlay" class="hidden absolute inset-0 bg-anthracite-950/85 backdrop-blur-xs z-20 flex flex-col items-center justify-center p-5 text-center text-ivory-50">
                             <div class="w-11 h-11 rounded-full border-2 border-bronze-400 border-t-transparent animate-spin mb-4" aria-hidden="true"></div>
-                            <h3 class="zu-display mb-2">Ricerca avversario</h3>
+                            <h3 class="zu-display mb-2">Invita il tuo amico</h3>
                             <p id="matchmakingSubtext" class="zu-small text-ivory-200 max-w-xs mb-4">
-                                In attesa che entri qualcuno. Puoi mandare il codice stanza a un amico, o giocare subito contro uno sfidante AI.
+                                Mandagli il link: lo apre ed è subito in partita con te.
                             </p>
-                            <div class="flex items-center gap-2 bg-anthracite-800 border border-bronze-500/40 rounded-lg px-3.5 py-2 mb-4">
-                                <span class="zu-micro text-ivory-200">Codice stanza</span>
-                                <span id="waitingRoomCodeDisplay" class="zu-mono text-base font-medium text-bronze-400 tracking-widest">------</span>
-                                <button id="copyWaitingCodeBtn" type="button" class="zu-btn zu-btn--quiet zu-btn--sm">Copia</button>
-                            </div>
-                            <div class="flex flex-wrap items-center justify-center gap-2">
-                                <button id="instantWorldOpponentBtn" type="button" class="zu-btn zu-btn--accent zu-btn--sm">
-                                    Gioca subito contro uno sfidante AI
-                                </button>
-                                <button id="cancelMatchmakingBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
-                                    Annulla
-                                </button>
-                            </div>
+                            <button id="shareInviteBtn" type="button" class="zu-btn zu-btn--accent mb-3">
+                                Manda il link
+                            </button>
+                            <p class="zu-micro text-ivory-200 mb-4">
+                                Codice stanza
+                                <span id="waitingRoomCodeDisplay" class="zu-mono text-base font-medium text-bronze-400 tracking-widest ml-1">------</span>
+                            </p>
+                            <!-- «Annulla invito», non «Annulla»: sotto la scacchiera c'e' gia' un Annulla, quello della mossa -->
+                            <button id="cancelMatchmakingBtn" type="button" class="zu-btn zu-btn--onDark zu-btn--sm">
+                                Annulla invito
+                            </button>
                         </div>
                     </div>
 
@@ -278,8 +281,9 @@
                             </div>
                         </div>
 
-                        <!-- Mossa scritta: la via corta per chi gioca da tastiera -->
-                        <div class="flex items-center gap-2 mt-3">
+                        <!-- Mossa scritta: la via corta per chi gioca da tastiera.
+                             Sul telefono non compare: li' si tocca, e una riga in meno conta -->
+                        <div class="hidden sm:flex items-center gap-2 mt-3">
                             <label for="notationMoveInput" class="zu-sr">Mossa in notazione</label>
                             <input id="notationMoveInput" type="text" inputmode="text" autocomplete="off"
                                    spellcheck="false" maxlength="10" placeholder="Scrivi la mossa: e4, Nf6, O-O"
@@ -365,61 +369,63 @@
                         </button>
                     </div>
 
-                    <!-- Pannello: due giocatori sullo stesso dispositivo -->
-                    <div id="tabPanelLocal" class="hidden space-y-4">
-                        <p class="zu-note">
-                            Scacchiera da tavolo: due persone muovono a turno sullo stesso schermo.
-                            Usa <strong class="font-medium text-anthracite-900">Ruota</strong> per girare la scacchiera fra una mossa e l'altra.
-                        </p>
-                        <div>
-                            <label for="localTimeControlSelect" class="zu-label">Tempo di gioco</label>
-                            <select id="localTimeControlSelect" class="zu-field" data-time-control></select>
+                    <!--
+                        Pannello: in due. Tutto quello che serve per giocare con
+                        una persona che si conosce sta qui: sullo stesso schermo,
+                        oppure a distanza con un link.
+                    -->
+                    <div id="tabPanelLocal" class="hidden space-y-5">
+
+                        <!-- Insieme, davanti allo stesso schermo -->
+                        <div class="space-y-3">
+                            <div>
+                                <label for="localTimeControlSelect" class="zu-label">Tempo di gioco</label>
+                                <select id="localTimeControlSelect" class="zu-field" data-time-control></select>
+                            </div>
+                            <!-- Spenta, la scacchiera resta ferma: serve a chi gioca seduto di fronte all'altro -->
+                            <label class="zu-check" for="localAutoFlipToggle">
+                                <input id="localAutoFlipToggle" type="checkbox" checked>
+                                <span>Gira la scacchiera a ogni mossa</span>
+                            </label>
+                            <button id="startLocalMatchBtn" type="button" class="zu-btn zu-btn--primary zu-btn--block">
+                                Gioca in due su questo schermo
+                            </button>
                         </div>
-                        <button id="startLocalMatchBtn" type="button" class="zu-btn zu-btn--primary zu-btn--block">
-                            Avvia una partita in due
-                        </button>
+
+                        <!-- Lontani: un link, e l'amico entra senza scrivere niente -->
+                        <div class="zu-subblock space-y-3">
+                            <button id="createPrivateRoomBtn" type="button" class="zu-btn zu-btn--outline zu-btn--block" aria-describedby="inviteFriendNote">
+                                Invita un amico con un link
+                            </button>
+                            <p id="inviteFriendNote" class="zu-small zu-muted">Chi apre il link entra subito in partita con te. Non serve registrarsi.</p>
+                            <!-- Il codice serve di rado (l'invito e' un link): sta dietro una riga da aprire -->
+                            <details class="zu-more">
+                                <summary>Hai un codice stanza?</summary>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <label for="joinRoomCodeInput" class="zu-sr">Codice stanza</label>
+                                    <input id="joinRoomCodeInput" type="text" maxlength="8" placeholder="ZU4819" class="zu-field zu-mono uppercase" />
+                                    <button id="joinRoomByCodeBtn" type="button" class="zu-btn zu-btn--accent shrink-0">
+                                        Entra
+                                    </button>
+                                </div>
+                            </details>
+                        </div>
                     </div>
 
-                    <!-- Pannello: multiplayer online -->
+                    <!-- Pannello: sala mondiale -->
                     <div id="tabPanelOnline" class="hidden space-y-4">
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <div class="flex-1">
-                                <label for="playerNicknameInput" class="zu-label">Il tuo nome in sala</label>
-                                <input id="playerNicknameInput" type="text" maxlength="22" placeholder="Es. Marco_Roma" class="zu-field" />
-                            </div>
-                            <div class="sm:w-44">
-                                <span class="zu-label">Il tuo identificativo</span>
-                                <div class="zu-field flex items-center justify-between gap-2 px-3">
-                                    <span id="userIdDisplay" class="zu-mono text-[13px] truncate zu-muted" title="Identificativo del giocatore">ONLINE-01</span>
-                                    <button id="copyUserIdBtn" type="button" class="zu-btn zu-btn--quiet zu-btn--sm shrink-0">Copia</button>
-                                </div>
-                            </div>
+                        <div>
+                            <label for="playerNicknameInput" class="zu-label">Il tuo nome in sala</label>
+                            <input id="playerNicknameInput" type="text" maxlength="22" placeholder="Es. Marco_Roma" class="zu-field" />
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <button id="findWorldMatchBtn" type="button" class="zu-btn zu-btn--primary" aria-describedby="findWorldMatchNote">
+                        <div>
+                            <button id="findWorldMatchBtn" type="button" class="zu-btn zu-btn--primary zu-btn--block" aria-describedby="findWorldMatchNote">
                                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
                                 <span>Gioca nel mondo ora</span>
                             </button>
-                            <!--
-                                La condizione sta accanto alla promessa, prima che la persona
-                                tocchi il bottone. Sul telefono resta subito sotto «Gioca nel
-                                mondo ora»; con due colonne scende sotto i due bottoni.
-                            -->
-                            <p id="findWorldMatchNote" class="zu-micro zu-muted sm:order-last sm:col-span-2">Se nessuno è in attesa, giochi contro uno sfidante AI.</p>
-                            <button id="createPrivateRoomBtn" type="button" class="zu-btn zu-btn--outline">
-                                Crea una stanza privata
-                            </button>
-                        </div>
-
-                        <div class="flex items-end gap-2">
-                            <div class="flex-1">
-                                <label for="joinRoomCodeInput" class="zu-label">Hai un codice stanza?</label>
-                                <input id="joinRoomCodeInput" type="text" maxlength="8" placeholder="ZU4819" class="zu-field zu-mono uppercase" />
-                            </div>
-                            <button id="joinRoomByCodeBtn" type="button" class="zu-btn zu-btn--accent shrink-0">
-                                Entra
-                            </button>
+                            <!-- La condizione sta accanto alla promessa, prima che la persona tocchi il bottone -->
+                            <p id="findWorldMatchNote" class="zu-micro zu-muted mt-2">Se nessuno è in attesa, giochi contro uno sfidante AI.</p>
                         </div>
 
                         <div class="pt-1">
@@ -621,7 +627,19 @@
     <!-- ================= PIEDE ================= -->
     <footer class="border-t border-ivory-200 bg-ivory-50 py-4 px-4 mt-4">
         <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 zu-micro zu-muted">
-            <span>Scacchi ZeroUno &mdash; Motore, interfaccia e pezzi originali</span>
+            <!--
+                I disegni dei pezzi sono di Cburnett (Wikimedia Commons), con i
+                colori cambiati. La licenza CC BY-SA 3.0 chiede di nominare
+                l'autore, la licenza e le modifiche: questa riga non si toglie.
+            -->
+            <span class="text-center sm:text-left">
+                Scacchi ZeroUno &mdash; Motore e interfaccia originali.
+                Disegni dei pezzi: Cburnett,
+                <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces" target="_blank" rel="noopener noreferrer" class="hover:underline">Wikimedia Commons</a>,
+                licenza
+                <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.it" target="_blank" rel="noopener noreferrer" class="hover:underline">CC BY-SA 3.0</a>.
+                Colori e linee adattati.
+            </span>
             <a href="https://youtube.com/@zerounosolution?si=lG3MRDl_C2orWerj" target="_blank" rel="noopener noreferrer" class="text-bronze-600 hover:underline font-medium">
                 YouTube: @zerounosolution
             </a>

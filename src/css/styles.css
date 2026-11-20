@@ -298,6 +298,55 @@ select.zu-field { cursor: pointer; appearance: auto; }
     margin-bottom: 6px;
 }
 
+/* Spunta con la sua scritta: tutta la riga si tocca, alta quanto un bottone. */
+.zu-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+}
+.zu-check input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ink);
+    cursor: pointer;
+}
+
+/* Secondo gruppo dentro una linguetta: un filetto, non una scatola. */
+.zu-subblock { padding-top: 20px; border-top: 1px solid var(--rule); }
+
+/* Una riga che si apre: per cio' che serve di rado e non deve stare in mezzo.
+   La freccia la disegna il foglio, uguale su tutti i browser, e gira quando
+   la riga e' aperta. */
+.zu-more > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--tap);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    list-style: none;
+}
+.zu-more > summary::-webkit-details-marker { display: none; }
+.zu-more > summary::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.16s ease;
+}
+.zu-more[open] > summary::before { transform: rotate(45deg); }
+.zu-more > summary:hover { color: var(--ink); }
+
 .zu-pill {
     display: inline-flex;
     align-items: center;

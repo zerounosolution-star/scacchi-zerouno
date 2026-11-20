@@ -719,6 +719,10 @@ video {
   margin-bottom: 1.25rem;
 }
 
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
 .mt-0\.5 {
   margin-top: 0.125rem;
 }
@@ -729,6 +733,10 @@ video {
 
 .mt-1\.5 {
   margin-top: 0.375rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
 }
 
 .mt-2\.5 {
@@ -919,10 +927,6 @@ video {
   align-items: flex-start;
 }
 
-.items-end {
-  align-items: flex-end;
-}
-
 .items-center {
   align-items: center;
 }
@@ -975,10 +979,22 @@ video {
   margin-bottom: calc(0.375rem * var(--tw-space-y-reverse));
 }
 
+.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+}
+
 .space-y-4 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+
+.space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.25rem * var(--tw-space-y-reverse));
 }
 
 .overflow-hidden {
@@ -1053,11 +1069,6 @@ video {
   border-top-color: transparent;
 }
 
-.bg-anthracite-800 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(42 40 37 / var(--tw-bg-opacity, 1));
-}
-
 .bg-anthracite-900 {
   --tw-bg-opacity: 1;
   background-color: rgb(28 27 24 / var(--tw-bg-opacity, 1));
@@ -1125,11 +1136,6 @@ video {
   padding-right: 0.75rem;
 }
 
-.px-3\.5 {
-  padding-left: 0.875rem;
-  padding-right: 0.875rem;
-}
-
 .px-4 {
   padding-left: 1rem;
   padding-right: 1rem;
@@ -1138,11 +1144,6 @@ video {
 .px-6 {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
 }
 
 .py-4 {
@@ -1177,10 +1178,6 @@ video {
 .text-2xl {
   font-size: 1.5rem;
   line-height: 2rem;
-}
-
-.text-\[13px\] {
-  font-size: 13px;
 }
 
 .text-\[17px\] {
@@ -1313,14 +1310,6 @@ video {
 }
 
 @media (min-width: 640px) {
-  .sm\:order-last {
-    order: 9999;
-  }
-
-  .sm\:col-span-2 {
-    grid-column: span 2 / span 2;
-  }
-
   .sm\:mr-auto {
     margin-right: auto;
   }
@@ -1335,10 +1324,6 @@ video {
 
   .sm\:h-56 {
     height: 14rem;
-  }
-
-  .sm\:w-44 {
-    width: 11rem;
   }
 
   .sm\:w-\[148px\] {
@@ -1404,6 +1389,10 @@ video {
   .sm\:px-6 {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+  }
+
+  .sm\:text-left {
+    text-align: left;
   }
 
   .sm\:text-2xl {

@@ -119,7 +119,7 @@ const stanzaNuova = (uid, extra = {}) => {
     const ora = Date.now();
     return {
         status: 'waiting', isPrivate: false, fen: FEN_INIZIALE, pgn: '', lastFrom: null, lastTo: null,
-        whiteUid: uid, whiteName: 'Anna', blackUid: null, blackName: 'In attesa di avversario...',
+        whiteUid: uid, whiteName: 'Anna', blackUid: null, blackName: 'In attesa…',
         winnerTitle: null, winnerSubtitle: null, createdAt: ora, updatedAt: ora, ...extra
     };
 };

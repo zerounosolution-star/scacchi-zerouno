@@ -5,9 +5,12 @@ Si gioca contro l'intelligenza artificiale, in due sullo stesso dispositivo
 oppure, quando Firebase e' configurato, contro altre persone in rete.
 
 Nessuna libreria da installare: moduli ES nativi, e i due programmi di terze
-parti (Tailwind per l'impaginazione, Tone.js per i suoni) stanno dentro il
-progetto, non arrivano da siti esterni.
-Il motore scacchistico e' scritto da zero in JavaScript puro.
+parti che servono per giocare (Tailwind per l'impaginazione, Tone.js per i
+suoni) stanno dentro il progetto, non arrivano da siti esterni. Da fuori la
+pagina prende ancora tre cose: i caratteri (Google Fonts), il programma di
+Firebase per il gioco online (dal sito di Google) e i video (YouTube).
+Il motore scacchistico e' scritto da zero in JavaScript puro. I disegni dei
+pezzi sono di Cburnett, da Wikimedia Commons: vedi i [crediti](#crediti).
 
 ---
 
@@ -34,7 +37,7 @@ npx serve .
 npm test
 ```
 
-85 prove che girano fuori dal browser, senza dipendenze.
+103 prove che girano fuori dal browser, senza dipendenze.
 
 Le regole: arrocco, presa en passant, promozione, scacco matto, stallo,
 materiale insufficiente, patta per ripetizione, regola delle 50 mosse,
@@ -50,6 +53,10 @@ mosse ambigue e scritture che non sono mosse.
 
 Il service worker: ogni modulo del progetto e' in cache (il guasto da
 evitare e' aggiungere un file e accorgersene solo senza rete).
+
+Il gioco in due: la scacchiera che si gira verso chi deve muovere, il link
+d'invito, la linguetta che tiene tutto insieme, e una guardia generale: ogni
+pezzo di pagina che il codice va a prendere deve esistere davvero.
 
 ---
 
@@ -100,11 +107,15 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
 │   │   ├── moveinput.js        Campo della mossa scritta
 │   │   ├── review.js           Rivedere una mossa passata
 │   │   ├── panels.js           Turno, notazione, catture, orologi
+│   │   ├── orientation.js      Gira la scacchiera: bottone Ruota e rotazione automatica
 │   │   └── gameover.js         Fine partita e video del canale
-│   ├── game/modes.js           Avvio delle modalita' di gioco
+│   ├── game/
+│   │   ├── modes.js            Avvio delle modalita' di gioco
+│   │   └── autoflip.js         In due: da che parte si guarda la scacchiera (puro, testabile)
 │   └── online/
 │       ├── firestore.js        Multiplayer in tempo reale
 │       ├── lobby.js            Quali stanze si vedono nella sala (puro, testabile)
+│       ├── invite.js           Il link d'invito per l'amico (puro, testabile)
 │       └── sync.js             La mossa dell'avversario dalla posizione (puro, testabile)
 └── tests/
     ├── engine.test.mjs         Test delle regole
@@ -113,6 +124,7 @@ evitare e' aggiungere un file e accorgersene solo senza rete).
     ├── persistence.test.mjs    Test della partita salvata
     ├── serviceworker.test.mjs  Test del service worker e della sua lista di file
     ├── online.test.mjs         Test del gioco online e guardie di sicurezza
+    ├── indue.test.mjs          Test del gioco in due: rotazione, invito, linguetta, crediti
     ├── pagina.test.mjs         Test della pagina: niente programmi esterni, foglio di Tailwind aggiornato
     └── regole.test.mjs         Test che gioco e regole del database vadano d'accordo
 ```
@@ -137,14 +149,42 @@ quell'oggetto.
 | Modalita' | Avversario | Serve la rete |
 |---|---|---|
 | Contro AI | Motore locale, 3 livelli | No |
-| 2 Giocatori | Due persone, stesso dispositivo | No |
+| 2 Giocatori, stesso schermo | Due persone, stesso dispositivo | No |
+| 2 Giocatori, a distanza | Un amico invitato con un link | Si', con Firebase |
 | Sfidante internazionale | Avversario AI con nome e punteggio | No |
-| Mondiale online | Altra persona, stanza pubblica o privata | Si', con Firebase |
+| Mondiale online | Chi e' in attesa nella sala; se non c'e' nessuno, uno sfidante AI | Si', con Firebase |
 
 Gli sfidanti internazionali (Lukas Meyer, Sofia Rojas, Kenji Takahashi,
 Claire Dubois) **non sono persone reali**: sono l'AI locale con un nome e un
 punteggio. Nell'elenco sono contrassegnati "AI". Il contatore della lobby
 conta solo le persone vere in attesa.
+
+---
+
+## Giocare in due
+
+Tutto quello che serve per giocare con una persona che si conosce sta nella
+linguetta **2 Giocatori**, in due gruppi.
+
+**Sullo stesso schermo.** Un bottone avvia la partita. La scacchiera si gira
+da sola verso chi deve muovere, mezzo secondo dopo la mossa: cosi' chi ha
+mosso vede il pezzo arrivare dal proprio lato, poi tocca all'altro. La spunta
+"Gira la scacchiera a ogni mossa" la tiene ferma, per chi gioca seduto di
+fronte all'altro; la scelta resta tra una visita e l'altra. Il bottone
+"Ruota" continua a funzionare a mano. Quando girare lo decide
+[`src/game/autoflip.js`](src/game/autoflip.js), che non tocca la pagina; chi
+gira davvero e' [`src/ui/orientation.js`](src/ui/orientation.js).
+
+**A distanza.** "Invita un amico con un link" apre una stanza privata e mette
+sulla scacchiera un riquadro con una cosa sola da fare: mandare il link. Sul
+telefono il bottone apre il foglio di condivisione (WhatsApp e le altre app);
+dove il browser non lo offre, copia l'invito negli appunti. Chi apre il link
+entra nella stanza senza scrivere niente e senza vedere l'annuncio
+d'apertura. Il codice della stanza resta scritto nel riquadro per chi lo
+detta a voce: l'amico lo scrive in "Hai un codice stanza?".
+
+Dopo aver avviato una partita dalla sala, la scacchiera torna in vista da
+sola: sul telefono la sala sta sotto.
 
 ---
 
@@ -154,7 +194,7 @@ conta solo le persone vere in attesa.
 |---|---|
 | Mouse | Si clicca il pezzo e poi la casa, oppure si trascina |
 | Tastiera | Frecce per spostarsi, Invio per prendere e posare, Esc per annullare |
-| Scrivendo | Si scrive la mossa nel campo sotto la scacchiera e si preme Invio |
+| Scrivendo | Si scrive la mossa nel campo sotto la scacchiera e si preme Invio (il campo non compare sul telefono, dove si tocca) |
 
 La mossa scritta accetta la notazione algebrica (`e4`, `Nf6`, `O-O`, `e8=Q`,
 con o senza `+` e `#`), gli zeri al posto delle O nell'arrocco, le due case
@@ -411,5 +451,13 @@ In entrambi i casi serve HTTPS, altrimenti l'installazione come applicazione
 
 ## Crediti
 
-Progetto di ZeroUno Solution. Motore scacchistico, interfaccia e grafica dei
-pezzi sono originali: nessuna libreria di scacchi esterna.
+Progetto di ZeroUno Solution. Motore scacchistico e interfaccia sono
+originali: nessuna libreria di scacchi esterna.
+
+I disegni dei 12 pezzi sono di **Cburnett**, da
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces),
+con i colori e lo spessore del tratto adattati. Licenza
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.it): chiede
+di nominare l'autore e la licenza e di dichiarare le modifiche, e lo stesso
+vale per chi riusa i pezzi di questo progetto. La riga nel piede della pagina
+serve a questo e non si toglie: un test la tiene ferma.

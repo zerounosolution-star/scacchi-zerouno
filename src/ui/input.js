@@ -16,6 +16,7 @@ import { makeAiMove } from '../engine/ai.js';
 import { saveMatch } from '../core/persistence.js';
 import { checkAndHandleGameOver } from './gameover.js';
 import { syncOnlineMove } from '../online/firestore.js';
+import { scheduleLocalAutoFlip } from './orientation.js';
 
 export function setupDesktopMouseAndTouchHandlers() {
     const boardEl = document.getElementById('chessboard');
@@ -275,6 +276,9 @@ export async function executeMove(fromSq, toSq, promotionPiece = 'q') {
 
     // La partita in corso resta nella memoria del browser
     saveMatch();
+
+    // In due sullo stesso schermo la scacchiera si gira verso chi deve muovere
+    scheduleLocalAutoFlip();
 
     // Se siamo contro AI o contro uno Sfidante Internazionale simulato ed è il suo turno
     if ((state.gameMode === 'ai' || state.gameMode === 'world-challenger') && chess.turn() !== state.playerColor && !state.matchEnded) {

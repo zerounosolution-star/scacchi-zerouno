@@ -9,8 +9,10 @@ import { APP_ID, SITE_URL } from './config/app.config.js';
 import { chess, state } from './core/state.js';
 import { saveMatch, readSavedMatch, clearSavedMatch } from './core/persistence.js';
 import { showToast, copyTextToClipboard } from './core/utils.js';
-import { initPersistentBoardDOM, renderBoard } from './ui/board.js';
-import { updatePlayerCardsUI, renderTimersUI, setupTimeControlSelects } from './ui/panels.js';
+import { initPersistentBoardDOM, renderBoard, scrollBoardIntoView } from './ui/board.js';
+import { setupTimeControlSelects } from './ui/panels.js';
+import { flipBoard, alignLocalBoardNow, setupAutoFlipToggle } from './ui/orientation.js';
+import { inviteLink, inviteMessage, INVITE_TEXT } from './online/invite.js';
 import { setupReviewControls, exitReview } from './ui/review.js';
 import { setupNotationInput } from './ui/moveinput.js';
 import { setupSidePanel } from './ui/sidepanel.js';
@@ -74,18 +76,8 @@ export function setupEventListeners() {
     });
 
     // Controlli Partita Sotto Scacchiera
-    document.getElementById('flipBoardBtn').addEventListener('click', () => {
-        state.boardOrientation = state.boardOrientation === 'w' ? 'b' : 'w';
-        const currentTopName = document.getElementById('topPlayerName').textContent;
-        const currentBottomName = document.getElementById('bottomPlayerName').textContent;
-        if (state.boardOrientation === 'w') {
-            updatePlayerCardsUI(currentTopName, currentBottomName);
-        } else {
-            updatePlayerCardsUI(currentBottomName, currentTopName);
-        }
-        renderTimersUI();
-        renderBoard();
-    });
+    // Girare la scacchiera sta in un posto solo: src/ui/orientation.js
+    document.getElementById('flipBoardBtn').addEventListener('click', flipBoard);
 
     document.getElementById('newGameQuickBtn').addEventListener('click', () => {
         if (state.gameMode === 'local') startNewLocalGame();
@@ -118,6 +110,8 @@ export function setupEventListeners() {
         const last = hist[hist.length - 1];
         state.lastMoveSquares = last ? { from: last.from, to: last.to } : { from: null, to: null };
         renderBoard();
+        // In due sullo stesso schermo tocca di nuovo a chi aveva mosso: la scacchiera lo segue
+        alignLocalBoardNow();
         saveMatch();
         showToast("Mossa annullata");
     });
@@ -146,37 +140,64 @@ export function setupEventListeners() {
         triggerEndOfGame(title, subtitle);
     });
 
-    // Pulsanti Modalità AI & Locale
-    document.getElementById('startAiMatchBtn').addEventListener('click', startNewAiGame);
-    document.getElementById('startLocalMatchBtn').addEventListener('click', startNewLocalGame);
+    /*
+     * Chi sceglie come giocare dalla sala vuole vedere la scacchiera. Sul
+     * telefono la sala sta sotto: senza questo si resta a guardare il
+     * bottone appena premuto.
+     */
+    const avvia = (azione) => () => {
+        azione();
+        scrollBoardIntoView();
+    };
 
-    // Pulsanti Multiplayer Online
-    document.getElementById('findWorldMatchBtn').addEventListener('click', findOrCreateWorldMatch);
+    // Contro l'AI, e in due sullo stesso schermo
+    document.getElementById('startAiMatchBtn').addEventListener('click', avvia(startNewAiGame));
+    document.getElementById('startLocalMatchBtn').addEventListener('click', avvia(startNewLocalGame));
+
+    /*
+     * In due a distanza: una stanza privata e un link da mandare. Qui la
+     * scacchiera torna in vista solo se la stanza si apre davvero (lo fa
+     * firestore.js): con un codice sbagliato si resta dove si stava scrivendo.
+     */
     document.getElementById('createPrivateRoomBtn').addEventListener('click', () => createOnlineRoom(true));
     document.getElementById('joinRoomByCodeBtn').addEventListener('click', () => {
         const code = document.getElementById('joinRoomCodeInput').value;
         joinOnlineMatchById(code);
     });
+
+    // Sala mondiale
+    document.getElementById('findWorldMatchBtn').addEventListener('click', avvia(findOrCreateWorldMatch));
     document.getElementById('cancelMatchmakingBtn').addEventListener('click', () => {
         cleanupActiveOnlineMatch();
         startNewAiGame();
     });
-    document.getElementById('instantWorldOpponentBtn').addEventListener('click', () => {
-        cleanupActiveOnlineMatch();
-        startWorldChallengerMatch();
-    });
-    document.getElementById('copyWaitingCodeBtn').addEventListener('click', () => {
+    /*
+     * L'invito all'amico: un link che lo porta dentro la stanza senza
+     * fargli scrivere niente. Sul telefono si apre il foglio di
+     * condivisione (WhatsApp e le altre app); dove non c'e', l'invito
+     * finisce negli appunti, pronto da incollare.
+     */
+    const shareInviteBtn = document.getElementById('shareInviteBtn');
+    const puoCondividere = typeof navigator.share === 'function'
+        && Boolean(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    if (!puoCondividere) shareInviteBtn.textContent = 'Copia il link';
+
+    shareInviteBtn.addEventListener('click', async () => {
         const code = document.getElementById('waitingRoomCodeDisplay').textContent;
-        /*
-         * Non il codice nudo: un invito pronto da incollare, con il link
-         * che porta l'amico dentro la stanza senza fargli scrivere niente.
-         */
-        const invito = `Ti sfido a scacchi! Apri questo link ed entri subito nella mia stanza: ${SITE_URL}?stanza=${code}`;
-        copyTextToClipboard(invito, 'Invito copiato: incollalo al tuo amico');
-    });
-    document.getElementById('copyUserIdBtn').addEventListener('click', () => {
-        const uid = document.getElementById('userIdDisplay').textContent;
-        copyTextToClipboard(uid, "ID Giocatore copiato negli appunti");
+        const link = inviteLink(SITE_URL, code);
+        if (!link) return;
+
+        if (puoCondividere) {
+            try {
+                await navigator.share({ title: 'Scacchi ZeroUno', text: INVITE_TEXT, url: link });
+                return;
+            } catch (err) {
+                // Chi chiude il foglio senza mandare non vuole altro
+                if (err && err.name === 'AbortError') return;
+                // Qualsiasi altro intoppo: si ripiega sugli appunti
+            }
+        }
+        copyTextToClipboard(inviteMessage(link), 'Invito copiato: incollalo al tuo amico');
     });
     document.getElementById('copyPgnBtn').addEventListener('click', () => {
         // A zero mosse non c'e' niente da copiare: il bottone e' spento (C5)
@@ -227,6 +248,8 @@ window.onload = async function () {
     setupTimeControlSelects();
     setupNotationInput();
     setupSidePanel();
+    // Prima di riprendere una partita salvata: in due decide da che parte guardarla
+    setupAutoFlipToggle();
     setupNameEditing();
     setupFullscreen();
     setupPromoOverlay();

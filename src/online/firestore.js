@@ -18,7 +18,7 @@ import { APP_ID, loadFirebaseConfig, LOBBY_MAX_ROOMS } from '../config/app.confi
 import { chess, state } from '../core/state.js';
 import { playChessSound } from '../core/sound.js';
 import { showToast, getPlayerNickname } from '../core/utils.js';
-import { renderBoard } from '../ui/board.js';
+import { renderBoard, scrollBoardIntoView } from '../ui/board.js';
 import { updatePlayerCardsUI, startMatchTimers, applyClockIncrement } from '../ui/panels.js';
 import { checkAndHandleGameOver, triggerEndOfGame } from '../ui/gameover.js';
 import { startWorldChallengerMatch } from '../game/modes.js';
@@ -62,8 +62,6 @@ function setNetworkStatus(mode, label) {
  * una sala mondiale che non esiste.
  */
 export async function initFirebase() {
-    const uidDisplay = document.getElementById('userIdDisplay');
-
     // La lobby mostra subito gli sfidanti AI, cosi' e' giocabile da subito
     renderGlobalLobbyUI();
 
@@ -72,7 +70,6 @@ export async function initFirebase() {
 
     if (!firebaseConfig) {
         setNetworkStatus('locale', 'Modalita Locale');
-        if (uidDisplay) uidDisplay.textContent = 'ZU-' + Math.floor(1000 + Math.random() * 9000);
         return;
     }
 
@@ -88,7 +85,6 @@ export async function initFirebase() {
             state.currentUser = user;
             if (user) {
                 setNetworkStatus('online', 'Rete Mondiale Attiva');
-                if (uidDisplay) uidDisplay.textContent = user.uid;
                 subscribeToGlobalLobby();
                 joinRoomFromInviteLink();
             }
@@ -96,7 +92,6 @@ export async function initFirebase() {
     } catch (err) {
         console.error('Errore inizializzazione Firebase:', err);
         setNetworkStatus('errore', 'Rete non raggiungibile');
-        if (uidDisplay) uidDisplay.textContent = 'ZU-' + Math.floor(1000 + Math.random() * 9000);
     }
 }
 
@@ -197,7 +192,7 @@ export function renderGlobalLobbyUI() {
             live: true,
             name: displayName(room.whiteName),
             metas: [`Stanza #${room.id}`],
-            buttonLabel: isOwnRoom ? 'In attesa...' : 'Entra Ora',
+            buttonLabel: isOwnRoom ? 'In attesa…' : 'Entra Ora',
             onClick: () => {
                 if (!isOwnRoom) joinOnlineMatchById(room.id);
             }
@@ -213,7 +208,10 @@ export function renderGlobalLobbyUI() {
             metas: [challenger.country, `(${challenger.elo})`],
             buttonLabel: 'Sfida Ora',
             quiet: true,
-            onClick: () => startWorldChallengerMatch(challenger)
+            onClick: () => {
+                startWorldChallengerMatch(challenger);
+                scrollBoardIntoView();
+            }
         }));
     });
 }
@@ -296,7 +294,8 @@ export async function createOnlineRoom(isPrivate = false) {
         whiteUid: state.currentUser.uid,
         whiteName: myName,
         blackUid: null,
-        blackName: 'In attesa di avversario...',
+        // Corto: i nomi a schermo si fermano a 22 caratteri, e questo si legge nella fascia
+        blackName: 'In attesa…',
         winnerTitle: null,
         winnerSubtitle: null,
         createdAt: Date.now(),
@@ -320,7 +319,8 @@ export async function createOnlineRoom(isPrivate = false) {
         document.getElementById('gameModePill').textContent = `Stanza #${roomCode}`;
 
         listenToActiveMatch(roomCode);
-        showToast(`Stanza #${roomCode} creata. In attesa di un avversario...`, 'gold');
+        // Niente avviso a comparsa: il riquadro sulla scacchiera dice gia' cosa fare
+        scrollBoardIntoView();
     } catch (e) {
         console.error("Errore creazione stanza:", e);
         showToast("Errore nella creazione della stanza online");
@@ -393,6 +393,7 @@ export async function joinOnlineMatchById(roomCodeInput) {
 
         document.getElementById('gameModePill').textContent = `Online #${code}`;
         listenToActiveMatch(code);
+        scrollBoardIntoView();
     } catch (e) {
         console.error("Errore ingresso stanza:", e);
         showToast("Impossibile entrare nella stanza specificata");
@@ -413,7 +414,7 @@ export function listenToActiveMatch(roomCode) {
 
             // I nomi li ha scritti qualcun altro: si ripuliscono prima di mostrarli
             const whiteName = displayName(data.whiteName, 'Bianco');
-            const blackName = displayName(data.blackName, 'In attesa...');
+            const blackName = displayName(data.blackName, 'In attesa…');
 
             // Se il secondo giocatore si è unito, chiudiamo l'overlay di attesa
             if (data.status === 'active') {

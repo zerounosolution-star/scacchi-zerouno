@@ -200,13 +200,118 @@ memoria dell'app: basta aggiungere `?v=2` in fondo all'indirizzo.
 - **App Check** di Firebase (proposta C) e **pulizia automatica delle partite
   vecchie** (proposta D): si accendono dalla console di Firebase, cioè
   dall'account del titolare.
-- Dal Revisore, per un altro giro: a chi avvia la partita in due il gioco dice
-  «muovi col mouse!», che sul telefono è sbagliato; il punteggio accanto agli
-  sfidanti AI non l'ha misurato nessuno; il pallino verde sul bottone pulsa
-  anche quando non c'è nessuno in attesa.
+- Dal Revisore, per un altro giro: il punteggio accanto agli sfidanti AI non
+  l'ha misurato nessuno; il pallino verde sul bottone pulsa anche quando non
+  c'è nessuno in attesa. («muovi col mouse!» è stato corretto la sera: vedi
+  sotto.)
 - Domanda del Revisore per il titolare: all'apertura e a fine partita il gioco
   mostra anche video del canale Agjensi Okazione. Con la regola «niente
   pubblicità ai clienti» restano? Se il canale è suo, va bene così.
 - Idea del Revisore: un indirizzo con il nome di ZeroUno al posto di
   `zerounosolution-star.github.io`, che è la riga che la gente guarda per
   decidere se fidarsi di un link.
+
+---
+
+# Sera: «semplifica il gioco tra due persone, semplifica lo schermo»
+
+Richiesta del titolare. Ha visto le immagini prima/dopo e ha detto «Sì,
+pubblica» la sera stessa. La versione del service worker è la v26.
+
+## Cosa non andava
+
+Per giocare con una persona servivano troppi passi, sparsi in due linguette.
+
+- **Sullo stesso telefono:** scendere sotto la scacchiera, cambiare
+  linguetta, premere il bottone, risalire. Poi «Ruota» a mano a ogni mossa:
+  lo diceva il gioco stesso, in un paragrafo di istruzioni.
+- **A distanza:** linguetta «Mondiale Online», un nome da scrivere, un
+  «identificativo» con il suo bottone Copia che non serviva a niente, due
+  bottoni, un campo per il codice. Il riquadro d'attesa si chiamava «Ricerca
+  avversario» e offriva tre bottoni, uno dei quali portava a giocare contro
+  l'AI.
+- Guardando il codice: le stanze pubbliche non le crea nessun bottone. La
+  sola strada per giocare fra due persone a distanza è la stanza privata con
+  il link. «Gioca nel mondo ora» porta sempre a uno sfidante AI, e lo dice.
+
+## Cosa è cambiato
+
+1. **Una linguetta sola per giocare in due.** «2 Giocatori» ha due gruppi:
+   *Sullo stesso schermo* (tempo, una spunta, un bottone) e *A distanza* (un
+   bottone per invitare, e il campo del codice per chi lo riceve a voce).
+2. **La scacchiera si gira da sola** verso chi deve muovere, mezzo secondo
+   dopo la mossa. Una spunta la tiene ferma. Vale anche dopo «Annulla» e
+   quando si riprende una partita salvata.
+3. **L'invito è un bottone:** «Manda il link». Sul telefono apre WhatsApp e
+   le altre app; dove non si può, il bottone dice «Copia il link» e copia
+   l'invito. Il riquadro d'attesa ha due bottoni invece di tre («Manda il
+   link» e «Annulla invito») e si chiama «Invita il tuo amico». Il campo del
+   codice sta dietro una riga da aprire, «Hai un codice stanza?»: serve di
+   rado.
+4. **«Mondiale Online» più corta:** via l'identificativo, via i doppioni.
+5. **Sul telefono** non c'è più il campo della mossa scritta, e la riga
+   d'istruzione dice «Tocca un pezzo, poi la casa dove va» invece di parlare
+   di mouse, frecce e Invio.
+6. **La scacchiera torna in vista** dopo aver avviato una partita dalla sala.
+7. Nomi più corti nella partita in due («Giocatore 1», «Giocatore 2»: il
+   colore lo dice già l'etichetta) e l'avviso giusto: «Partita in due
+   avviata: inizia il Bianco!».
+
+## Una correzione che non c'entra con la semplicità
+
+Il Revisore e il Developer hanno segnalato che i disegni dei pezzi non sono
+nostri: sono di **Cburnett**, su Wikimedia Commons. Verificato: il tracciato
+del pedone ha gli stessi numeri di `Chess_plt45.svg`. La licenza (CC BY-SA
+3.0) chiede di nominare autore e licenza e di dichiarare le modifiche. Il
+piede della pagina diceva «pezzi originali»: ora dice di chi sono, con i due
+collegamenti. Corretto anche il README. Un test tiene ferma la riga.
+
+## Come è stato provato
+
+- 103 prove automatiche su 103 (erano 85). Nuove: la rotazione
+  automatica in tutti i casi, il link d'invito, la linguetta, e una guardia
+  generale: ogni elemento che il codice va a prendere deve esistere nella
+  pagina.
+- Nel browser, con il banco di prova a Firebase finto (nessun dato esce dal
+  computer): partita in due con rotazione, spunta spenta e riaccesa, «Annulla»,
+  ripresa dopo una ricarica; invito con due schede, mosse nei due sensi;
+  bottone «Manda il link» con una condivisione finta, per vedere cosa parte.
+- **Sul database vero**, prima di pubblicare: la versione di lavoro (sul
+  computer) ha invitato, il sito pubblicato (versione di prima, schermo da
+  telefono) è entrato dal link. Due giocatori anonimi diversi. Mosse nei due
+  sensi, resa, fine partita vista dall'altra parte, nessun errore nelle due
+  pagine. La stanza di prova è stata cancellata. Quindi le regole del
+  database accettano quello che scrive la versione nuova, e le due versioni
+  si parlano: chi ha ancora la vecchia può giocare con chi ha la nuova.
+- Le 21 prove delle regole nell'emulatore: 21 su 21.
+- Foto prima/dopo fatte con Chrome senza finestra, a schermo da telefono e da
+  computer: stanno nel progetto del sito, in
+  `anteprime/2026-11-20-scacchi-semplice/`.
+- **Non provato:** il foglio di condivisione vero di un telefono (WhatsApp),
+  e il tocco su un telefono vero. Si guardano dopo la pubblicazione.
+
+## I due controlli prima di mostrarlo al titolare
+
+- **Revisore Social: verde.** Quattro rifiniture a scelta. Applicate: il
+  bottone del riquadro dice «Annulla invito» (sotto la scacchiera c'è già un
+  «Annulla», quello della mossa); «In attesa…» con i puntini in un carattere
+  solo; nel piede «Colori e linee adattati». La quarta (scrivere la casa in
+  minuscolo) è stata risolta accorciando: sul telefono la riga dice solo
+  «Tocca una casa evidenziata», perché la casa scelta la dice già
+  l'etichetta accanto.
+- **master-designer: passa, con due ritocchi**, tutti e due applicati:
+  «Annulla invito», e la nota sotto «Invita un amico con un link» a 13 px
+  come la nota gemella della sala mondiale.
+- Proposte del master-designer per il titolare, non applicate: in una partita
+  in due togliere «Ruota» quando la scacchiera si gira da sola, e togliere
+  «Patta» (due persone sedute insieme si mettono d'accordo a voce).
+
+## Segnalato dai colleghi, non fatto
+
+- **Privacy** (Revisore): i video arrivano da youtube.com e non da
+  youtube-nocookie.com, e nel gioco non c'è un collegamento alla pagina della
+  privacy. È un lavoro a parte, serve il sì del titolare.
+- **Video del canale Agjensi Okazione:** domanda ancora aperta, vedi sopra.
+  Finché non risponde, il Developer non mette il gioco nella pagina del sito.
+- **Rivincita:** dopo una partita a distanza, «Nuova partita» porta a uno
+  sfidante AI. Per rigiocare con l'amico serve un invito nuovo.

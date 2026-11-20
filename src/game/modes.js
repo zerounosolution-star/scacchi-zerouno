@@ -15,6 +15,7 @@ import { timeControlById } from '../config/app.config.js';
 import { cleanupActiveOnlineMatch } from '../online/firestore.js';
 import { readSavedMatch, replayMoves, clearSavedMatch } from '../core/persistence.js';
 import { exitReview } from '../ui/review.js';
+import { orientationForLocalTurn } from './autoflip.js';
 
 export function startNewAiGame() {
     cleanupActiveOnlineMatch();
@@ -70,11 +71,12 @@ export function startNewLocalGame() {
     state.playerColor = 'w';
     state.boardOrientation = 'w';
 
-    updatePlayerCardsUI('Giocatore 1 (Bianco)', 'Giocatore 2 (Nero)');
-    document.getElementById('gameModePill').textContent = '2 Giocatori in Locale';
+    // Il colore lo dice gia' l'etichetta sotto il nome: qui basta chi e'
+    updatePlayerCardsUI('Giocatore 1', 'Giocatore 2');
+    document.getElementById('gameModePill').textContent = '2 Giocatori';
     startMatchTimers();
     renderBoard();
-    showToast("Partita 2 Giocatori avviata: muovi col mouse!", "gold");
+    showToast('Partita in due avviata: inizia il Bianco!', 'gold');
 }
 
 export function startWorldChallengerMatch(challengerObj) {
@@ -150,8 +152,21 @@ export function resumeSavedMatch() {
     state.lastMoveSquares = last ? { from: last.from, to: last.to } : { from: null, to: null };
 
     if (snapshot.gameMode === 'local') {
-        updatePlayerCardsUI('Giocatore 1 (Bianco)', 'Giocatore 2 (Nero)');
-        document.getElementById('gameModePill').textContent = '2 Giocatori in Locale';
+        /*
+         * In due la scacchiera guarda chi deve muovere, se la spunta e'
+         * accesa. Il lato salvato e' quello di chi aveva appena mosso: la
+         * partita si salva prima che la scacchiera si giri.
+         */
+        const versoChiMuove = orientationForLocalTurn({
+            gameMode: 'local',
+            autoFlip: state.localAutoFlip,
+            turn: chess.turn(),
+            matchEnded: false
+        });
+        if (versoChiMuove) state.boardOrientation = versoChiMuove;
+
+        updatePlayerCardsUI('Giocatore 1', 'Giocatore 2');
+        document.getElementById('gameModePill').textContent = '2 Giocatori';
     } else {
         const opponentLabel = snapshot.opponentName
             || `Maestro AI (${LEVEL_NAMES[state.aiDifficulty] || 'Club'})`;

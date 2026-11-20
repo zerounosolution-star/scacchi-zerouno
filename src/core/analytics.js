@@ -21,7 +21,7 @@ const EVENTI = {
     findWorldMatchBtn: 'gioca-nel-mondo',
     createPrivateRoomBtn: 'stanza-creata',
     joinRoomByCodeBtn: 'stanza-entrata-col-codice',
-    copyWaitingCodeBtn: 'invito-copiato',
+    shareInviteBtn: 'invito-mandato',
     challengeFriendBtn: 'sfida-amico-copiata',
     promoSubscribeBtn: 'iscriviti-da-annuncio',
     subscribeChannelBtn: 'iscriviti-da-fine-partita',
